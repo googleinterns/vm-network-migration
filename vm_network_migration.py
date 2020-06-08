@@ -50,7 +50,7 @@ def stop_instance(compute, project, zone, instance) -> dict:
     Args:
         compute: google API compute engine service
         project: project ID
-        zone: zone name of the VM
+        zone: zone of the VM
         instance: name of the VM
 
     Returns:
@@ -71,7 +71,7 @@ def retrieve_instance_template(compute, project, zone, instance) -> dict:
     Args:
         compute: google API compute engine service
         project: project ID
-        zone: zone name of the instance
+        zone: zone of the VM
         instance: name of the VM
 
     Returns:
@@ -112,7 +112,7 @@ def detach_disk(compute, project, zone, instance, disk) -> dict:
     Args:
         compute: google API compute engine service
         project: project ID
-        zone: zone name of the VM
+        zone: zone of the VM
         instance: name of the VM
         disk: name of the disk
 
@@ -198,14 +198,14 @@ def create_instance(compute, project, zone, instance_template) -> dict:
         Args:
             compute: google API compute engine service
             project: project ID
-            zone: zone name of the VM
+            zone: zone of the VM
             instance_template: instance template
 
         Returns:
             a dict of the new network interface
 
         Raises:
-            googleapiclient.errors.HttpError: invalid request
+            googleapiclient.errors.HttpErrFZor: invalid request
     """
     return compute.instances().insert(
         project=project,
@@ -219,7 +219,7 @@ def delete_instance(compute, project, zone, instance) -> dict:
         Args:
             compute: google API compute engine service
             project: project ID
-            zone: zone name of the VM
+            zone: zone of the VM
             instance: name of the instance
 
         Returns:
@@ -240,7 +240,7 @@ def wait_for_operation(compute, project, zone, operation):
         Args:
             compute: google API compute engine service
             project: project ID
-            zone: zone name of the VM
+            zone: zone of the VM
             operation: name of the Operations resource to return
 
         Returns:
@@ -270,7 +270,7 @@ def get_region_from_zone(compute, project, zone) -> str:
         Args:
             compute: google API compute engine service
             project: project ID
-            zone: zone name of the VM
+            zone: zone of the VM
 
         Returns:
             region link
@@ -311,7 +311,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
 
         Args:
             project: project ID
-            zone: zone name of the VM
+            zone: zone of the VM
             original_instance: name of the original VM
 
         Returns:
