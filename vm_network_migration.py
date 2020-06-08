@@ -41,6 +41,7 @@ import argparse
 import time
 
 from googleapiclient import discovery
+from googleapiclient import http
 import google.auth
 
 
@@ -255,7 +256,7 @@ def create_instance(compute, project, zone, instance_template) -> dict:
 
 
 def delete_instance(compute, project, zone, instance) -> dict:
-    """ Delete the instance
+    """ delete the instance
 
         Args:
             compute: google API compute engine service
@@ -360,7 +361,7 @@ def roll_back_original_instance(compute, project, zone, instance,
         Raises:
             googleapiclient.errors.HttpError: invalid request
     """
-    print('VM network migration is failed'
+    print('VM network migration is failed. '
           'Rolling back to the original VM')
     print('Attacking disks back to the original VM')
     for disk_info in all_disks_info:
@@ -374,7 +375,7 @@ def roll_back_original_instance(compute, project, zone, instance,
     start_instance_operation = start_instance(compute, project, zone, instance)
     wait_for_operation(compute, project, zone,
                        start_instance_operation['name'])
-    print('Rollback process is end. The original VM is running.')
+    print('The migration process is failed. The original VM is running.')
 
 
 def main(project, zone, original_instance, new_instance, network, subnetwork):
@@ -434,8 +435,10 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     try:
         new_network_info = generate_new_network_info(compute, project, region,
                                                      network, subnetwork)
-    except:
-        roll_back_original_instance(compute, project,zone, original_instance, all_disks_info)
+    except http.HttpError as err:
+        print('An HttpError occurs: ', err)
+        roll_back_original_instance(compute, project, zone, original_instance, all_disks_info)
+        return
 
     print('Modifying instance template')
     new_instance_template = modify_instance_template_with_new_network(
@@ -446,8 +449,10 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     try:
         create_instance_operation = create_instance(compute, project, zone,
                                                     new_instance_template)
-    except:
-        roll_back_original_instance(compute, project, original_instance, all_disks_info)
+    except http.HttpError as err:
+        print('An HttpError occurs: ', err)
+        roll_back_original_instance(compute, project, zone, original_instance, all_disks_info)
+        return
 
     wait_for_operation(compute, project, zone,
                        create_instance_operation['name'])
