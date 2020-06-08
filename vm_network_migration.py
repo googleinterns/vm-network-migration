@@ -292,14 +292,14 @@ def wait_for_operation(compute, project, zone, operation):
             Exception: if the operation has an error
             googleapiclient.errors.HttpError: invalid request
     """
-    print('Waiting for operation to finish...')
+    print('Waiting ...')
     while True:
         result = compute.zoneOperations().get(
             project=project,
             zone=zone,
             operation=operation).execute()
         if result['status'] == 'DONE':
-            print("Operation is done.")
+            print("The current operation is done.")
             if 'error' in result:
                 raise Exception(result['error'])
             return result
@@ -370,7 +370,7 @@ def roll_back_original_instance(compute, project, zone, instance,
                                             instance, disk_info)
         wait_for_operation(compute, project, zone,
                        attach_disk_operation['name'])
-    print('Restarting the original VM')
+    print('Restartingf the original VM')
     print('start_instance_operation is running')
     start_instance_operation = start_instance(compute, project, zone, instance)
     wait_for_operation(compute, project, zone,
@@ -401,6 +401,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     if new_instance == original_instance:
         raise IOError('The new VM should not have the same name as '
                       'the original VM')
+
     # If the network is auto, then the subnetwork name is optional.
     # Otherwise it should be specified
     automode_status = check_network_auto_mode(compute, project, network)
@@ -453,7 +454,6 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
         print('An HttpError occurs: ', err)
         roll_back_original_instance(compute, project, zone, original_instance, all_disks_info)
         return
-
     wait_for_operation(compute, project, zone,
                        create_instance_operation['name'])
 
