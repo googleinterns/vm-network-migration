@@ -255,7 +255,7 @@ def create_instance(compute, project, zone, instance_template) -> dict:
 
 
 def delete_instance(compute, project, zone, instance) -> dict:
-    """ delete the instance
+    """ Delete the instance
 
         Args:
             compute: google API compute engine service
