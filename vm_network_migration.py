@@ -356,7 +356,9 @@ def roll_back_original_instance(compute, project, zone, instance,
         Args:
             compute: google API compute engine service
             project: project ID
-            network: name of the network
+            zone: zone of the VM
+            instance: name of the VM
+            all_disks_info: a list of disks' info
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
@@ -370,7 +372,7 @@ def roll_back_original_instance(compute, project, zone, instance,
                                             instance, disk_info)
         wait_for_operation(compute, project, zone,
                        attach_disk_operation['name'])
-    print('Restartingf the original VM')
+    print('Restarting the original VM')
     print('start_instance_operation is running')
     start_instance_operation = start_instance(compute, project, zone, instance)
     wait_for_operation(compute, project, zone,
