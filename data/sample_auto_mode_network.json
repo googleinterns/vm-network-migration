@@ -1,0 +1,11 @@
+{
+"id": "2049351722046166819",
+"creationTimestamp": "2018-04-06T19:15:40.672-07:00",
+"name": "target-network",
+"selfLink": "https://www.googleapis.com/compute/v1/projects/mock_project/global/networks/target-network",
+"autoCreateSubnetworks": true,
+"subnetworks": ["https://www.googleapis.com/compute/v1/projects/mock_project/regions/mock_us_central1_a/subnetworks/target-network"],
+"routingConfig": {"routingMode": "REGIONAL"},
+"kind": "compute#network"
+}
+
