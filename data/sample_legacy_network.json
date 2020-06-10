@@ -1,0 +1,12 @@
+{
+    "id": "12287492",
+    "creationTimestamp": "2019-06-24T18:01:21.208-07:00",
+    "name": "legacy-network",
+    "IPv4Range": "10.240.0.0/16",
+    "gatewayIPv4": "10.240.0.1",
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/mock_project/global/networks/legacy-network",
+    "routingConfig": {
+        "routingMode": "REGIONAL"
+    },
+    "kind": "compute#network"
+}

@@ -229,6 +229,12 @@ def modify_instance_template_with_new_network(instance_template, new_instance,
         Returns:
             a dict of the new network interface
     """
+    if 'networkInterfaces' not in instance_template:
+        raise KeyError('networkInterfaces is not in instance_template')
+    elif not isinstance(instance_template['networkInterfaces'], list):
+        raise TypeError('Invalid value type')
+    if 'name' not in instance_template:
+        raise KeyError('name is not in instance_template')
     instance_template['networkInterfaces'][0] = new_network_info
     instance_template['name'] = new_instance
     return instance_template
@@ -306,8 +312,8 @@ def wait_for_operation(compute, project, zone, operation):
         time.sleep(1)
 
 
-def get_region_from_zone(compute, project, zone) -> str:
-    """ Get region link from the zone
+def get_zone(compute, project, zone) -> dict:
+    """ Get zone information
 
         Args:
             compute: google API compute engine service
@@ -315,14 +321,14 @@ def get_region_from_zone(compute, project, zone) -> str:
             zone: zone of the VM
 
         Returns:
-            region link
+            deserialized zone information
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
     """
-    request = compute.zones().get(project=project, zone=zone)
-    response = request.execute()
-    return response['region']
+    return compute.zones().get(
+        project=project,
+        zone=zone).execute()
 
 
 def check_network_auto_mode(compute, project, network) -> bool:
@@ -434,7 +440,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
         wait_for_operation(compute, project, zone,
                            detach_disk_operation['name'])
 
-    region = get_region_from_zone(compute, project, zone)
+    region = get_zone(compute, project, zone)['region']
     try:
         new_network_info = generate_new_network_info(compute, project, region,
                                                      network, subnetwork)
