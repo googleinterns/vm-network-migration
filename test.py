@@ -409,21 +409,6 @@ class CheckNetworkAutoModeTest(unittest.TestCase):
                                             target_network)
         self.assertEqual(auto_mode, True)
 
-    def test_auto_network(self):
-        target_network_information = read_json_file(
-            "sample_non_auto_mode_network.json")
-        target_network = target_network_information["name"]
-        request_builder = RequestMockBuilder(
-            {
-                "compute.networks.get": (
-                    self.successResponse,
-                    json.dumps(target_network_information))})
-        compute = build("compute", "v1", self.http,
-                        requestBuilder=request_builder)
-        auto_mode = check_network_auto_mode(compute, self.project,
-                                            target_network)
-        self.assertEqual(auto_mode, False)
-
     def test_change_to_legacy_network(self):
         target_legacy_network_information = read_json_file(
             "sample_legacy_network.json")
