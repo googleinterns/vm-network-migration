@@ -355,7 +355,7 @@ def check_network_auto_mode(compute, project, network) -> bool:
 
 
 def roll_back_original_instance(compute, project, zone, instance,
-                                all_disks_info):
+                                all_disks_info) -> bool:
     """ Roll back to the original VM. Reattach the disks to the
     original VM and restart it.
 
@@ -384,7 +384,7 @@ def roll_back_original_instance(compute, project, zone, instance,
     wait_for_operation(compute, project, zone,
                        start_instance_operation['name'])
     print('The migration process is failed. The original VM is running.')
-
+    return True
 
 def main(project, zone, original_instance, new_instance, network, subnetwork):
     """ Execute the migration process.
