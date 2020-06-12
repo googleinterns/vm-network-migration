@@ -14,21 +14,50 @@
 """
 Test roll_back_original_instance() function
 """
-from __future__ import absolute_import
 
-import google
+import json
+import os
+from unittest import mock
+from unittest.mock import patch
+
+import google.auth.credentials
 import httplib2
-import mock
 import unittest2 as unittest
 from googleapiclient.errors import HttpError
-from mock import patch
-from utils import *
-from vm_network_migration import *
+from vm_network_migration.vm_network_migration import *
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
-@patch("vm_network_migration.attach_disk")  # index: 3
-@patch("vm_network_migration.wait_for_operation")  # index: 2
-@patch("vm_network_migration.start_instance")  # index: 1
+def datafile(filename):
+    """Generate path of the file
+    Args:
+        filename: file name
+
+    Returns: the file path
+
+    """
+    return os.path.join(DATA_DIR, filename)
+
+
+def read_json_file(filename):
+    """Read *.json file
+    Args:
+        filename: json file name
+
+    Returns: a Python object
+
+    """
+    with open(datafile(filename)) as f:
+        res = json.load(f)
+        f.close()
+    return res
+
+
+@patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 3
+@patch(
+    "vm_network_migration.vm_network_migration.wait_for_operation")  # index: 2
+@patch("vm_network_migration.vm_network_migration.start_instance")  # index: 1
 @patch("google.auth.default")  # index 0
 class RollBackOriginalInstance(unittest.TestCase):
     MOCK_CREDENTIALS = mock.Mock(spec=google.auth.credentials.Credentials)

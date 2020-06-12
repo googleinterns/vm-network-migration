@@ -15,15 +15,16 @@
 Test main() function
 """
 
-import os
 import json
+import os
+from unittest import mock
+from unittest.mock import patch
+
 import httplib2
-import mock
 import unittest2 as unittest
 from googleapiclient.errors import HttpError
-from mock import patch
-from vm_network_migration.vm_network_migration import stop_instance
-import google.auth
+from vm_network_migration.vm_network_migration import *
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
@@ -51,6 +52,21 @@ def read_json_file(filename):
         f.close()
     return res
 
+
+@patch(
+    "vm_network_migration.vm_network_migration.roll_back_original_instance")  # index: 10
+@patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 9
+@patch("vm_network_migration.vm_network_migration.delete_instance")  # index: 8
+@patch("vm_network_migration.vm_network_migration.create_instance")  # index: 7
+@patch("vm_network_migration.vm_network_migration.get_network")  # index: 6
+@patch("vm_network_migration.vm_network_migration.get_zone")  # index: 5
+@patch("vm_network_migration.vm_network_migration.detach_disk")  # index: 4
+@patch(
+    "vm_network_migration.vm_network_migration.retrieve_instance_template")  # index: 3
+@patch(
+    "vm_network_migration.vm_network_migration.wait_for_operation")  # index: 2
+@patch("vm_network_migration.vm_network_migration.stop_instance")  # index: 1
+@patch("google.auth.default")  # index 0
 class MainFlowLogic(unittest.TestCase):
     MOCK_CREDENTIALS = mock.Mock(spec=google.auth.credentials.Credentials)
     errorResponse = httplib2.Response({
@@ -59,33 +75,18 @@ class MainFlowLogic(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
 
-    # @mock.patch("vm_network_migration.roll_back_original_instance")  # index: 10
-    # @mock.patch("vm_network_migration.attach_disk")  # index: 9
-    # @mock.patch("vm_network_migration.delete_instance")  # index: 8
-    # @mock.patch("vm_network_migration.create_instance")  # index: 7
-    # @mock.patch("vm_network_migration.get_network")  # index: 6
-    # @mock.patch("vm_network_migration.get_zone")  # index: 5
-    # @mock.patch("vm_network_migration.detach_disk")  # index: 4
-    # @mock.patch("vm_network_migration.retrieve_instance_template")  # index: 3
-    # @mock.patch("vm_network_migration.wait_for_operation")  # index: 2
-    # @mock.patch("vm_network_migration.stop_instance")  # index: 1
-    # @mock.patch("google.auth.default")  # index 0
+    def test_basic(self, *mocks):
+        mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
+        mocks[3].return_value = read_json_file("sample_instance_template.json")
+        mocks[6].return_value = read_json_file("sample_auto_mode_network.json")
 
-    def test_basic(self,):
-        with patch("google.auth.default") as func1:
-            with patch("vm_network_migration.vm_network_migration.stop_instance") as func2:
-                print(self.MOCK_CREDENTIALS)
-                func1.return_value = (self.MOCK_CREDENTIALS, self.project)
-                #mocks[3].return_value = read_json_file("sample_instance_template.json")
-                #mocks[6].return_value = read_json_file("sample_auto_mode_network.json")
-
-                original_instance = "mock_original_instance"
-                new_instance = "mock_new_instance"
-                target_network = "mock_target_network"
-                target_subnetwork = "mock_target_subnetwork"
-                self.assertIsNone(
-                    main(self.project, self.zone, new_instance, original_instance,
-                         target_network, target_subnetwork))
+        original_instance = "mock_original_instance"
+        new_instance = "mock_new_instance"
+        target_network = "mock_target_network"
+        target_subnetwork = "mock_target_subnetwork"
+        self.assertIsNone(
+            main(self.project, self.zone, new_instance, original_instance,
+                 target_network, target_subnetwork))
 
     def test_unchanged_instance_name(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
