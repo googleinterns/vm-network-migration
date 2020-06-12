@@ -34,7 +34,7 @@ Before running:
 Run the script by terminal, for example:
      python3 vm_network_migration.py --project_id=dakeying-devconsole
      --zone=us-central1-a --original_instance_name=instance-legacy
-     --new_instance_name=vm-new --network=tests-network --subnetwork=tests-network
+     --new_instance_name=vm_network_migration-new --network=tests-network --subnetwork=tests-network
 
 """
 import time
@@ -43,7 +43,7 @@ import argparse
 import google.auth
 from googleapiclient import discovery
 from googleapiclient import http
-from errors import *
+from vm_network_migration.errors import *
 
 def stop_instance(compute, project, zone, instance) -> dict:
     """ Stop the instance.
