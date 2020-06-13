@@ -357,7 +357,7 @@ def check_network_auto_mode(compute, project, network) -> bool:
 
 
 def roll_back_original_instance(compute, project, zone, instance,
-                                all_disks_info=None):
+                                all_disks_info=[]):
     """ Roll back to the original VM. Reattach the disks to the
     original VM and restart it.
 
@@ -366,21 +366,19 @@ def roll_back_original_instance(compute, project, zone, instance,
             project: project ID
             zone: zone of the VM
             instance: name of the VM
-            all_disks_info: a list of disks' info. Default value is None.
+            all_disks_info: a list of disks' info. Default value is [].
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
     """
     print('VM network migration is failed. '
           'Rolling back to the original VM')
-    if all_disks_info is not None:
-        print('Attacking disks back to the original VM')
-        for disk_info in all_disks_info:
-            print('attach_disk_operation is running')
-            attach_disk_operation = attach_disk(compute, project, zone,
-                                                instance, disk_info)
-            wait_for_operation(compute, project, zone,
-                               attach_disk_operation['name'])
+    for disk_info in all_disks_info:
+        print('attach_disk_operation is running')
+        attach_disk_operation = attach_disk(compute, project, zone,
+                                            instance, disk_info)
+        wait_for_operation(compute, project, zone,
+                           attach_disk_operation['name'])
     print('Restarting the original VM')
     print('start_instance_operation is running')
     start_instance_operation = start_instance(compute, project, zone, instance)
@@ -429,43 +427,35 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     stop_instance_operation = stop_instance(compute, project, zone,
                                             original_instance)
     wait_for_operation(compute, project, zone, stop_instance_operation['name'])
-    all_disks_info = None
+    all_disks_info = []
     try:
         instance_template = retrieve_instance_template(compute, project, zone,
                                                        original_instance)
+
         all_disks_info = get_disks_info_from_instance_template(
             instance_template)
 
-    except Exception as e:
-        print('An error occurs: ', e)
-        roll_back_original_instance(compute, project, zone, original_instance, all_disks_info)
+        print('Detaching the disks')
+        for disk_info in all_disks_info:
+            disk = disk_info['deviceName']
+            print('detach_disk_operation is running')
+            detach_disk_operation = detach_disk(compute, project, zone,
+                                                original_instance, disk)
+            wait_for_operation(compute, project, zone,
+                               detach_disk_operation['name'])
 
-    print('Detaching the disks')
-    for disk_info in all_disks_info:
-        disk = disk_info['deviceName']
-        print('detach_disk_operation is running')
-        detach_disk_operation = detach_disk(compute, project, zone,
-                                            original_instance, disk)
-        wait_for_operation(compute, project, zone,
-                           detach_disk_operation['name'])
-    region = get_zone(compute, project, zone)['region']
+        region = get_zone(compute, project, zone)['region']
 
-    try:
         new_network_info = generate_new_network_info(compute, project, region,
                                                      network, subnetwork)
-    except Exception as e:
-        print('An error occurs: ', e)
-        roll_back_original_instance(compute, project, zone, original_instance,
-                                    all_disks_info)
-        return
 
-    print('Modifying instance template')
-    new_instance_template = modify_instance_template_with_new_network(
-        instance_template, new_instance, new_network_info)
+        print('Modifying instance template')
+        new_instance_template = modify_instance_template_with_new_network(
+            instance_template, new_instance, new_network_info)
 
-    print('Creating a new VM instance')
-    print('create_instance_operation is running')
-    try:
+        print('Creating a new VM instance')
+        print('create_instance_operation is running')
+
         create_instance_operation = create_instance(compute, project, zone,
                                                     new_instance_template)
     except Exception as e:
