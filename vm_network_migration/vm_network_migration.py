@@ -42,8 +42,8 @@ import time
 import argparse
 import google.auth
 from googleapiclient import discovery
-from googleapiclient import http
 from vm_network_migration.errors import *
+
 
 def stop_instance(compute, project, zone, instance) -> dict:
     """ Stop the instance.
@@ -231,7 +231,8 @@ def modify_instance_template_with_new_network(instance_template, new_instance,
             a dict of the new network interface
     """
     if 'networkInterfaces' not in instance_template:
-        raise AttributeNotExistError('networkInterfaces is not in instance_template')
+        raise AttributeNotExistError(
+            'networkInterfaces is not in instance_template')
     elif not isinstance(instance_template['networkInterfaces'], list):
         raise InvalidTypeError('Invalid value type')
     if 'name' not in instance_template:
@@ -349,13 +350,14 @@ def check_network_auto_mode(compute, project, network) -> bool:
     """
     network_info = get_network(compute, project, network)
     if 'autoCreateSubnetworks' not in network_info:
-        raise InvalidTargetNetworkError('The target network is not a subnetwork mode network')
+        raise InvalidTargetNetworkError(
+            'The target network is not a subnetwork mode network')
     auto_mode_status = network_info['autoCreateSubnetworks']
     return auto_mode_status
 
 
 def roll_back_original_instance(compute, project, zone, instance,
-                                all_disks_info):
+                                all_disks_info=None):
     """ Roll back to the original VM. Reattach the disks to the
     original VM and restart it.
 
@@ -364,20 +366,21 @@ def roll_back_original_instance(compute, project, zone, instance,
             project: project ID
             zone: zone of the VM
             instance: name of the VM
-            all_disks_info: a list of disks' info
+            all_disks_info: a list of disks' info. Default value is None.
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
     """
     print('VM network migration is failed. '
           'Rolling back to the original VM')
-    print('Attacking disks back to the original VM')
-    for disk_info in all_disks_info:
-        print('attach_disk_operation is running')
-        attach_disk_operation = attach_disk(compute, project, zone,
-                                            instance, disk_info)
-        wait_for_operation(compute, project, zone,
-                           attach_disk_operation['name'])
+    if all_disks_info is not None:
+        print('Attacking disks back to the original VM')
+        for disk_info in all_disks_info:
+            print('attach_disk_operation is running')
+            attach_disk_operation = attach_disk(compute, project, zone,
+                                                instance, disk_info)
+            wait_for_operation(compute, project, zone,
+                               attach_disk_operation['name'])
     print('Restarting the original VM')
     print('start_instance_operation is running')
     start_instance_operation = start_instance(compute, project, zone, instance)
@@ -407,7 +410,8 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     compute = discovery.build('compute', 'v1', credentials=credentials)
 
     if new_instance == original_instance:
-        raise UnchangedInstanceNameError('The new VM should not have the same name as the original VM')
+        raise UnchangedInstanceNameError(
+            'The new VM should not have the same name as the original VM')
 
     # If the network is auto, then the subnetwork name is optional.
     # Otherwise it should be specified
@@ -425,11 +429,17 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     stop_instance_operation = stop_instance(compute, project, zone,
                                             original_instance)
     wait_for_operation(compute, project, zone, stop_instance_operation['name'])
+    all_disks_info = None
+    try:
+        instance_template = retrieve_instance_template(compute, project, zone,
+                                                       original_instance)
+        all_disks_info = get_disks_info_from_instance_template(
+            instance_template)
 
-    instance_template = retrieve_instance_template(compute, project, zone,
-                                                   original_instance)
+    except Exception as e:
+        print('An error occurs: ', e)
+        roll_back_original_instance(compute, project, zone, original_instance, all_disks_info)
 
-    all_disks_info = get_disks_info_from_instance_template(instance_template)
     print('Detaching the disks')
     for disk_info in all_disks_info:
         disk = disk_info['deviceName']
@@ -443,8 +453,8 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     try:
         new_network_info = generate_new_network_info(compute, project, region,
                                                      network, subnetwork)
-    except http.HttpError as err:
-        print('An HttpError occurs: ', err)
+    except Exception as e:
+        print('An error occurs: ', e)
         roll_back_original_instance(compute, project, zone, original_instance,
                                     all_disks_info)
         return
@@ -458,8 +468,8 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     try:
         create_instance_operation = create_instance(compute, project, zone,
                                                     new_instance_template)
-    except http.HttpError as err:
-        print('An HttpError occurs: ', err)
+    except Exception as e:
+        print('An error occurs: ', e)
         roll_back_original_instance(compute, project, zone, original_instance,
                                     all_disks_info)
         return
