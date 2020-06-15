@@ -18,7 +18,7 @@ subnetwork will be created and the old VM instance will be deleted.
     3. Install the Python client library for Google APIs by running
        `pip install --upgrade google-api-python-client`
 ## Run
-     python3 vm_network_migration.py --project_id=dakeying-devconsole
+     python3 vm_network_migration.py --project_id=test-project
      --zone=us-central1-a --original_instance_name=instance-legacy
      --new_instance_name=vm-new --network=test-network --subnetwork=test-network
 ## Source Code Headers
