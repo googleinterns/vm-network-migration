@@ -11,34 +11,47 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+
+"""
 
 import httplib2
-import json
-import os
-import unittest2 as unittest
-import time
 import timeout_decorator
-
+import unittest2 as unittest
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
-
-from vm_network_migration import *
+from vm_network_migration.vm_network_migration import *
+import json
+import os
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
 def datafile(filename):
+    """Generate path of the file
+    Args:
+        filename: file name
+
+    Returns: the file path
+
+    """
     return os.path.join(DATA_DIR, filename)
 
 
 def read_json_file(filename):
+    """Read *.json file
+    Args:
+        filename: json file name
+
+    Returns: a Python object
+
+    """
     with open(datafile(filename)) as f:
         res = json.load(f)
         f.close()
     return res
-
 
 class BasicGoogleAPICalls(unittest.TestCase):
     project = "mock_project"
@@ -82,10 +95,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(HttpError):
             stop_instance(compute, self.project, self.zone, self.instance)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_start_instance_success(self):
         request_builder = RequestMockBuilder(
@@ -109,10 +121,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(HttpError):
             start_instance(compute, self.project, self.zone, self.instance)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_retrieve_instance_template_success(self):
         request_builder = RequestMockBuilder(
@@ -138,11 +149,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+        with self.assertRaises(HttpError):
             retrieve_instance_template(compute, self.project, self.zone,
                                        self.instance)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_detach_disk_success(self):
         request_builder = RequestMockBuilder(
@@ -167,11 +176,10 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(HttpError):
             detach_disk(compute, self.project, self.zone, self.instance,
                         self.boot_disk)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_attach_disk_success(self):
         request_builder = RequestMockBuilder(
@@ -196,11 +204,10 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(HttpError):
             attach_disk(compute, self.project, self.zone, self.instance,
                         self.boot_disk)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_get_network_success(self):
         request_builder = RequestMockBuilder(
@@ -224,10 +231,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(HttpError):
             get_network(compute, self.project, self.target_network)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_create_instance_success(self):
         request_builder = RequestMockBuilder(
@@ -252,11 +258,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+        with self.assertRaises(HttpError):
             create_instance(compute, self.project, self.zone,
                             self.instance_template)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_delete_instance_success(self):
         request_builder = RequestMockBuilder(
@@ -280,14 +284,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+        with self.assertRaises(HttpError):
             delete_instance(compute, self.project, self.zone,
                             self.instance_template)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
-
-    def test_wait_for_operation(self):
-        pass
 
     def test_get_zone_success(self):
         request_builder = RequestMockBuilder(
@@ -310,10 +309,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(HttpError):
             get_zone(compute, self.project, self.zone)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_check_network_auto_mode_success(self):
         request_builder = RequestMockBuilder(
@@ -333,13 +331,11 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b"{Invalid resource}")})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(HttpError):
             check_network_auto_mode(compute, self.project, self.zone)
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
     def test_wait_for_operation_success(self):
-
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
@@ -361,13 +357,12 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b'Invalid Resource')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(HttpError):
             wait_for_operation(compute, self.project, self.zone, {})
-        except HttpError as e:
-            self.assertEqual(e.resp.status, 404)
 
 
-class CheckNetworkAutoModeTest(unittest.TestCase):
+class CheckNetworkAutoMode(unittest.TestCase):
     project = "mock_project"
     http = HttpMock(datafile("compute_rest.json"), {
         "status": "200"})
@@ -420,14 +415,13 @@ class CheckNetworkAutoModeTest(unittest.TestCase):
                     json.dumps(target_legacy_network_information))})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(InvalidTargetNetworkError):
             check_network_auto_mode(compute, self.project,
                                     target_legacy_network)
-        except:
-            self.assertRaises(IOError)
 
 
-class WaitForOperationTest(unittest.TestCase):
+class WaitForOperation(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
     http = HttpMock(datafile("compute_rest.json"), {
@@ -449,11 +443,10 @@ class WaitForOperationTest(unittest.TestCase):
                     '{"status":"RUNNING"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(StopIteration):
             wait_for_operation(compute, self.project,
                                self.zone, {})
-        except:
-            self.assertRaises(StopIteration)
 
     def test_error_in_response(self):
         request_builder = RequestMockBuilder(
@@ -463,14 +456,13 @@ class WaitForOperationTest(unittest.TestCase):
                     '{"status":"DONE", "error":"something wrong"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        try:
+
+        with self.assertRaises(ZoneOperationsError):
             wait_for_operation(compute, self.project,
                                self.zone, {})
-        except Exception as e:
-            self.assertEqual(getattr(e, 'message', str(e)), "something wrong")
 
 
-class ModifyInstanceTemplateWithNewNetworkTest(unittest.TestCase):
+class ModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
     new_instance = "mock_new_instance"
     new_network_info = {
         "network": "mock_new_network",
@@ -479,7 +471,7 @@ class ModifyInstanceTemplateWithNewNetworkTest(unittest.TestCase):
     def test_basic(self):
         instance_template = {
             'networkInterfaces': [{
-                                      "network": "legacy"}],
+                "network": "legacy"}],
             'name': 'mock_old_instance'}
 
         new_instance_template = modify_instance_template_with_new_network(
@@ -492,41 +484,33 @@ class ModifyInstanceTemplateWithNewNetworkTest(unittest.TestCase):
 
     def test_invalid_instance_template(self):
         instance_template = {}
-        try:
+
+        with self.assertRaises(AttributeNotExistError):
             modify_instance_template_with_new_network(instance_template,
                                                       self.new_instance,
                                                       self.new_network_info)
-        except:
-            self.assertRaises(KeyError)
-
         instance_template = {
             'networkInterfaces': []}
-        try:
+
+        with self.assertRaises(AttributeNotExistError):
             modify_instance_template_with_new_network(instance_template,
                                                       self.new_instance,
                                                       self.new_network_info)
-        except:
-            self.assertRaises(KeyError)
 
         instance_template = {
             'name': 'mock_old_instance'}
 
-        try:
+        with self.assertRaises(AttributeNotExistError):
             modify_instance_template_with_new_network(instance_template,
                                                       self.new_instance,
                                                       self.new_network_info)
-        except:
-            self.assertRaises(KeyError)
 
         instance_template = {
             'networkInterfaces': {},
             'name': 'mock_old_instance'}
-
-        try:
+        with self.assertRaises(InvalidTypeError):
             modify_instance_template_with_new_network(instance_template,
                                                       self.new_instance,
                                                       self.new_network_info)
-        except:
-            self.assertRaises(TypeError)
 
 

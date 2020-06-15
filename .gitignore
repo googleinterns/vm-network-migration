@@ -1,2 +1,6 @@
 .idea/
 venv/
+__pycache__/
+*.pyc
+*.cpython-37.pyc
+vm_network_migration/__pycache__/

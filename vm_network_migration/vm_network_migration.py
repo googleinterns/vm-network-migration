@@ -34,15 +34,15 @@ Before running:
 Run the script by terminal, for example:
      python3 vm_network_migration.py --project_id=dakeying-devconsole
      --zone=us-central1-a --original_instance_name=instance-legacy
-     --new_instance_name=vm-new --network=test-network --subnetwork=test-network
+     --new_instance_name=vm_network_migration-new --network=tests-network --subnetwork=tests-network
 
 """
-import argparse
 import time
 
-from googleapiclient import discovery
-from googleapiclient import http
+import argparse
 import google.auth
+from googleapiclient import discovery
+from vm_network_migration.errors import *
 
 
 def stop_instance(compute, project, zone, instance) -> dict:
@@ -118,10 +118,10 @@ def get_disks_info_from_instance_template(instance_template) -> list:
         a list of disks' info
 
     Raises:
-        KeyError: No disks on the VM
+        AttributeNotExistError: No disks on the VM
     """
     if 'disks' not in instance_template:
-        raise KeyError('No disks are attached on the VM')
+        raise AttributeNotExistError('No disks are attached on the VM')
     return instance_template['disks']
 
 
@@ -146,6 +146,7 @@ def detach_disk(compute, project, zone, instance, disk) -> dict:
         zone=zone,
         instance=instance,
         deviceName=disk).execute()
+
 
 def attach_disk(compute, project, zone, instance, disk_info):
     """Attach a disk to the instance
@@ -230,11 +231,12 @@ def modify_instance_template_with_new_network(instance_template, new_instance,
             a dict of the new network interface
     """
     if 'networkInterfaces' not in instance_template:
-        raise KeyError('networkInterfaces is not in instance_template')
+        raise AttributeNotExistError(
+            'networkInterfaces is not in instance_template')
     elif not isinstance(instance_template['networkInterfaces'], list):
-        raise TypeError('Invalid value type')
+        raise InvalidTypeError('Invalid value type')
     if 'name' not in instance_template:
-        raise KeyError('name is not in instance_template')
+        raise AttributeNotExistError('name is not in instance_template')
     instance_template['networkInterfaces'][0] = new_network_info
     instance_template['name'] = new_instance
     return instance_template
@@ -295,7 +297,7 @@ def wait_for_operation(compute, project, zone, operation):
             a deserialized object of the response
 
         Raises:
-            Exception: if the operation has an error
+            ZoneOperationsError: if the operation has an error
             googleapiclient.errors.HttpError: invalid request
     """
     print('Waiting ...')
@@ -307,7 +309,7 @@ def wait_for_operation(compute, project, zone, operation):
         if result['status'] == 'DONE':
             print("The current operation is done.")
             if 'error' in result:
-                raise Exception(result['error'])
+                raise ZoneOperationsError(result['error'])
             return result
         time.sleep(1)
 
@@ -343,19 +345,19 @@ def check_network_auto_mode(compute, project, network) -> bool:
             true or false
 
         Raises:
-            IOError: if the network is not a subnetwork mode network
+            InvalidTargetNetworkError: if the network is not a subnetwork mode network
             googleapiclient.errors.HttpError: invalid request
     """
-    request = compute.networks().get(project=project, network=network)
-    response = request.execute()
-    if 'autoCreateSubnetworks' not in response:
-        raise IOError('The target network is not a subnetwork mode network')
-    auto_mode_status = response['autoCreateSubnetworks']
+    network_info = get_network(compute, project, network)
+    if 'autoCreateSubnetworks' not in network_info:
+        raise InvalidTargetNetworkError(
+            'The target network is not a subnetwork mode network')
+    auto_mode_status = network_info['autoCreateSubnetworks']
     return auto_mode_status
 
 
 def roll_back_original_instance(compute, project, zone, instance,
-                                all_disks_info):
+                                all_disks_info=[]):
     """ Roll back to the original VM. Reattach the disks to the
     original VM and restart it.
 
@@ -364,20 +366,19 @@ def roll_back_original_instance(compute, project, zone, instance,
             project: project ID
             zone: zone of the VM
             instance: name of the VM
-            all_disks_info: a list of disks' info
+            all_disks_info: a list of disks' info. Default value is [].
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
     """
     print('VM network migration is failed. '
           'Rolling back to the original VM')
-    print('Attacking disks back to the original VM')
     for disk_info in all_disks_info:
-        print('attach_instance_operation is running')
+        print('attach_disk_operation is running')
         attach_disk_operation = attach_disk(compute, project, zone,
                                             instance, disk_info)
         wait_for_operation(compute, project, zone,
-                       attach_disk_operation['name'])
+                           attach_disk_operation['name'])
     print('Restarting the original VM')
     print('start_instance_operation is running')
     start_instance_operation = start_instance(compute, project, zone, instance)
@@ -398,24 +399,24 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
             true or false
 
         Raises:
-            IOError: if the network mode is not auto and
+            UnchangedInstanceNameError: if the network mode is not auto and
              the subnetwork is not specified
-            IOError: if new_instance == orignal_instance
+            MissingSubnetworkError: if new_instance == orignal_instance
             googleapiclient.errors.HttpError: invalid request
     """
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
 
     if new_instance == original_instance:
-        raise IOError('The new VM should not have the same name as '
-                      'the original VM')
+        raise UnchangedInstanceNameError(
+            'The new VM should not have the same name as the original VM')
 
     # If the network is auto, then the subnetwork name is optional.
     # Otherwise it should be specified
     automode_status = check_network_auto_mode(compute, project, network)
     if subnetwork is None:
         if not automode_status:
-            raise IOError('No specified subnetwork')
+            raise MissingSubnetworkError('No specified subnetwork')
         else:
             # the network is in auto mode, the default subnetwork name is the
             # same as the network name
@@ -426,41 +427,41 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     stop_instance_operation = stop_instance(compute, project, zone,
                                             original_instance)
     wait_for_operation(compute, project, zone, stop_instance_operation['name'])
-
-    instance_template = retrieve_instance_template(compute, project, zone,
-                                                   original_instance)
-
-    all_disks_info = get_disks_info_from_instance_template(instance_template)
-    print('Detaching the disks')
-    for disk_info in all_disks_info:
-        disk = disk_info['deviceName']
-        print('detach_disk_operation is running')
-        detach_disk_operation = detach_disk(compute, project, zone,
-                                            original_instance, disk)
-        wait_for_operation(compute, project, zone,
-                           detach_disk_operation['name'])
-
-    region = get_zone(compute, project, zone)['region']
+    all_disks_info = []
     try:
+        instance_template = retrieve_instance_template(compute, project, zone,
+                                                       original_instance)
+
+        all_disks_info = get_disks_info_from_instance_template(
+            instance_template)
+
+        print('Detaching the disks')
+        for disk_info in all_disks_info:
+            disk = disk_info['deviceName']
+            print('detach_disk_operation is running')
+            detach_disk_operation = detach_disk(compute, project, zone,
+                                                original_instance, disk)
+            wait_for_operation(compute, project, zone,
+                               detach_disk_operation['name'])
+
+        region = get_zone(compute, project, zone)['region']
+
         new_network_info = generate_new_network_info(compute, project, region,
                                                      network, subnetwork)
-    except http.HttpError as err:
-        print('An HttpError occurs: ', err)
-        roll_back_original_instance(compute, project, zone, original_instance, all_disks_info)
-        return
 
-    print('Modifying instance template')
-    new_instance_template = modify_instance_template_with_new_network(
-        instance_template, new_instance, new_network_info)
+        print('Modifying instance template')
+        new_instance_template = modify_instance_template_with_new_network(
+            instance_template, new_instance, new_network_info)
 
-    print('Creating a new VM instance')
-    print('create_instance_operation is running')
-    try:
+        print('Creating a new VM instance')
+        print('create_instance_operation is running')
+
         create_instance_operation = create_instance(compute, project, zone,
                                                     new_instance_template)
-    except http.HttpError as err:
-        print('An HttpError occurs: ', err)
-        roll_back_original_instance(compute, project, zone, original_instance, all_disks_info)
+    except Exception as e:
+        print('An error occurs: ', e)
+        roll_back_original_instance(compute, project, zone, original_instance,
+                                    all_disks_info)
         return
     wait_for_operation(compute, project, zone,
                        create_instance_operation['name'])
