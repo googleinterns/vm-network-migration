@@ -336,17 +336,17 @@ def get_zone(compute, project, zone) -> dict:
 def check_network_auto_mode(compute, project, network) -> bool:
     """ Check if the network is in auto mode
 
-        Args:
-            compute: google API compute engine service
-            project: project ID
-            network: name of the network
+    Args:
+        compute: google API compute engine service
+        project: project ID
+        network: name of the network
 
-        Returns:
-            true or false
+    Returns:
+        true or false
 
-        Raises:
-            InvalidTargetNetworkError: if the network is not a subnetwork mode network
-            googleapiclient.errors.HttpError: invalid request
+    Raises:
+        InvalidTargetNetworkError: if the network is not a subnetwork mode network
+        googleapiclient.errors.HttpError: invalid request
     """
     network_info = get_network(compute, project, network)
     if 'autoCreateSubnetworks' not in network_info:
@@ -355,7 +355,58 @@ def check_network_auto_mode(compute, project, network) -> bool:
     auto_mode_status = network_info['autoCreateSubnetworks']
     return auto_mode_status
 
+def preserve_internal_ip_address(compute, project, region, address_body):
+    ###TODO TEST
+    """ Preserve the internal IP address. If the IP address is already
+    a static one, the function will return HTTP response
+    successfully without overwriting the existing IP.
 
+    Args:
+        compute: google API compute engine service
+        project: project ID
+        region: project region
+        address_body: internal IP address information, such as
+            {
+              "name": "example-address-1",
+              "addressType": "INTERNAL",
+              "subnetwork": "regions/us-central1/subnetworks/my-custom-subnet",
+              "address": "10.128.0.12"
+            }
+
+    Returns: a deserialized object of the response
+
+    Raises:
+        googleapiclient.errors.HttpError: invalid request
+    """
+    return compute.addresses().insert(project=project, region=region,
+                                         body=address_body).execute()
+
+def preserve_external_ip_address(compute, project, region, address_body):
+    ###TODO TEST
+    """ Preserve the external IP address.
+
+    Args:
+        compute: google API compute engine service
+        project: project ID
+        region: project region
+        address_body: internal IP address information, such as
+           {
+              name: "ADDRESS_NAME",
+              address: "IP_ADDRESS"
+            }
+    Returns: a deserialized object of the response
+
+    Raises:
+        googleapiclient.errors.HttpError: If the IP
+        address is already a static one, or if the IP is not being
+        used by any instance, or invalid request, it will raise an Http error
+    """
+    return compute.addresses().insert(project=project, region=region,
+                                      body=address_body).execute()
+
+def generate_timestamp():
+    from datetime import datetime
+    return str(datetime.utcnow().timestamp())
 def roll_back_original_instance(compute, project, zone, instance,
                                 all_disks_info=[]):
     """ Roll back to the original VM. Reattach the disks to the
