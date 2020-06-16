@@ -56,13 +56,23 @@ def read_json_file(filename):
 class BasicGoogleAPICalls(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
+    region = "mock_us_central1"
     instance = "mock_instance_legacy"
     boot_disk = "mock_boot_disk"
     target_network = "mock_target_network"
     target_subnetwork = "mock_target_subnetwork"
     instance_template = {
         "mock_instance_template": "mocking"}
-
+    internal_ip_address_body = {
+              "name": "example-internal-address",
+              "addressType": "INTERNAL",
+              "subnetwork": "regions/us-central1/subnetworks/my-custom-subnet",
+              "address": "10.128.0.12"
+            }
+    external_ip_address_body = {
+        "name": "example-external-address",
+        "address":"35.203.14.22"
+    }
     http = HttpMock(datafile("compute_rest.json"), {
         "status": "200"})
     errorResponse = httplib2.Response({
@@ -361,6 +371,57 @@ class BasicGoogleAPICalls(unittest.TestCase):
         with self.assertRaises(HttpError):
             wait_for_operation(compute, self.project, self.zone, {})
 
+    def test_preserve_internal_ip_success(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.addresses.insert": (
+                    self.successResponse, '{"foo": "bar"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        preserve_internal_ip_address_operation = preserve_internal_ip_address(compute, self.project, self.region, self.internal_ip_address_body)
+        self.assertEqual(
+            preserve_internal_ip_address_operation,
+            {
+                "foo": "bar"}
+        )
+
+    def test_preserve_internal_ip_failure(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.addresses.insert": (
+                    self.errorResponse, b"{Invalid resource}")})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+
+        with self.assertRaises(HttpError):
+            preserve_internal_ip_address(compute, self.project, self.region,
+                                         self.internal_ip_address_body)
+
+    def test_preserve_external_ip_success(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.addresses.insert": (
+                    self.successResponse, '{"foo": "bar"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        preserve_external_ip_address_operation = preserve_external_ip_address(compute, self.project, self.region, self.external_ip_address_body)
+        self.assertEqual(
+            preserve_external_ip_address_operation,
+            {
+                "foo": "bar"}
+        )
+
+    def test_preserve_external_ip_failure(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.addresses.insert": (
+                    self.errorResponse, b"{Invalid resource}")})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+
+        with self.assertRaises(HttpError):
+            preserve_external_ip_address(compute, self.project, self.region,
+                                         self.external_ip_address_body)
 
 class CheckNetworkAutoMode(unittest.TestCase):
     project = "mock_project"
