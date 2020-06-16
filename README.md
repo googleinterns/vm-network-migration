@@ -39,6 +39,9 @@ Compute Engine resources.
      python3 vm_network_migration.py --project_id=test-project
      --zone=us-central1-a --original_instance_name=instance-legacy
      --new_instance_name=vm-new --network=test-network --subnetwork=test-network
+     --preserve_external_ip=False --preserve_internal_ip=False 
+     --preserve_alias_ip=False
+     
 ## Source Code Headers
 
 Every file containing source code must include copyright and license
