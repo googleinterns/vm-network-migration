@@ -555,6 +555,15 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
 
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
+    if preserve_external_ip:
+        warnings.warn(
+            'You choose to preserve the external IP. If the original instance '
+            'has an ephemeral IP, it will be reserved as a static IP after the '
+            'execution,',
+            warnings)
+        continue_execution = input('Do you still want to preserve the external IP? y/n')
+        if continue_execution == 'n':
+            preserve_external_ip = False
 
     if new_instance == original_instance:
         raise UnchangedInstanceNameError(

@@ -30,7 +30,6 @@ install_requires = [
     "google-api-python-client",
     "google",
     "timeout_decorator",
-    "unittest",
     "unittest2"
 ]
 
@@ -43,5 +42,5 @@ setup(
    author_email='',
    test_suite = 'tests',
    packages=['vm_network_migration'],  #same as name
-   install_requires=['google-api-python-client', 'google'], #external packages as dependencies
+   install_requires=install_requires, #external packages as dependencies
 )
