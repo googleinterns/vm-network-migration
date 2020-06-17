@@ -586,11 +586,19 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                                           preserve_external_ip_operation[
                                               'name'])
             except HttpError as e:
-                print('Preserving external IP error:', e.content)
-                print("The external IP address is static.")
+                error_reason = e._get_reason()
+                # The external IP is already preserved as a static IP,
+                # or the current name of the external IP already exists
+                if 'already' in error_reason:
+                    print(error_reason)
+                else:
+                    print('Failed to preserve the external IP address as a static IP:', e._get_reason())
+                    print('A new external IP address will be assigned.')
             else:
                 print(
-                    "The external IP address is preserved as a static IP address")
+                    'The external IP address is preserved as a static IP address.')
+
+
     elif 'accessConfigs' in new_network_interface:
         del new_network_interface['accessConfigs']
 
@@ -612,7 +620,8 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                                           preserve_internal_ip_operation[
                                               'name'])
             except HttpError as e:
-                print('Preserving internal IP error:', e.content)
+                print('Failed to preserve the internal IP:', e._get_reason())
+                print('A new internal IP will be assigned.')
                 del new_network_interface['networkIP']
 
     elif 'networkIP' in new_network_interface:
@@ -696,13 +705,11 @@ def main2(project, zone, original_instance, new_instance, network, subnetwork,
 
     new_network_info = generate_new_network_info(compute, project, region,
                                                  network, subnetwork)
-
+    original_network_interface = instance_template['networkInterfaces'][0]
     new_network_interface = preserve_ip_addresses_handler(compute, project,
                                                           new_instance,
                                                           new_network_info,
-                                                          instance_template[
-                                                              'networkInterfaces'][
-                                                              0],
+                                                       original_network_interface,
                                                           region_name,
                                                           preserve_external_ip,
                                                           preserve_internal_ip,
