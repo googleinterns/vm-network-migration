@@ -40,6 +40,7 @@ Run the script by terminal, for example:
 
 """
 import time
+import warnings
 
 import google.auth
 from googleapiclient import discovery
@@ -445,8 +446,10 @@ def roll_back_original_instance(compute, project, zone, instance,
         Raises:
             googleapiclient.errors.HttpError: invalid request
     """
-    print('VM network migration is failed. '
-          'Rolling back to the original VM')
+    warnings.warn(
+        'VM network migration is failed. Rolling back to the original VM.',
+        Warning)
+
     if not instance_deleted:
         for disk_info in all_disks_info:
             print('attach_disk_operation is running')
@@ -460,15 +463,13 @@ def roll_back_original_instance(compute, project, zone, instance,
                                                   instance)
         wait_for_zone_operation(compute, project, zone,
                                 start_instance_operation['name'])
-        print('The migration process is failed. The original VM is running.')
-
     else:
         recreate_original_instance_operation = create_instance(compute, project,
                                                                zone,
                                                                original_instance_template)
         wait_for_zone_operation(compute, project, zone,
                                 recreate_original_instance_operation['name'])
-        print('The migration process is failed. The original VM is running.')
+    print('The migration process is failed. The original VM is running.')
 
 
 def preserve_ip_addresses_handler(compute, project, new_instance_name,
@@ -504,10 +505,11 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                 if 'already' in error_reason:
                     print(error_reason)
                 else:
-                    print(
-                        'Failed to preserve the external IP address as a static IP:',
-                        e._get_reason())
-                    print('A new external IP address will be assigned.')
+                    warnings.warn(
+                        'Failed to preserve the external IP address as a static IP.',
+                        Warning)
+                    print(e._get_reason())
+                    print('A random external IP address will be assigned.')
             else:
                 print(
                     'The external IP address is preserved as a static IP address.')
