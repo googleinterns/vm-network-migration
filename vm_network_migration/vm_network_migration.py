@@ -438,6 +438,23 @@ def preserve_external_ip_address(compute, project, region, address_body):
                                       body=address_body).execute()
 
 
+def release_static_ip_address(compute, project, region, address_name):
+    """ Release a static external or internal IP address.
+
+     Args:
+         compute: google API compute engine service
+         project: project ID
+         region: project region
+         address_name: name of the address resource to delete
+     Returns: a deserialized object of the response
+
+     Raises:
+         googleapiclient.errors.HttpError: invalid request
+     """
+    return compute.addresses().delete(project=project, region=region,
+                                      address=address_name).execute()
+
+
 def roll_back_original_instance(compute, project, zone, instance,
                                 all_disks_info=[]):
     """ Roll back to the original VM. Reattach the disks to the
@@ -592,7 +609,9 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                 if 'already' in error_reason:
                     print(error_reason)
                 else:
-                    print('Failed to preserve the external IP address as a static IP:', e._get_reason())
+                    print(
+                        'Failed to preserve the external IP address as a static IP:',
+                        e._get_reason())
                     print('A new external IP address will be assigned.')
             else:
                 print(
@@ -679,6 +698,7 @@ def main2(project, zone, original_instance, new_instance, network, subnetwork,
             MissingSubnetworkError: if new_instance == orignal_instance
             googleapiclient.errors.HttpError: invalid request
     """
+
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
 
@@ -709,7 +729,7 @@ def main2(project, zone, original_instance, new_instance, network, subnetwork,
     new_network_interface = preserve_ip_addresses_handler(compute, project,
                                                           new_instance,
                                                           new_network_info,
-                                                       original_network_interface,
+                                                          original_network_interface,
                                                           region_name,
                                                           preserve_external_ip,
                                                           preserve_internal_ip,
@@ -723,7 +743,8 @@ def main2(project, zone, original_instance, new_instance, network, subnetwork,
     print('stop_instance_operation is running')
     stop_instance_operation = stop_instance(compute, project, zone,
                                             original_instance)
-    wait_for_zone_operation(compute, project, zone, stop_instance_operation['name'])
+    wait_for_zone_operation(compute, project, zone,
+                            stop_instance_operation['name'])
 
     all_disks_info = get_disks_info_from_instance_template(
         instance_template)

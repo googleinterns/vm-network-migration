@@ -422,6 +422,34 @@ class BasicGoogleAPICalls(unittest.TestCase):
             preserve_external_ip_address(compute, self.project, self.region,
                                          self.external_ip_address_body)
 
+
+    def test_release_static_ip_address_success(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.addresses.delete": (
+                    self.successResponse, '{"foo": "bar"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        release_static_ip_address_operation = release_static_ip_address(compute, self.project, self.region, self.external_ip_address_body)
+        self.assertEqual(
+            release_static_ip_address_operation,
+            {
+                "foo": "bar"}
+        )
+
+    def test_release_static_ip_address_failure(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.addresses.delete": (
+                    self.errorResponse, b"{Invalid resource}")})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+
+        with self.assertRaises(HttpError):
+            release_static_ip_address(compute, self.project, self.region,
+                                         self.external_ip_address_body)
+
+
 class CheckNetworkAutoMode(unittest.TestCase):
     project = "mock_project"
     http = HttpMock(datafile("compute_rest.json"), {
