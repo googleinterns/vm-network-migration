@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-
+Test googleapi http calls
 """
 
 import httplib2
 import timeout_decorator
 import unittest2 as unittest
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from vm_network_migration.vm_network_migration import *
