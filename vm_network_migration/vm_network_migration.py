@@ -342,7 +342,7 @@ def wait_for_region_operation(compute, project, region, operation):
             print("The current operation is done.")
             if 'error' in result:
                 print('Region operations error', result['error'])
-                # raise RegionOperationsError(result['error'])
+                raise RegionOperationsError(result['error'])
             return result
         time.sleep(1)
 
@@ -532,7 +532,7 @@ def generate_timestamp_string():
 
 
 def main(project, zone, original_instance, new_instance, network, subnetwork,
-         preserve_external_ip):
+         preserve_external_ip=False):
     """ Execute the migration process.
 
         Args:

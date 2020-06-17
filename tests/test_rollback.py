@@ -55,7 +55,7 @@ def read_json_file(filename):
 
 @patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 3
 @patch(
-    "vm_network_migration.vm_network_migration.wait_for_operation")  # index: 2
+    "vm_network_migration.vm_network_migration.wait_for_zone_operation")  # index: 2
 @patch("vm_network_migration.vm_network_migration.start_instance")  # index: 1
 @patch("google.auth.default")  # index 0
 class RollBackOriginalInstance(unittest.TestCase):
@@ -111,7 +111,7 @@ class RollBackOriginalInstance(unittest.TestCase):
             roll_back_original_instance(self.compute, self.project, self.zone,
                                         self.instance, disk)
 
-    def test_wait_for_operation_failed(self, *mocks):
+    def test_wait_for_zone_operation_failed(self, *mocks):
         mocks[2].side_effect = ZoneOperationsError
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         with self.assertRaises(ZoneOperationsError):

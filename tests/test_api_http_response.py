@@ -370,6 +370,32 @@ class BasicGoogleAPICalls(unittest.TestCase):
         with self.assertRaises(HttpError):
             wait_for_zone_operation(compute, self.project, self.zone, {})
 
+    def test_wait_for_region_operation_success(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.regionOperations.get": (
+                    self.successResponse, '{"status": "DONE"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        wait_response = wait_for_region_operation(compute, self.project, self.region, {})
+
+        self.assertEqual(
+            wait_response,
+            {
+                "status": "DONE"}
+        )
+
+    def test_wait_for_region_operation_failure(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.regionOperations.get": (
+                    self.errorResponse, b'Invalid Resource')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+
+        with self.assertRaises(HttpError):
+            wait_for_region_operation(compute, self.project, self.region, {})
+
     def test_preserve_external_ip_success(self):
         request_builder = RequestMockBuilder(
             {
@@ -460,6 +486,7 @@ class CheckNetworkAutoMode(unittest.TestCase):
 class WaitForOperation(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
+    region = "mock_us_central1"
     http = HttpMock(datafile("compute_rest.json"), {
         "status": "200"})
     errorResponse = httplib2.Response({
@@ -471,7 +498,7 @@ class WaitForOperation(unittest.TestCase):
     })
 
     @timeout_decorator.timeout(3, timeout_exception=StopIteration)
-    def test_basic_waiting(self):
+    def test_basic_zone_waiting(self):
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
@@ -484,7 +511,7 @@ class WaitForOperation(unittest.TestCase):
             wait_for_zone_operation(compute, self.project,
                                self.zone, {})
 
-    def test_error_in_response(self):
+    def test_error_in_zone_waiting(self):
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
@@ -497,6 +524,32 @@ class WaitForOperation(unittest.TestCase):
             wait_for_zone_operation(compute, self.project,
                                self.zone, {})
 
+    @timeout_decorator.timeout(3, timeout_exception=StopIteration)
+    def test_basic_region_waiting(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.regionOperations.get": (
+                    self.successResponse,
+                    '{"status":"RUNNING"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+
+        with self.assertRaises(StopIteration):
+            wait_for_region_operation(compute, self.project,
+                               self.region, {})
+
+    def test_error_in_region_waiting(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.regionOperations.get": (
+                    self.successResponse,
+                    '{"status":"DONE", "error":"something wrong"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+
+        with self.assertRaises(RegionOperationsError):
+            wait_for_region_operation(compute, self.project,
+                               self.region, {})
 
 class ModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
     new_instance = "mock_new_instance"
