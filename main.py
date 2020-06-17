@@ -60,18 +60,10 @@ if __name__ == '__main__':
         '--preserve_external_ip',
         default=False,
         help='Preserve the external IP address')
-    parser.add_argument(
-        '--preserve_internal_ip',
-        default=False,
-        help='Preserve the internal IP address')
-    parser.add_argument(
-        '--preserve_alias_ip_ranges',
-        default=False,
-        help='Preserve the alias IP ranges')
+
     args = parser.parse_args()
     # main(args.project_id, args.zone, args.original_instance_name,
     #      args.new_instance_name, args.network, args.subnetwork)
-    main2(args.project_id, args.zone, args.original_instance_name,
+    main(args.project_id, args.zone, args.original_instance_name,
           args.new_instance_name, args.network, args.subnetwork,
-          args.preserve_external_ip, args.preserve_internal_ip,
-          args.preserve_alias_ip_ranges)
+          args.preserve_external_ip)

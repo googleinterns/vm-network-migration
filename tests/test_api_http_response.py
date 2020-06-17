@@ -344,14 +344,14 @@ class BasicGoogleAPICalls(unittest.TestCase):
         with self.assertRaises(HttpError):
             check_network_auto_mode(compute, self.project, self.zone)
 
-    def test_wait_for_operation_success(self):
+    def test_wait_for_zone_operation_success(self):
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
                     self.successResponse, '{"status": "DONE"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        wait_response = wait_for_operation(compute, self.project, self.zone, {})
+        wait_response = wait_for_zone_operation(compute, self.project, self.zone, {})
 
         self.assertEqual(
             wait_response,
@@ -359,7 +359,7 @@ class BasicGoogleAPICalls(unittest.TestCase):
                 "status": "DONE"}
         )
 
-    def test_wait_for_operation_failure(self):
+    def test_wait_for_zone_operation_failure(self):
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
@@ -368,33 +368,7 @@ class BasicGoogleAPICalls(unittest.TestCase):
                         requestBuilder=request_builder)
 
         with self.assertRaises(HttpError):
-            wait_for_operation(compute, self.project, self.zone, {})
-
-    def test_preserve_internal_ip_success(self):
-        request_builder = RequestMockBuilder(
-            {
-                "compute.addresses.insert": (
-                    self.successResponse, '{"foo": "bar"}')})
-        compute = build("compute", "v1", self.http,
-                        requestBuilder=request_builder)
-        preserve_internal_ip_address_operation = preserve_internal_ip_address(compute, self.project, self.region, self.internal_ip_address_body)
-        self.assertEqual(
-            preserve_internal_ip_address_operation,
-            {
-                "foo": "bar"}
-        )
-
-    def test_preserve_internal_ip_failure(self):
-        request_builder = RequestMockBuilder(
-            {
-                "compute.addresses.insert": (
-                    self.errorResponse, b"{Invalid resource}")})
-        compute = build("compute", "v1", self.http,
-                        requestBuilder=request_builder)
-
-        with self.assertRaises(HttpError):
-            preserve_internal_ip_address(compute, self.project, self.region,
-                                         self.internal_ip_address_body)
+            wait_for_zone_operation(compute, self.project, self.zone, {})
 
     def test_preserve_external_ip_success(self):
         request_builder = RequestMockBuilder(
@@ -422,32 +396,6 @@ class BasicGoogleAPICalls(unittest.TestCase):
             preserve_external_ip_address(compute, self.project, self.region,
                                          self.external_ip_address_body)
 
-
-    def test_release_static_ip_address_success(self):
-        request_builder = RequestMockBuilder(
-            {
-                "compute.addresses.delete": (
-                    self.successResponse, '{"foo": "bar"}')})
-        compute = build("compute", "v1", self.http,
-                        requestBuilder=request_builder)
-        release_static_ip_address_operation = release_static_ip_address(compute, self.project, self.region, self.external_ip_address_body)
-        self.assertEqual(
-            release_static_ip_address_operation,
-            {
-                "foo": "bar"}
-        )
-
-    def test_release_static_ip_address_failure(self):
-        request_builder = RequestMockBuilder(
-            {
-                "compute.addresses.delete": (
-                    self.errorResponse, b"{Invalid resource}")})
-        compute = build("compute", "v1", self.http,
-                        requestBuilder=request_builder)
-
-        with self.assertRaises(HttpError):
-            release_static_ip_address(compute, self.project, self.region,
-                                         self.external_ip_address_body)
 
 
 class CheckNetworkAutoMode(unittest.TestCase):
@@ -533,7 +481,7 @@ class WaitForOperation(unittest.TestCase):
                         requestBuilder=request_builder)
 
         with self.assertRaises(StopIteration):
-            wait_for_operation(compute, self.project,
+            wait_for_zone_operation(compute, self.project,
                                self.zone, {})
 
     def test_error_in_response(self):
@@ -546,7 +494,7 @@ class WaitForOperation(unittest.TestCase):
                         requestBuilder=request_builder)
 
         with self.assertRaises(ZoneOperationsError):
-            wait_for_operation(compute, self.project,
+            wait_for_zone_operation(compute, self.project,
                                self.zone, {})
 
 

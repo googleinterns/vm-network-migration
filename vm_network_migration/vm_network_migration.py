@@ -389,32 +389,6 @@ def check_network_auto_mode(compute, project, network) -> bool:
     return auto_mode_status
 
 
-def preserve_internal_ip_address(compute, project, region, address_body):
-    """ Preserve the internal IP address. If the IP address is already
-    a static one, the function will return HTTP response
-    successfully without overwriting the existing IP.
-
-    Args:
-        compute: google API compute engine service
-        project: project ID
-        region: project region
-        address_body: internal IP address information, such as
-            {
-              "name": "example-address-1",
-              "addressType": "INTERNAL",
-              "subnetwork": "regions/us-central1/subnetworks/my-custom-subnet",
-              "address": "10.128.0.12"
-            }
-
-    Returns: a deserialized object of the response
-
-    Raises:
-        googleapiclient.errors.HttpError: invalid request
-    """
-    return compute.addresses().insert(project=project, region=region,
-                                      body=address_body).execute()
-
-
 def preserve_external_ip_address(compute, project, region, address_body):
     """ Preserve the external IP address.
 
@@ -456,7 +430,8 @@ def release_static_ip_address(compute, project, region, address_name):
 
 
 def roll_back_original_instance(compute, project, zone, instance,
-                                all_disks_info=[]):
+                                original_instance_template,
+                                all_disks_info=[], instance_deleted=False):
     """ Roll back to the original VM. Reattach the disks to the
     original VM and restart it.
 
@@ -472,117 +447,37 @@ def roll_back_original_instance(compute, project, zone, instance,
     """
     print('VM network migration is failed. '
           'Rolling back to the original VM')
-    for disk_info in all_disks_info:
-        print('attach_disk_operation is running')
-        attach_disk_operation = attach_disk(compute, project, zone,
-                                            instance, disk_info)
+    if not instance_deleted:
+        for disk_info in all_disks_info:
+            print('attach_disk_operation is running')
+            attach_disk_operation = attach_disk(compute, project, zone,
+                                                instance, disk_info)
+            wait_for_zone_operation(compute, project, zone,
+                                    attach_disk_operation['name'])
+        print('Restarting the original VM')
+        print('start_instance_operation is running')
+        start_instance_operation = start_instance(compute, project, zone,
+                                                  instance)
         wait_for_zone_operation(compute, project, zone,
-                                attach_disk_operation['name'])
-    print('Restarting the original VM')
-    print('start_instance_operation is running')
-    start_instance_operation = start_instance(compute, project, zone, instance)
-    wait_for_zone_operation(compute, project, zone,
-                            start_instance_operation['name'])
-    print('The migration process is failed. The original VM is running.')
+                                start_instance_operation['name'])
+        print('The migration process is failed. The original VM is running.')
 
-
-# def main(project, zone, original_instance, new_instance, network, subnetwork):
-#     """ Execute the migration process.
-#
-#         Args:
-#             project: project ID
-#             zone: zone of the VM
-#             original_instance: name of the original VM
-#
-#         Returns:
-#             true or false
-#
-#         Raises:
-#             UnchangedInstanceNameError: if the network mode is not auto and
-#              the subnetwork is not specified
-#             MissingSubnetworkError: if new_instance == orignal_instance
-#             googleapiclient.errors.HttpError: invalid request
-#     """
-#     credentials, default_project = google.auth.default()
-#     compute = discovery.build('compute', 'v1', credentials=credentials)
-#
-#     if new_instance == original_instance:
-#         raise UnchangedInstanceNameError(
-#             'The new VM should not have the same name as the original VM')
-#
-#     # If the network is auto, then the subnetwork name is optional.
-#     # Otherwise it should be specified
-#     automode_status = check_network_auto_mode(compute, project, network)
-#     if subnetwork is None:
-#         if not automode_status:
-#             raise MissingSubnetworkError('No specified subnetwork')
-#         else:
-#             # the network is in auto mode, the default subnetwork name is the
-#             # same as the network name
-#             subnetwork = network
-#
-#     print('Stopping the VM instance')
-#     print('stop_instance_operation is running')
-#     stop_instance_operation = stop_instance(compute, project, zone,
-#                                             original_instance)
-#     wait_for_operation(compute, project, zone, stop_instance_operation['name'])
-#     all_disks_info = []
-#     try:
-#         instance_template = retrieve_instance_template(compute, project, zone,
-#                                                        original_instance)
-#
-#         region = get_zone(compute, project, zone)['region']
-#
-#         new_network_info = generate_new_network_info(compute, project, region,
-#                                                      network, subnetwork)
-#         print('Modifying instance template')
-#         new_instance_template = modify_instance_template_with_new_network(
-#             instance_template, new_instance, new_network_info)
-#
-#         all_disks_info = get_disks_info_from_instance_template(
-#             instance_template)
-#
-#         print('Detaching the disks')
-#         for disk_info in all_disks_info:
-#             disk = disk_info['deviceName']
-#             print('detach_disk_operation is running')
-#             detach_disk_operation = detach_disk(compute, project, zone,
-#                                                 original_instance, disk)
-#             wait_for_operation(compute, project, zone,
-#                                detach_disk_operation['name'])
-#
-#         print('Creating a new VM instance')
-#         print('create_instance_operation is running')
-#
-#         create_instance_operation = create_instance(compute, project, zone,
-#                                                     new_instance_template)
-#     except HttpError as e:
-#         print('An error occurs: ', e.content)
-#         roll_back_original_instance(compute, project, zone, original_instance,
-#                                     all_disks_info)
-#         return
-#     wait_for_operation(compute, project, zone,
-#                        create_instance_operation['name'])
-#
-#     print('Deleting the old VM instance')
-#     print('delete_instance_operation is running')
-#     delete_instance_operation = delete_instance(compute, project, zone,
-#                                                 original_instance)
-#     wait_for_operation(compute, project, zone,
-#                        delete_instance_operation['name'])
-#
-#     print('Success')
+    else:
+        recreate_original_instance_operation = create_instance(compute, project,
+                                                               zone,
+                                                               original_instance_template)
+        wait_for_zone_operation(compute, project, zone,
+                                recreate_original_instance_operation['name'])
+        print('The migration process is failed. The original VM is running.')
 
 
 def preserve_ip_addresses_handler(compute, project, new_instance_name,
                                   new_network_info, original_network_interface,
                                   region,
-                                  preserve_external_ip, preserve_internal_ip,
-                                  preserve_alias_ip_ranges) -> dict:
+                                  preserve_external_ip) -> dict:
     new_network_interface = original_network_interface
     new_network_interface['network'] = new_network_info['network']
     new_network_interface['subnetwork'] = new_network_info['subnetwork']
-    print('Debug Network interface:', new_network_interface)
     if preserve_external_ip:
         print('Preserving the external IP address')
         # There is no external ip assigned to the original instance
@@ -617,39 +512,9 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                 print(
                     'The external IP address is preserved as a static IP address.')
 
-
     elif 'accessConfigs' in new_network_interface:
         del new_network_interface['accessConfigs']
 
-    if preserve_internal_ip:
-        print('Preserving the internal IP address')
-        if 'networkIP' not in new_network_interface:
-            pass
-        else:
-            internal_ip_address = new_network_interface['networkIP']
-            internal_ip_address_body = generate_internal_ip_address_body(
-                internal_ip_address,
-                new_network_info['subnetwork'].split(project + '/')[1],
-                new_instance_name)
-            try:
-                preserve_internal_ip_operation = preserve_internal_ip_address(
-                    compute, project, region,
-                    internal_ip_address_body)
-                wait_for_region_operation(compute, project, region,
-                                          preserve_internal_ip_operation[
-                                              'name'])
-            except HttpError as e:
-                print('Failed to preserve the internal IP:', e._get_reason())
-                print('A new internal IP will be assigned.')
-                del new_network_interface['networkIP']
-
-    elif 'networkIP' in new_network_interface:
-        del new_network_interface['networkIP']
-
-    if preserve_alias_ip_ranges:
-        pass
-    elif 'aliasIpRanges' in new_network_interface:
-        del new_network_interface['aliasIpRanges']
     return new_network_interface
 
 
@@ -661,24 +526,13 @@ def generate_external_ip_address_body(external_ip_address, new_instance_name):
     return external_ip_address_body
 
 
-def generate_internal_ip_address_body(internal_ip_address, subnetwork_link,
-                                      new_instance_name):
-    internal_ip_address_body = {}
-    internal_ip_address_body[
-        'name'] = new_instance_name + '-' + generate_timestamp_string()
-    internal_ip_address_body['addressType'] = 'INTERNAL'
-    internal_ip_address_body['subnetwork'] = subnetwork_link
-    internal_ip_address_body['address'] = internal_ip_address
-    return internal_ip_address_body
-
-
 def generate_timestamp_string():
     import time
     return str(time.strftime("%s", time.gmtime()))
 
 
-def main2(project, zone, original_instance, new_instance, network, subnetwork,
-          preserve_external_ip, preserve_internal_ip, preserve_alias_ip_ranges):
+def main(project, zone, original_instance, new_instance, network, subnetwork,
+         preserve_external_ip):
     """ Execute the migration process.
 
         Args:
@@ -689,8 +543,6 @@ def main2(project, zone, original_instance, new_instance, network, subnetwork,
             network: name of the target network
             subnetwork: name of the target subnet
             preserve_external_ip: preserve the current external IP or not
-            preserve_internal_ip: presrve the current internal IP or not
-            preserve_alias_ip_ranges: preserve the alias IP ranges or not
 
         Raises:
             UnchangedInstanceNameError: if the network mode is not auto and
@@ -731,9 +583,7 @@ def main2(project, zone, original_instance, new_instance, network, subnetwork,
                                                           new_network_info,
                                                           original_network_interface,
                                                           region_name,
-                                                          preserve_external_ip,
-                                                          preserve_internal_ip,
-                                                          preserve_alias_ip_ranges)
+                                                          preserve_external_ip)
 
     print('Modifying instance template')
     new_instance_template = modify_instance_template_with_new_network(
@@ -748,28 +598,36 @@ def main2(project, zone, original_instance, new_instance, network, subnetwork,
 
     all_disks_info = get_disks_info_from_instance_template(
         instance_template)
+    try:
+        print('Detaching the disks')
+        for disk_info in all_disks_info:
+            disk = disk_info['deviceName']
+            print('detach_disk_operation is running')
+            detach_disk_operation = detach_disk(compute, project, zone,
+                                                original_instance, disk)
+            wait_for_zone_operation(compute, project, zone,
+                                    detach_disk_operation['name'])
 
-    print('Detaching the disks')
-    for disk_info in all_disks_info:
-        disk = disk_info['deviceName']
-        print('detach_disk_operation is running')
-        detach_disk_operation = detach_disk(compute, project, zone,
-                                            original_instance, disk)
+        print('Deleting the old VM instance')
+        print('delete_instance_operation is running')
+        delete_instance_operation = delete_instance(compute, project, zone,
+                                                    original_instance)
         wait_for_zone_operation(compute, project, zone,
-                                detach_disk_operation['name'])
-
-    print('Deleting the old VM instance')
-    print('delete_instance_operation is running')
-    delete_instance_operation = delete_instance(compute, project, zone,
-                                                original_instance)
-    wait_for_zone_operation(compute, project, zone,
-                            delete_instance_operation['name'])
-    print('Creating a new VM instance')
-    print('create_instance_operation is running')
-    create_instance_operation = create_instance(compute, project, zone,
-                                                new_instance_template)
-
-    wait_for_zone_operation(compute, project, zone,
-                            create_instance_operation['name'])
-
+                                delete_instance_operation['name'])
+    except:
+        roll_back_original_instance(compute, project, zone, original_instance,
+                                    instance_template,
+                                    all_disks_info, False)
+        return
+    try:
+        print('Creating a new VM instance')
+        print('create_instance_operation is running')
+        create_instance_operation = create_instance(compute, project, zone,
+                                                    new_instance_template)
+        wait_for_zone_operation(compute, project, zone,
+                                create_instance_operation['name'])
+    except:
+        roll_back_original_instance(compute, project, zone, original_instance,
+                                    instance_template, all_disks_info, True)
+        return
     print('Success')
