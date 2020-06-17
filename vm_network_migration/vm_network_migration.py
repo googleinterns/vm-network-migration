@@ -32,16 +32,18 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 vm_network_migration.py --project_id=dakeying-devconsole
+     python3 vm_network_migration.py --project_id=test-project
      --zone=us-central1-a --original_instance_name=instance-legacy
-     --new_instance_name=vm_network_migration-new --network=tests-network --subnetwork=tests-network
+     --new_instance_name=vm_network_migration-new --network=tests-network
+     --subnetwork=tests-network --preserve_internal_ip=False
+     --preserve_external_ip = False --preserve_alias_ip_ranges=False
 
 """
 import time
 
-import argparse
 import google.auth
 from googleapiclient import discovery
+from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 
 
@@ -314,6 +316,37 @@ def wait_for_operation(compute, project, zone, operation):
         time.sleep(1)
 
 
+def wait_for_region_operation(compute, project, region, operation):
+    """ Create the instance using instance template
+
+        Args:
+            compute: google API compute engine service
+            project: project ID
+            region: zone of the VM
+            operation: name of the Operations resource to return
+
+        Returns:
+            a deserialized object of the response
+
+        Raises:
+            ZoneOperationsError: if the operation has an error
+            googleapiclient.errors.HttpError: invalid request
+    """
+    print('Waiting ...')
+    while True:
+        result = compute.regionOperations().get(
+            project=project,
+            region=region,
+            operation=operation).execute()
+        if result['status'] == 'DONE':
+            print("The current operation is done.")
+            if 'error' in result:
+                print('Region operations error', result['error'])
+                # raise RegionOperationsError(result['error'])
+            return result
+        time.sleep(1)
+
+
 def get_zone(compute, project, zone) -> dict:
     """ Get zone information
 
@@ -355,6 +388,7 @@ def check_network_auto_mode(compute, project, network) -> bool:
     auto_mode_status = network_info['autoCreateSubnetworks']
     return auto_mode_status
 
+
 def preserve_internal_ip_address(compute, project, region, address_body):
     """ Preserve the internal IP address. If the IP address is already
     a static one, the function will return HTTP response
@@ -378,7 +412,8 @@ def preserve_internal_ip_address(compute, project, region, address_body):
         googleapiclient.errors.HttpError: invalid request
     """
     return compute.addresses().insert(project=project, region=region,
-                                         body=address_body).execute()
+                                      body=address_body).execute()
+
 
 def preserve_external_ip_address(compute, project, region, address_body):
     """ Preserve the external IP address.
@@ -479,6 +514,14 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
         instance_template = retrieve_instance_template(compute, project, zone,
                                                        original_instance)
 
+        region = get_zone(compute, project, zone)['region']
+
+        new_network_info = generate_new_network_info(compute, project, region,
+                                                     network, subnetwork)
+        print('Modifying instance template')
+        new_instance_template = modify_instance_template_with_new_network(
+            instance_template, new_instance, new_network_info)
+
         all_disks_info = get_disks_info_from_instance_template(
             instance_template)
 
@@ -491,22 +534,13 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
             wait_for_operation(compute, project, zone,
                                detach_disk_operation['name'])
 
-        region = get_zone(compute, project, zone)['region']
-
-        new_network_info = generate_new_network_info(compute, project, region,
-                                                     network, subnetwork)
-
-        print('Modifying instance template')
-        new_instance_template = modify_instance_template_with_new_network(
-            instance_template, new_instance, new_network_info)
-
         print('Creating a new VM instance')
         print('create_instance_operation is running')
 
         create_instance_operation = create_instance(compute, project, zone,
                                                     new_instance_template)
-    except Exception as e:
-        print('An error occurs: ', e)
+    except HttpError as e:
+        print('An error occurs: ', e.resp)
         roll_back_original_instance(compute, project, zone, original_instance,
                                     all_disks_info)
         return
@@ -523,24 +557,188 @@ def main(project, zone, original_instance, new_instance, network, subnetwork):
     print('Success')
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--project_id',
-                        help='The project ID of the original VM.')
-    parser.add_argument('--zone', help='The zone name of the original VM.')
-    parser.add_argument('--original_instance_name',
-                        help='The name of the original VM')
-    parser.add_argument('--new_instance_name',
-                        help='The name of the new VM. It should be'
-                             ' different from the original VM')
-    parser.add_argument('--network', help='The name of the new network')
-    parser.add_argument(
-        '--subnetwork',
-        default=None,
-        help='The name of the subnetwork. For auto mode networks,'
-             ' this field is optional')
-    args = parser.parse_args()
-    main(args.project_id, args.zone, args.original_instance_name,
-         args.new_instance_name, args.network, args.subnetwork)
+def preserve_ip_addresses_handler(compute, project, new_instance_name,
+                                  new_network_info, original_network_interface,
+                                  region,
+                                  preserve_external_ip, preserve_internal_ip,
+                                  preserve_alias_ip_ranges) -> dict:
+    new_network_interface = original_network_interface
+    new_network_interface['network'] = new_network_info['network']
+    new_network_interface['subnetwork'] = new_network_info['subnetwork']
+    print('Debug Network interface:', new_network_interface)
+    if preserve_external_ip:
+        print('Preserving the external IP address')
+        # There is no external ip assigned to the original instance
+        if 'accessConfigs' not in new_network_interface or 'natIP' not in \
+                new_network_interface['accessConfigs'][0]:
+            pass
+        else:
+            print('debugging')
+            external_ip_address = new_network_interface['accessConfigs'][0][
+                'natIP']
+            external_ip_address_body = generate_external_ip_address_body(
+                external_ip_address, new_instance_name)
+            try:
+                preserve_external_ip_operation = preserve_external_ip_address(
+                    compute, project, region,
+                    external_ip_address_body)
+                wait_for_region_operation(compute, project, region,
+                                          preserve_external_ip_operation[
+                                              'name'])
+            except HttpError as e:
+                print('Preserving external IP error:', e.resp)
+                print("The external IP address is static.")
+            else:
+                print(
+                    "The external IP address is preserved as a static IP address")
+    elif 'accessConfigs' in new_network_interface:
+        del new_network_interface['accessConfigs']
+
+    if preserve_internal_ip:
+        print('Preserving the internal IP address')
+        if 'networkIP' not in new_network_interface:
+            pass
+        else:
+            internal_ip_address = new_network_interface['networkIP']
+            internal_ip_address_body = generate_internal_ip_address_body(
+                internal_ip_address,
+                new_network_info['subnetwork'].split(project + '/')[1],
+                new_instance_name)
+            try:
+                preserve_internal_ip_operation = preserve_internal_ip_address(
+                    compute, project, region,
+                    internal_ip_address_body)
+                wait_for_region_operation(compute, project, region,
+                                          preserve_internal_ip_operation[
+                                              'name'])
+            except HttpError as e:
+                print('Preserving internal IP error:', e.resp)
+                del new_network_interface['networkIP']
+
+    elif 'networkIP' in new_network_interface:
+        del new_network_interface['networkIP']
+
+    if preserve_alias_ip_ranges:
+        pass
+    elif 'aliasIpRanges' in new_network_interface:
+        del new_network_interface['aliasIpRanges']
+    return new_network_interface
+
+
+def generate_external_ip_address_body(external_ip_address, new_instance_name):
+    external_ip_address_body = {}
+    external_ip_address_body[
+        'name'] = new_instance_name + '-' + generate_timestamp_string()
+    external_ip_address_body['address'] = external_ip_address
+    return external_ip_address_body
+
+
+def generate_internal_ip_address_body(internal_ip_address, subnetwork_link,
+                                      new_instance_name):
+    internal_ip_address_body = {}
+    internal_ip_address_body[
+        'name'] = new_instance_name + '-' + generate_timestamp_string()
+    internal_ip_address_body['addressType'] = 'INTERNAL'
+    internal_ip_address_body['subnetwork'] = subnetwork_link
+    internal_ip_address_body['address'] = internal_ip_address
+    return internal_ip_address_body
+
+
+def generate_timestamp_string():
+    import time
+    return str(time.strftime("%s", time.gmtime()))
+
+
+def main2(project, zone, original_instance, new_instance, network, subnetwork,
+          preserve_external_ip, preserve_internal_ip, preserve_alias_ip_ranges):
+    """ Execute the migration process.
+
+        Args:
+            project: project ID
+            zone: zone of the VM
+            original_instance: name of the original VM
+
+        Returns:
+            true or false
+
+        Raises:
+            UnchangedInstanceNameError: if the network mode is not auto and
+             the subnetwork is not specified
+            MissingSubnetworkError: if new_instance == orignal_instance
+            googleapiclient.errors.HttpError: invalid request
+    """
+    credentials, default_project = google.auth.default()
+    compute = discovery.build('compute', 'v1', credentials=credentials)
+
+    if new_instance == original_instance:
+        raise UnchangedInstanceNameError(
+            'The new VM should not have the same name as the original VM')
+
+    # If the network is auto, then the subnetwork name is optional.
+    # Otherwise it should be specified
+    automode_status = check_network_auto_mode(compute, project, network)
+    if subnetwork is None:
+        if not automode_status:
+            raise MissingSubnetworkError('No specified subnetwork')
+        else:
+            # the network is in auto mode, the default subnetwork name is the
+            # same as the network name
+            subnetwork = network
+
+    instance_template = retrieve_instance_template(compute, project, zone,
+                                                   original_instance)
+
+    region = get_zone(compute, project, zone)['region']
+    region_name = region.split('regions/')[1]
+
+    new_network_info = generate_new_network_info(compute, project, region,
+                                                 network, subnetwork)
+
+    new_network_interface = preserve_ip_addresses_handler(compute, project,
+                                                          new_instance,
+                                                          new_network_info,
+                                                          instance_template[
+                                                              'networkInterfaces'][
+                                                              0],
+                                                          region_name,
+                                                          preserve_external_ip,
+                                                          preserve_internal_ip,
+                                                          preserve_alias_ip_ranges)
+
+    print('Modifying instance template')
+    new_instance_template = modify_instance_template_with_new_network(
+        instance_template, new_instance, new_network_interface)
+
+    print('Stopping the VM instance')
+    print('stop_instance_operation is running')
+    stop_instance_operation = stop_instance(compute, project, zone,
+                                            original_instance)
+    wait_for_operation(compute, project, zone, stop_instance_operation['name'])
+
+    all_disks_info = get_disks_info_from_instance_template(
+        instance_template)
+
+    print('Detaching the disks')
+    for disk_info in all_disks_info:
+        disk = disk_info['deviceName']
+        print('detach_disk_operation is running')
+        detach_disk_operation = detach_disk(compute, project, zone,
+                                            original_instance, disk)
+        wait_for_operation(compute, project, zone,
+                           detach_disk_operation['name'])
+
+    print('Deleting the old VM instance')
+    print('delete_instance_operation is running')
+    delete_instance_operation = delete_instance(compute, project, zone,
+                                                original_instance)
+    wait_for_operation(compute, project, zone,
+                       delete_instance_operation['name'])
+    print('Creating a new VM instance')
+    print('create_instance_operation is running')
+    create_instance_operation = create_instance(compute, project, zone,
+                                                new_instance_template)
+
+    wait_for_operation(compute, project, zone,
+                       create_instance_operation['name'])
+
+    print('Success')
