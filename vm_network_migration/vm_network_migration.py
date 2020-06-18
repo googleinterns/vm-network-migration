@@ -39,6 +39,7 @@ Run the script by terminal, for example:
      --preserve_external_ip = False --preserve_alias_ip_ranges=False
 
 """
+import copy
 import time
 import warnings
 
@@ -442,6 +443,7 @@ def roll_back_original_instance(compute, project, zone, instance,
             zone: zone of the VM
             instance: name of the VM
             all_disks_info: a list of disks' info. Default value is [].
+            instance_deleted: whether the original VM has been deleted
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
@@ -449,6 +451,8 @@ def roll_back_original_instance(compute, project, zone, instance,
     warnings.warn(
         'VM network migration is failed. Rolling back to the original VM.',
         Warning)
+
+    print(original_instance_template)
 
     if not instance_deleted:
         for disk_info in all_disks_info:
@@ -476,17 +480,31 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                                   new_network_info, original_network_interface,
                                   region,
                                   preserve_external_ip) -> dict:
-    new_network_interface = original_network_interface
+    """Preserve the external IP address.
+
+    Args:
+        compute: google API compute engine service
+        project: project ID
+        new_instance_name: name of the new VM
+        new_network_info: selfLinks of current network and subnet
+        original_network_interface: network interface of the original VM
+        region: region of original VM
+        preserve_external_ip: preserve the external ip or not
+
+    Returns:
+        network interface of the new VM
+    """
+    new_network_interface = copy.deepcopy(original_network_interface)
     new_network_interface['network'] = new_network_info['network']
     new_network_interface['subnetwork'] = new_network_info['subnetwork']
     if preserve_external_ip:
         print('Preserving the external IP address')
-        # There is no external ip assigned to the original instance
+        # There is no external ip assigned to the original VM
+        # An ephemeral external ip will be assigned to the new VM
         if 'accessConfigs' not in new_network_interface or 'natIP' not in \
                 new_network_interface['accessConfigs'][0]:
             pass
         else:
-            print('debugging')
             external_ip_address = new_network_interface['accessConfigs'][0][
                 'natIP']
             external_ip_address_body = generate_external_ip_address_body(
@@ -509,18 +527,32 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                         'Failed to preserve the external IP address as a static IP.',
                         Warning)
                     print(e._get_reason())
-                    print('A random external IP address will be assigned.')
+                    print('An ephemeral external IP address will be assigned.')
             else:
                 print(
-                    'The external IP address is preserved as a static IP address.')
+                    'The external IP address is reserved as a static IP address.')
 
     elif 'accessConfigs' in new_network_interface:
         del new_network_interface['accessConfigs']
+    # Use an ephemeral internal IP for the new VM
+    del new_network_interface['networkIP']
 
     return new_network_interface
 
 
 def generate_external_ip_address_body(external_ip_address, new_instance_name):
+    """Generate external IP address.
+
+    Args:
+        external_ip_address: IPV4 format address
+        new_instance_name: name of the new VM
+
+    Returns:
+          {
+          name: "ADDRESS_NAME",
+          address: "IP_ADDRESS"
+        }
+    """
     external_ip_address_body = {}
     external_ip_address_body[
         'name'] = new_instance_name + '-' + generate_timestamp_string()
@@ -528,8 +560,12 @@ def generate_external_ip_address_body(external_ip_address, new_instance_name):
     return external_ip_address_body
 
 
-def generate_timestamp_string():
-    import time
+def generate_timestamp_string() -> str:
+    """Generate the current timestamp.
+
+    Returns: current timestamp string
+
+    """
     return str(time.strftime("%s", time.gmtime()))
 
 
@@ -560,8 +596,9 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
             'You choose to preserve the external IP. If the original instance '
             'has an ephemeral IP, it will be reserved as a static IP after the '
             'execution,',
-            warnings)
-        continue_execution = input('Do you still want to preserve the external IP? y/n')
+            Warning)
+        continue_execution = input(
+            'Do you still want to preserve the external IP? y/n')
         if continue_execution == 'n':
             preserve_external_ip = False
 
@@ -582,7 +619,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
 
     instance_template = retrieve_instance_template(compute, project, zone,
                                                    original_instance)
-
+    original_instance_template = copy.deepcopy(instance_template)
     region = get_zone(compute, project, zone)['region']
     region_name = region.split('regions/')[1]
 
@@ -627,7 +664,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
                                 delete_instance_operation['name'])
     except:
         roll_back_original_instance(compute, project, zone, original_instance,
-                                    instance_template,
+                                    original_instance_template,
                                     all_disks_info, False)
         return
     try:
@@ -639,6 +676,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
                                 create_instance_operation['name'])
     except:
         roll_back_original_instance(compute, project, zone, original_instance,
-                                    instance_template, all_disks_info, True)
+                                    original_instance_template, all_disks_info,
+                                    True)
         return
     print('Success')

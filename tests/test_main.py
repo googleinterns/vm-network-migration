@@ -80,7 +80,7 @@ class MainFlowLogic(unittest.TestCase):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         mocks[3].return_value = original_instance_template
         mocks[5].return_value = {
-            "region": "https://www.googleapis.com/compute/v1/projects/mock_project/mock-us-central-region"}
+            "region": "https://www.googleapis.com/compute/v1/projects/mock_project/regions/mock-us-central-region"}
         mocks[6].return_value = read_json_file("sample_auto_mode_network.json")
 
         original_instance = "mock_original_instance"
