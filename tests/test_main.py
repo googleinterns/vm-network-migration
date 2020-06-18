@@ -199,9 +199,9 @@ class MainFlowLogic(unittest.TestCase):
         # rollback will be called
         mocks[10].assert_called()
         # check all the disks are reattached in rollback
-        self.assertEqual(mocks[10].call_args[0][4],
+        self.assertEqual(mocks[10].call_args[0][5],
                          sample_instance_template["disks"])
-        # checl the original instance restarts in rollback
+        # check the original instance restarts in rollback
         self.assertEqual(mocks[10].call_args[0][3], original_instance)
 
     def test_auto_network_with_no_subnetwork_specified(self, *mocks):
@@ -255,8 +255,6 @@ class MainFlowLogic(unittest.TestCase):
 
         main(self.project, self.zone, original_instance, new_instance,
              target_network, target_subnetwork)
-        # check the rollback is called
-        mocks[10].assert_called()
         # check the original instance is not terminated
         mocks[0].assert_called()
 
@@ -412,13 +410,15 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
             "sample_instance_template.json")
         mocks[6].return_value = read_json_file(
             "sample_non_auto_mode_network.json")
-        mocks[8].side_effect = HttpError(resp=self.errorResponse, content=b'')
+        mocks[7].side_effect = HttpError(resp=self.errorResponse, content=b'')
+        mocks[9].side_effect = HttpError(resp=self.errorResponse, content=b'')
 
         original_instance = "original-instance"
         new_instance = "new-instance"
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        with self.assertRaises(HttpError):
-            main(self.project, self.zone, original_instance, new_instance,
-                 target_network, target_subnetwork)
+        main(self.project, self.zone, original_instance, new_instance,
+             target_network, target_subnetwork)
+        # check rollback is called
+        mocks[10].assert_called()

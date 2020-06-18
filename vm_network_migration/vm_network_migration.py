@@ -619,6 +619,14 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
 
     instance_template = retrieve_instance_template(compute, project, zone,
                                                    original_instance)
+    try:
+        all_disks_info = get_disks_info_from_instance_template(
+            instance_template)
+    except AttributeNotExistError as e:
+        warnings.warn(e.args[0], Warning)
+        print('Migration is terminated.')
+        return
+
     original_instance_template = copy.deepcopy(instance_template)
     region = get_zone(compute, project, zone)['region']
     region_name = region.split('regions/')[1]
@@ -644,8 +652,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
     wait_for_zone_operation(compute, project, zone,
                             stop_instance_operation['name'])
 
-    all_disks_info = get_disks_info_from_instance_template(
-        instance_template)
+
     try:
         print('Detaching the disks')
         for disk_info in all_disks_info:
