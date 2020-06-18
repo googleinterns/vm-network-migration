@@ -53,7 +53,7 @@ def read_json_file(filename):
 
 
 @patch(
-    "vm_network_migration.vm_network_migration.roll_back_original_instance")  # index: 10
+    "vm_network_migration.vm_network_migration.rollback_failure_protection")  # index: 10
 @patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 9
 @patch("vm_network_migration.vm_network_migration.delete_instance")  # index: 8
 @patch("vm_network_migration.vm_network_migration.create_instance")  # index: 7
@@ -259,7 +259,7 @@ class MainFlowLogic(unittest.TestCase):
 @patch(
     "vm_network_migration.vm_network_migration.preserve_ip_addresses_handler")  # index: 11
 @patch(
-    "vm_network_migration.vm_network_migration.roll_back_original_instance")  # index: 10
+    "vm_network_migration.vm_network_migration.rollback_failure_protection")  # index: 10
 @patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 9
 @patch("vm_network_migration.vm_network_migration.delete_instance")  # index: 8
 @patch("vm_network_migration.vm_network_migration.create_instance")  # index: 7

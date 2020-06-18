@@ -75,7 +75,7 @@ class RollBackOriginalInstance(unittest.TestCase):
     def test_single_disk_instance_rollback(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         single_disk = ['{"deviceName": "mock_disk_0", "boot":true}']
-        roll_back_original_instance(self.compute, self.project, self.zone,
+        rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
                                     self.original_instance_template,
                                     single_disk, False)
@@ -86,7 +86,7 @@ class RollBackOriginalInstance(unittest.TestCase):
 
     def test_no_disk_info(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
-        roll_back_original_instance(self.compute, self.project, self.zone,
+        rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
                                     self.original_instance_template)
         # check the instance restarts
@@ -96,7 +96,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         multi_disk = ['{"deviceName": "mock_disk_0", "boot":true}',
                       '{"deviceName": "mock_disk_1", "boot":false}']
-        roll_back_original_instance(self.compute, self.project, self.zone,
+        rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
                                     self.original_instance_template, multi_disk)
         self.assertTrue(mocks[3].call_count, 2)
@@ -104,33 +104,37 @@ class RollBackOriginalInstance(unittest.TestCase):
         self.assertEqual(mocks[1].call_args[0][3], self.instance)
 
     def test_start_instance_failed(self, *mocks):
+        # An error happens during the rollback procedure
         mocks[1].side_effect = HttpError(resp=self.errorResponse, content=b'')
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
-        with self.assertRaises(HttpError):
-            roll_back_original_instance(self.compute, self.project, self.zone,
-                                        self.instance,
-                                        self.original_instance_template, disk)
-
-    def test_attach_disk_failed(self, *mocks):
-        mocks[3].side_effect = HttpError(resp=self.errorResponse, content=b'')
-        disk = ['{"deviceName": "mock_disk_0", "boot":true}']
-        with self.assertRaises(HttpError):
-            roll_back_original_instance(self.compute, self.project, self.zone,
+        self.assertFalse(
+            rollback_failure_protection(self.compute, self.project, self.zone,
                                         self.instance,
                                         self.original_instance_template, disk,
-                                        False)
+                                        False))
+
+    def test_attach_disk_failed(self, *mocks):
+        # An error happens during the rollback procedure
+        mocks[3].side_effect = HttpError(resp=self.errorResponse, content=b'')
+        disk = ['{"deviceName": "mock_disk_0", "boot":true}']
+        self.assertFalse(rollback_failure_protection(self.compute, self.project, self.zone,
+                                    self.instance,
+                                    self.original_instance_template, disk,
+                                    False))
+
 
     def test_wait_for_zone_operation_failed(self, *mocks):
+        # An error happens during the rollback procedure
         mocks[2].side_effect = ZoneOperationsError
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
-        with self.assertRaises(ZoneOperationsError):
-            roll_back_original_instance(self.compute, self.project, self.zone,
-                                        self.instance,
-                                        self.original_instance_template, disk)
+        self.assertFalse(rollback_failure_protection(self.compute, self.project, self.zone,
+                                    self.instance,
+                                    self.original_instance_template, disk,
+                                    False))
 
     def test_rollback_after_instance_deleted(self, *mocks):
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
-        roll_back_original_instance(self.compute, self.project, self.zone,
+        rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
                                     self.original_instance_template, disk, True)
         # recreate the original instance

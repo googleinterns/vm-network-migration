@@ -431,9 +431,43 @@ def release_static_ip_address(compute, project, region, address_name):
                                       address=address_name).execute()
 
 
-def roll_back_original_instance(compute, project, zone, instance,
-                                original_instance_template,
-                                all_disks_info=[], instance_deleted=False):
+def rollback_failure_protection(compute, project, zone, instance,
+                                original_instance_template, all_disks_info=[],
+                                instance_deleted=False)->bool:
+    """Try to rollback to the original VM. If the rollback procedure also fails,
+    then print out the original VM's instance template in the console
+
+        Args:
+            compute: google API compute engine service
+            project: project ID
+            zone: zone of the VM
+            instance: name of the VM
+            all_disks_info: a list of disks' info. Default value is [].
+            instance_deleted: whether the original VM has been deleted
+
+        Returns: True/False for successful/failed rollback
+
+    """
+    try:
+        rollback_original_instance(compute, project, zone, instance,
+                                   original_instance_template,
+                                   all_disks_info, instance_deleted)
+    except Exception as e:
+        warnings.warn("Rollback failed.", Warning)
+        print(e)
+        print(
+            "The original VM may have been deleted. "
+            "The instance template of the original VM is: ")
+        print(original_instance_template)
+        return False
+
+    print('Rollback finished. The original VM is running.')
+    return True
+
+
+def rollback_original_instance(compute, project, zone, instance,
+                               original_instance_template,
+                               all_disks_info, instance_deleted):
     """ Roll back to the original VM. Reattach the disks to the
     original VM and restart it.
 
@@ -473,7 +507,7 @@ def roll_back_original_instance(compute, project, zone, instance,
                                                                original_instance_template)
         wait_for_zone_operation(compute, project, zone,
                                 recreate_original_instance_operation['name'])
-    print('The migration process is failed. The original VM is running.')
+
 
 
 def preserve_ip_addresses_handler(compute, project, new_instance_name,
@@ -661,7 +695,8 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         wait_for_zone_operation(compute, project, zone,
                                 stop_instance_operation['name'])
     except:
-        roll_back_original_instance(compute, project, zone, original_instance, original_instance_template, [], False)
+        rollback_failure_protection(compute, project, zone, original_instance,
+                                    original_instance_template, [], False)
         return
 
 
@@ -682,10 +717,12 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         wait_for_zone_operation(compute, project, zone,
                                 delete_instance_operation['name'])
     except:
-        roll_back_original_instance(compute, project, zone, original_instance,
+
+        rollback_failure_protection(compute, project, zone, original_instance,
                                     original_instance_template,
                                     all_disks_info, False)
         return
+
     try:
         print('Creating a new VM')
         print('create_instance_operation is running')
@@ -694,7 +731,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         wait_for_zone_operation(compute, project, zone,
                                 create_instance_operation['name'])
     except:
-        roll_back_original_instance(compute, project, zone, original_instance,
+        rollback_failure_protection(compute, project, zone, original_instance,
                                     original_instance_template, all_disks_info,
                                     True)
         return
