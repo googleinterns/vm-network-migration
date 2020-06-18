@@ -92,7 +92,7 @@ class MainFlowLogic(unittest.TestCase):
         self.assertIsNone(
             main(self.project, self.zone, original_instance, new_instance,
                  target_network, target_subnetwork))
-        # Check the new instance template is used to create a new VM
+        # Check the new instance template is used to create a new instance
         # and it should have the same key-value pairs as the original one's
         # except for the network interface and the name
         new_instance_template = mocks[7].call_args[0][3]
@@ -237,7 +237,7 @@ class MainFlowLogic(unittest.TestCase):
     def test_original_instance_with_no_disks(self, *mocks):
         """The original instance doesn't have a disk.
         In this case, rollback procedure will not be called,
-        since it is not allowed to start a VM without a boot disk """
+        since it is not allowed to start a instance without a boot disk """
 
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         mocks[3].return_value = read_json_file(
@@ -368,10 +368,9 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-
         main(self.project, self.zone, original_instance, new_instance,
              target_network, target_subnetwork)
-        #the original instance is no terminated
+        # the original instance is no terminated
         mocks[1].assert_not_called()
 
     def test_create_instance_failed(self, *mocks):
@@ -421,7 +420,8 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
                          original_instance_template["disks"])
         self.assertEqual(mocks[10].call_args[0][6], False)
 
-    def test_preserve_ip_address_handler_failed_with_non_http_error(self, *mocks):
+    def test_preserve_ip_address_handler_failed_with_non_http_error(self,
+                                                                    *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         original_instance_template = read_json_file(
             "sample_instance_template.json")
@@ -437,6 +437,5 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
 
         main(self.project, self.zone, original_instance, new_instance,
              target_network, target_subnetwork)
-        # the original VM is not terminated
+        # the original instance is not terminated
         mocks[1].assert_not_called()
-

@@ -52,6 +52,7 @@ def read_json_file(filename):
         f.close()
     return res
 
+
 @patch("vm_network_migration.vm_network_migration.create_instance")  # index: 4
 @patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 3
 @patch(
@@ -70,21 +71,24 @@ class RollBackOriginalInstance(unittest.TestCase):
     instance = "mock_original_instance"
     original_instance_template = read_json_file(
         "sample_instance_template.json")
+
     def test_single_disk_instance_rollback(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         single_disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         roll_back_original_instance(self.compute, self.project, self.zone,
-                                    self.instance, self.original_instance_template, single_disk, False)
+                                    self.instance,
+                                    self.original_instance_template,
+                                    single_disk, False)
         # check the disk is reattached
         self.assertTrue(mocks[3].call_count, 1)
         # check the instance restarts
         self.assertEqual(mocks[1].call_args[0][3], self.instance)
 
-
     def test_no_disk_info(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         roll_back_original_instance(self.compute, self.project, self.zone,
-                                    self.instance, self.original_instance_template)
+                                    self.instance,
+                                    self.original_instance_template)
         # check the instance restarts
         self.assertEqual(mocks[1].call_args[0][3], self.instance)
 
@@ -93,7 +97,8 @@ class RollBackOriginalInstance(unittest.TestCase):
         multi_disk = ['{"deviceName": "mock_disk_0", "boot":true}',
                       '{"deviceName": "mock_disk_1", "boot":false}']
         roll_back_original_instance(self.compute, self.project, self.zone,
-                                    self.instance, self.original_instance_template, multi_disk)
+                                    self.instance,
+                                    self.original_instance_template, multi_disk)
         self.assertTrue(mocks[3].call_count, 2)
         # check the instance restarts
         self.assertEqual(mocks[1].call_args[0][3], self.instance)
@@ -103,21 +108,25 @@ class RollBackOriginalInstance(unittest.TestCase):
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         with self.assertRaises(HttpError):
             roll_back_original_instance(self.compute, self.project, self.zone,
-                                        self.instance, self.original_instance_template, disk)
+                                        self.instance,
+                                        self.original_instance_template, disk)
 
     def test_attach_disk_failed(self, *mocks):
         mocks[3].side_effect = HttpError(resp=self.errorResponse, content=b'')
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         with self.assertRaises(HttpError):
             roll_back_original_instance(self.compute, self.project, self.zone,
-                                        self.instance, self.original_instance_template, disk, False)
+                                        self.instance,
+                                        self.original_instance_template, disk,
+                                        False)
 
     def test_wait_for_zone_operation_failed(self, *mocks):
         mocks[2].side_effect = ZoneOperationsError
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         with self.assertRaises(ZoneOperationsError):
             roll_back_original_instance(self.compute, self.project, self.zone,
-                                        self.instance, self.original_instance_template, disk)
+                                        self.instance,
+                                        self.original_instance_template, disk)
 
     def test_rollback_after_instance_deleted(self, *mocks):
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']

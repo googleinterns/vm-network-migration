@@ -18,12 +18,13 @@ Test roll_back_original_instance() function
 import json
 import os
 from unittest import mock
-from googleapiclient.discovery import build
-from googleapiclient.http import HttpMock
-from googleapiclient.http import RequestMockBuilder
+
 import google.auth.credentials
 import httplib2
 import unittest2 as unittest
+from googleapiclient.discovery import build
+from googleapiclient.http import HttpMock
+from googleapiclient.http import RequestMockBuilder
 from vm_network_migration.vm_network_migration import *
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")

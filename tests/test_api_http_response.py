@@ -15,6 +15,9 @@
 Test googleapi http calls
 """
 
+import json
+import os
+
 import httplib2
 import timeout_decorator
 import unittest2 as unittest
@@ -22,8 +25,6 @@ from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from vm_network_migration.vm_network_migration import *
-import json
-import os
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -52,6 +53,7 @@ def read_json_file(filename):
         f.close()
     return res
 
+
 class BasicGoogleAPICalls(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
@@ -63,14 +65,14 @@ class BasicGoogleAPICalls(unittest.TestCase):
     instance_template = {
         "mock_instance_template": "mocking"}
     internal_ip_address_body = {
-              "name": "example-internal-address",
-              "addressType": "INTERNAL",
-              "subnetwork": "regions/us-central1/subnetworks/my-custom-subnet",
-              "address": "10.128.0.12"
-            }
+        "name": "example-internal-address",
+        "addressType": "INTERNAL",
+        "subnetwork": "regions/us-central1/subnetworks/my-custom-subnet",
+        "address": "10.128.0.12"
+    }
     external_ip_address_body = {
         "name": "example-external-address",
-        "address":"35.203.14.22"
+        "address": "35.203.14.22"
     }
     http = HttpMock(datafile("compute_rest.json"), {
         "status": "200"})
@@ -351,7 +353,8 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.successResponse, '{"status": "DONE"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        wait_response = wait_for_zone_operation(compute, self.project, self.zone, {})
+        wait_response = wait_for_zone_operation(compute, self.project,
+                                                self.zone, {})
 
         self.assertEqual(
             wait_response,
@@ -377,7 +380,8 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.successResponse, '{"status": "DONE"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        wait_response = wait_for_region_operation(compute, self.project, self.region, {})
+        wait_response = wait_for_region_operation(compute, self.project,
+                                                  self.region, {})
 
         self.assertEqual(
             wait_response,
@@ -403,7 +407,8 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.successResponse, '{"foo": "bar"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        preserve_external_ip_address_operation = preserve_external_ip_address(compute, self.project, self.region, self.external_ip_address_body)
+        preserve_external_ip_address_operation = preserve_external_ip_address(
+            compute, self.project, self.region, self.external_ip_address_body)
         self.assertEqual(
             preserve_external_ip_address_operation,
             {
@@ -421,7 +426,6 @@ class BasicGoogleAPICalls(unittest.TestCase):
         with self.assertRaises(HttpError):
             preserve_external_ip_address(compute, self.project, self.region,
                                          self.external_ip_address_body)
-
 
 
 class CheckNetworkAutoMode(unittest.TestCase):
@@ -509,7 +513,7 @@ class WaitForOperation(unittest.TestCase):
 
         with self.assertRaises(StopIteration):
             wait_for_zone_operation(compute, self.project,
-                               self.zone, {})
+                                    self.zone, {})
 
     def test_error_in_zone_waiting(self):
         request_builder = RequestMockBuilder(
@@ -522,7 +526,7 @@ class WaitForOperation(unittest.TestCase):
 
         with self.assertRaises(ZoneOperationsError):
             wait_for_zone_operation(compute, self.project,
-                               self.zone, {})
+                                    self.zone, {})
 
     @timeout_decorator.timeout(3, timeout_exception=StopIteration)
     def test_basic_region_waiting(self):
@@ -536,7 +540,7 @@ class WaitForOperation(unittest.TestCase):
 
         with self.assertRaises(StopIteration):
             wait_for_region_operation(compute, self.project,
-                               self.region, {})
+                                      self.region, {})
 
     def test_error_in_region_waiting(self):
         request_builder = RequestMockBuilder(
@@ -549,7 +553,4 @@ class WaitForOperation(unittest.TestCase):
 
         with self.assertRaises(RegionOperationsError):
             wait_for_region_operation(compute, self.project,
-                               self.region, {})
-
-
-
+                                      self.region, {})

@@ -654,7 +654,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         return
 
     try:
-        print('Stopping the VM instance')
+        print('Stopping the VM')
         print('stop_instance_operation is running')
         stop_instance_operation = stop_instance(compute, project, zone,
                                                 original_instance)
@@ -675,7 +675,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
             wait_for_zone_operation(compute, project, zone,
                                     detach_disk_operation['name'])
 
-        print('Deleting the old VM instance')
+        print('Deleting the old VM')
         print('delete_instance_operation is running')
         delete_instance_operation = delete_instance(compute, project, zone,
                                                     original_instance)
@@ -687,7 +687,7 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
                                     all_disks_info, False)
         return
     try:
-        print('Creating a new VM instance')
+        print('Creating a new VM')
         print('create_instance_operation is running')
         create_instance_operation = create_instance(compute, project, zone,
                                                     new_instance_template)
