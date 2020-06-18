@@ -622,35 +622,40 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
     try:
         all_disks_info = get_disks_info_from_instance_template(
             instance_template)
-    except AttributeNotExistError as e:
+
+
+        original_instance_template = copy.deepcopy(instance_template)
+        region = get_zone(compute, project, zone)['region']
+        region_name = region.split('regions/')[1]
+
+        new_network_info = generate_new_network_info(compute, project, region,
+                                                     network, subnetwork)
+        original_network_interface = instance_template['networkInterfaces'][0]
+        new_network_interface = preserve_ip_addresses_handler(compute, project,
+                                                              new_instance,
+                                                              new_network_info,
+                                                              original_network_interface,
+                                                              region_name,
+                                                              preserve_external_ip)
+
+        print('Modifying instance template')
+        new_instance_template = modify_instance_template_with_new_network(
+            instance_template, new_instance, new_network_interface)
+    except Exception as e:
         warnings.warn(e.args[0], Warning)
-        print('Migration is terminated.')
+        print('Error happens. Migration is terminated. The original VM is running.')
         return
 
-    original_instance_template = copy.deepcopy(instance_template)
-    region = get_zone(compute, project, zone)['region']
-    region_name = region.split('regions/')[1]
-
-    new_network_info = generate_new_network_info(compute, project, region,
-                                                 network, subnetwork)
-    original_network_interface = instance_template['networkInterfaces'][0]
-    new_network_interface = preserve_ip_addresses_handler(compute, project,
-                                                          new_instance,
-                                                          new_network_info,
-                                                          original_network_interface,
-                                                          region_name,
-                                                          preserve_external_ip)
-
-    print('Modifying instance template')
-    new_instance_template = modify_instance_template_with_new_network(
-        instance_template, new_instance, new_network_interface)
-
-    print('Stopping the VM instance')
-    print('stop_instance_operation is running')
-    stop_instance_operation = stop_instance(compute, project, zone,
-                                            original_instance)
-    wait_for_zone_operation(compute, project, zone,
-                            stop_instance_operation['name'])
+    try:
+        print('Stopping the VM instance')
+        print('stop_instance_operation is running')
+        stop_instance_operation = stop_instance(compute, project, zone,
+                                                original_instance)
+        wait_for_zone_operation(compute, project, zone,
+                                stop_instance_operation['name'])
+    except:
+        roll_back_original_instance(compute, project, zone, original_instance, original_instance_template, [], False)
+        return
 
 
     try:

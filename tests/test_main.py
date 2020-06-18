@@ -257,8 +257,7 @@ class MainFlowLogic(unittest.TestCase):
              target_network, target_subnetwork)
         # check the original instance is not terminated
         mocks[0].assert_called()
-
-
+@patch("vm_network_migration.vm_network_migration.preserve_ip_addresses_handler") # index: 11
 @patch(
     "vm_network_migration.vm_network_migration.roll_back_original_instance")  # index: 10
 @patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 9
@@ -284,8 +283,9 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
     def test_stop_instance_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         mocks[1].side_effect = HttpError(resp=self.errorResponse, content=b'')
-        mocks[3].return_value = read_json_file(
-            "sample_instance_template_with_no_disks.json")
+        original_instance_template = read_json_file(
+            "sample_instance_template.json")
+        mocks[3].return_value = copy.deepcopy(original_instance_template)
         mocks[6].return_value = read_json_file(
             "sample_non_auto_mode_network.json")
 
@@ -294,9 +294,15 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        with self.assertRaises(HttpError):
-            main(self.project, self.zone, original_instance, new_instance,
-                 target_network, target_subnetwork)
+
+        main(self.project, self.zone, original_instance, new_instance,
+             target_network, target_subnetwork)
+        # check rollback is called
+        mocks[10].assert_called()
+        # check rollback function's input arguments
+        self.assertEqual(mocks[10].call_args[0][3], original_instance)
+        self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
+
 
     def test_get_network_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
@@ -324,16 +330,16 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        # with self.assertRaises(HttpError):
-        main(self.project, self.zone, original_instance, new_instance,
-             target_network, target_subnetwork)
-        # check rollback is called
-        mocks[10].assert_called()
+        with self.assertRaises(HttpError):
+            main(self.project, self.zone, original_instance, new_instance,
+                 target_network, target_subnetwork)
+
 
     def test_detach_disk_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
-        mocks[3].return_value = read_json_file(
+        original_instance_template = read_json_file(
             "sample_instance_template.json")
+        mocks[3].return_value = copy.deepcopy(original_instance_template)
         mocks[4].side_effect = HttpError(resp=self.errorResponse, content=b'')
         mocks[6].return_value = read_json_file(
             "sample_non_auto_mode_network.json")
@@ -343,11 +349,13 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        # with self.assertRaises(HttpError):
         main(self.project, self.zone, original_instance, new_instance,
              target_network, target_subnetwork)
         # check rollback is called
         mocks[10].assert_called()
+        self.assertEqual(mocks[10].call_args[0][3], original_instance)
+        self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
+        self.assertEqual(mocks[10].call_args[0][5], original_instance_template["disks"])
 
     def test_get_zone_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
@@ -362,16 +370,16 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        # with self.assertRaises(HttpError):
-        main(self.project, self.zone, original_instance, new_instance,
-             target_network, target_subnetwork)
-        # check rollback is called
-        mocks[10].assert_called()
+        with self.assertRaises(HttpError):
+            main(self.project, self.zone, original_instance, new_instance,
+                 target_network, target_subnetwork)
+
 
     def test_create_instance_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
-        mocks[3].return_value = read_json_file(
+        original_instance_template = read_json_file(
             "sample_instance_template.json")
+        mocks[3].return_value = copy.deepcopy(original_instance_template)
         mocks[6].return_value = read_json_file(
             "sample_non_auto_mode_network.json")
         mocks[7].side_effect = HttpError(resp=self.errorResponse, content=b'')
@@ -386,11 +394,16 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
              target_network, target_subnetwork)
         # check rollback is called
         mocks[10].assert_called()
+        self.assertEqual(mocks[10].call_args[0][3], original_instance)
+        self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
+        self.assertEqual(mocks[10].call_args[0][5], original_instance_template["disks"])
+
 
     def test_delete_instance_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
-        mocks[3].return_value = read_json_file(
+        original_instance_template = read_json_file(
             "sample_instance_template.json")
+        mocks[3].return_value = copy.deepcopy(original_instance_template)
         mocks[6].return_value = read_json_file(
             "sample_non_auto_mode_network.json")
         mocks[8].side_effect = HttpError(resp=self.errorResponse, content=b'')
@@ -400,25 +413,30 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        with self.assertRaises(HttpError):
-            main(self.project, self.zone, original_instance, new_instance,
-                 target_network, target_subnetwork)
+        main(self.project, self.zone, original_instance, new_instance,
+             target_network, target_subnetwork)
+        # check rollback is called
+        mocks[10].assert_called()
+        self.assertEqual(mocks[10].call_args[0][3], original_instance)
+        self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
+        self.assertEqual(mocks[10].call_args[0][5], original_instance_template["disks"])
+        self.assertEqual(mocks[10].call_args[0][6], False)
 
-    def test_attach_disk_failed(self, *mocks):
+
+    def test_preserve_ip_address_handler_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
-        mocks[3].return_value = read_json_file(
+        original_instance_template = read_json_file(
             "sample_instance_template.json")
+        mocks[3].return_value = copy.deepcopy(original_instance_template)
         mocks[6].return_value = read_json_file(
             "sample_non_auto_mode_network.json")
-        mocks[7].side_effect = HttpError(resp=self.errorResponse, content=b'')
-        mocks[9].side_effect = HttpError(resp=self.errorResponse, content=b'')
+        mocks[11].side_effect = HttpError(resp=self.errorResponse, content=b'')
 
         original_instance = "original-instance"
         new_instance = "new-instance"
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        main(self.project, self.zone, original_instance, new_instance,
-             target_network, target_subnetwork)
-        # check rollback is called
-        mocks[10].assert_called()
+        with self.assertRaises(HttpError):
+            main(self.project, self.zone, original_instance, new_instance,
+                 target_network, target_subnetwork)
