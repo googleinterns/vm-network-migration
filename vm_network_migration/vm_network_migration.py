@@ -717,7 +717,6 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         wait_for_zone_operation(compute, project, zone,
                                 delete_instance_operation['name'])
     except:
-
         rollback_failure_protection(compute, project, zone, original_instance,
                                     original_instance_template,
                                     all_disks_info, False)
@@ -735,4 +734,4 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
                                     original_instance_template, all_disks_info,
                                     True)
         return
-    print('Success')
+    print('The migration is successful.')
