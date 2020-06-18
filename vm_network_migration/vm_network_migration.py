@@ -503,6 +503,10 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
         # An ephemeral external ip will be assigned to the new VM
         if 'accessConfigs' not in new_network_interface or 'natIP' not in \
                 new_network_interface['accessConfigs'][0]:
+            warnings.warn(
+                'The current VM has no external IP address. \
+                An ephemeral external IP address will be assigned to the new VM',
+                Warning)
             pass
         else:
             external_ip_address = new_network_interface['accessConfigs'][0][
@@ -521,13 +525,14 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                 # The external IP is already preserved as a static IP,
                 # or the current name of the external IP already exists
                 if 'already' in error_reason:
-                    print(error_reason)
+                    warnings.warn(error_reason, Warning)
                 else:
                     warnings.warn(
                         'Failed to preserve the external IP address as a static IP.',
                         Warning)
                     print(e._get_reason())
                     print('An ephemeral external IP address will be assigned.')
+                    del new_network_interface['accessConfigs']
             else:
                 print(
                     'The external IP address is reserved as a static IP address.')

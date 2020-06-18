@@ -16,15 +16,6 @@
       "subnetwork": "https://www.googleapis.com/compute/v1/projects/mock_project/regions/us-central1/subnetworks/default",
       "networkIP": "10.128.0.9",
       "name": "nic0",
-      "accessConfigs": [
-        {
-          "type": "ONE_TO_ONE_NAT",
-          "name": "External NAT",
-          "natIP": "23.24.5.64",
-          "networkTier": "PREMIUM",
-          "kind": "compute#accessConfig"
-        }
-      ],
       "fingerprint": "rkA0p3Bf2SE=",
       "kind": "compute#networkInterface"
     }

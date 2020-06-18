@@ -73,7 +73,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         single_disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         roll_back_original_instance(self.compute, self.project, self.zone,
-                                    self.instance, single_disk)
+                                    self.instance, single_disk, False)
         # check the disk is reattached
         self.assertTrue(mocks[3].call_count, 1)
         # check the instance restarts

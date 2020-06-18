@@ -20,7 +20,6 @@
         {
           "type": "ONE_TO_ONE_NAT",
           "name": "External NAT",
-          "natIP": "23.24.5.64",
           "networkTier": "PREMIUM",
           "kind": "compute#accessConfig"
         }

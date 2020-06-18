@@ -257,7 +257,10 @@ class MainFlowLogic(unittest.TestCase):
              target_network, target_subnetwork)
         # check the original instance is not terminated
         mocks[0].assert_called()
-@patch("vm_network_migration.vm_network_migration.preserve_ip_addresses_handler") # index: 11
+
+
+@patch(
+    "vm_network_migration.vm_network_migration.preserve_ip_addresses_handler")  # index: 11
 @patch(
     "vm_network_migration.vm_network_migration.roll_back_original_instance")  # index: 10
 @patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 9
@@ -294,7 +297,6 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-
         main(self.project, self.zone, original_instance, new_instance,
              target_network, target_subnetwork)
         # check rollback is called
@@ -302,7 +304,6 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         # check rollback function's input arguments
         self.assertEqual(mocks[10].call_args[0][3], original_instance)
         self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
-
 
     def test_get_network_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
@@ -334,7 +335,6 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
             main(self.project, self.zone, original_instance, new_instance,
                  target_network, target_subnetwork)
 
-
     def test_detach_disk_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         original_instance_template = read_json_file(
@@ -355,7 +355,8 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         mocks[10].assert_called()
         self.assertEqual(mocks[10].call_args[0][3], original_instance)
         self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
-        self.assertEqual(mocks[10].call_args[0][5], original_instance_template["disks"])
+        self.assertEqual(mocks[10].call_args[0][5],
+                         original_instance_template["disks"])
 
     def test_get_zone_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
@@ -374,7 +375,6 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
             main(self.project, self.zone, original_instance, new_instance,
                  target_network, target_subnetwork)
 
-
     def test_create_instance_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         original_instance_template = read_json_file(
@@ -389,15 +389,14 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        # with self.assertRaises(HttpError):
         main(self.project, self.zone, original_instance, new_instance,
              target_network, target_subnetwork)
         # check rollback is called
         mocks[10].assert_called()
         self.assertEqual(mocks[10].call_args[0][3], original_instance)
         self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
-        self.assertEqual(mocks[10].call_args[0][5], original_instance_template["disks"])
-
+        self.assertEqual(mocks[10].call_args[0][5],
+                         original_instance_template["disks"])
 
     def test_delete_instance_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
@@ -419,9 +418,9 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         mocks[10].assert_called()
         self.assertEqual(mocks[10].call_args[0][3], original_instance)
         self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
-        self.assertEqual(mocks[10].call_args[0][5], original_instance_template["disks"])
+        self.assertEqual(mocks[10].call_args[0][5],
+                         original_instance_template["disks"])
         self.assertEqual(mocks[10].call_args[0][6], False)
-
 
     def test_preserve_ip_address_handler_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)

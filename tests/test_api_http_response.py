@@ -551,55 +551,5 @@ class WaitForOperation(unittest.TestCase):
             wait_for_region_operation(compute, self.project,
                                self.region, {})
 
-class ModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
-    new_instance = "mock_new_instance"
-    new_network_info = {
-        "network": "mock_new_network",
-        "subnetwork": "mock_new_subnet"}
-
-    def test_basic(self):
-        instance_template = {
-            'networkInterfaces': [{
-                "network": "legacy"}],
-            'name': 'mock_old_instance'}
-
-        new_instance_template = modify_instance_template_with_new_network(
-            instance_template,
-            self.new_instance,
-            self.new_network_info)
-        self.assertEqual(new_instance_template['name'], self.new_instance)
-        self.assertEqual(new_instance_template['networkInterfaces'][0],
-                         self.new_network_info)
-
-    def test_invalid_instance_template(self):
-        instance_template = {}
-
-        with self.assertRaises(AttributeNotExistError):
-            modify_instance_template_with_new_network(instance_template,
-                                                      self.new_instance,
-                                                      self.new_network_info)
-        instance_template = {
-            'networkInterfaces': []}
-
-        with self.assertRaises(AttributeNotExistError):
-            modify_instance_template_with_new_network(instance_template,
-                                                      self.new_instance,
-                                                      self.new_network_info)
-
-        instance_template = {
-            'name': 'mock_old_instance'}
-
-        with self.assertRaises(AttributeNotExistError):
-            modify_instance_template_with_new_network(instance_template,
-                                                      self.new_instance,
-                                                      self.new_network_info)
-
-        instance_template = {
-            'networkInterfaces': {},
-            'name': 'mock_old_instance'}
-        with self.assertRaises(InvalidTypeError):
-            modify_instance_template_with_new_network(instance_template,
-                                                      self.new_instance,
-                                                      self.new_network_info)
 
 
