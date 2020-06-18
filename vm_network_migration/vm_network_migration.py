@@ -647,8 +647,10 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         new_instance_template = modify_instance_template_with_new_network(
             instance_template, new_instance, new_network_interface)
     except Exception as e:
-        warnings.warn(e.args[0], Warning)
-        print('Error happens. Migration is terminated. The original VM is running.')
+        print(e)
+        print('An error happens. '
+              'Migration is terminated. '
+              'The original VM is running.')
         return
 
     try:

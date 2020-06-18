@@ -142,10 +142,7 @@ class MainFlowLogic(unittest.TestCase):
              target_network, target_subnetwork)
         # rollback will be called
         mocks[10].assert_called()
-        # check all the disks are reattached in rollback
-        self.assertEqual(mocks[10].call_args[0][4],
-                         sample_instance_template["disks"])
-        # check the original instance restarts in rollback
+        # check the original instance is passed into rollback
         self.assertEqual(mocks[10].call_args[0][3], original_instance)
 
     def test_migrating_to_legacy_network(self, *mocks):
@@ -371,9 +368,11 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        with self.assertRaises(HttpError):
-            main(self.project, self.zone, original_instance, new_instance,
-                 target_network, target_subnetwork)
+
+        main(self.project, self.zone, original_instance, new_instance,
+             target_network, target_subnetwork)
+        #the original instance is no terminated
+        mocks[1].assert_not_called()
 
     def test_create_instance_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
@@ -422,7 +421,7 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
                          original_instance_template["disks"])
         self.assertEqual(mocks[10].call_args[0][6], False)
 
-    def test_preserve_ip_address_handler_failed(self, *mocks):
+    def test_preserve_ip_address_handler_failed_with_non_http_error(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         original_instance_template = read_json_file(
             "sample_instance_template.json")
@@ -436,6 +435,8 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        with self.assertRaises(HttpError):
-            main(self.project, self.zone, original_instance, new_instance,
-                 target_network, target_subnetwork)
+        main(self.project, self.zone, original_instance, new_instance,
+             target_network, target_subnetwork)
+        # the original VM is not terminated
+        mocks[1].assert_not_called()
+
