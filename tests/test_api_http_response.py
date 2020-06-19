@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-
+Test googleapi http calls
 """
+
+import json
+import os
 
 import httplib2
 import timeout_decorator
 import unittest2 as unittest
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from vm_network_migration.vm_network_migration import *
-import json
-import os
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -53,6 +53,7 @@ def read_json_file(filename):
         f.close()
     return res
 
+
 class BasicGoogleAPICalls(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
@@ -64,14 +65,14 @@ class BasicGoogleAPICalls(unittest.TestCase):
     instance_template = {
         "mock_instance_template": "mocking"}
     internal_ip_address_body = {
-              "name": "example-internal-address",
-              "addressType": "INTERNAL",
-              "subnetwork": "regions/us-central1/subnetworks/my-custom-subnet",
-              "address": "10.128.0.12"
-            }
+        "name": "example-internal-address",
+        "addressType": "INTERNAL",
+        "subnetwork": "regions/us-central1/subnetworks/my-custom-subnet",
+        "address": "10.128.0.12"
+    }
     external_ip_address_body = {
         "name": "example-external-address",
-        "address":"35.203.14.22"
+        "address": "35.203.14.22"
     }
     http = HttpMock(datafile("compute_rest.json"), {
         "status": "200"})
@@ -345,14 +346,15 @@ class BasicGoogleAPICalls(unittest.TestCase):
         with self.assertRaises(HttpError):
             check_network_auto_mode(compute, self.project, self.zone)
 
-    def test_wait_for_operation_success(self):
+    def test_wait_for_zone_operation_success(self):
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
                     self.successResponse, '{"status": "DONE"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        wait_response = wait_for_operation(compute, self.project, self.zone, {})
+        wait_response = wait_for_zone_operation(compute, self.project,
+                                                self.zone, {})
 
         self.assertEqual(
             wait_response,
@@ -360,7 +362,7 @@ class BasicGoogleAPICalls(unittest.TestCase):
                 "status": "DONE"}
         )
 
-    def test_wait_for_operation_failure(self):
+    def test_wait_for_zone_operation_failure(self):
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
@@ -369,33 +371,34 @@ class BasicGoogleAPICalls(unittest.TestCase):
                         requestBuilder=request_builder)
 
         with self.assertRaises(HttpError):
-            wait_for_operation(compute, self.project, self.zone, {})
+            wait_for_zone_operation(compute, self.project, self.zone, {})
 
-    def test_preserve_internal_ip_success(self):
+    def test_wait_for_region_operation_success(self):
         request_builder = RequestMockBuilder(
             {
-                "compute.addresses.insert": (
-                    self.successResponse, '{"foo": "bar"}')})
+                "compute.regionOperations.get": (
+                    self.successResponse, '{"status": "DONE"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        preserve_internal_ip_address_operation = preserve_internal_ip_address(compute, self.project, self.region, self.internal_ip_address_body)
+        wait_response = wait_for_region_operation(compute, self.project,
+                                                  self.region, {})
+
         self.assertEqual(
-            preserve_internal_ip_address_operation,
+            wait_response,
             {
-                "foo": "bar"}
+                "status": "DONE"}
         )
 
-    def test_preserve_internal_ip_failure(self):
+    def test_wait_for_region_operation_failure(self):
         request_builder = RequestMockBuilder(
             {
-                "compute.addresses.insert": (
-                    self.errorResponse, b"{Invalid resource}")})
+                "compute.regionOperations.get": (
+                    self.errorResponse, b'Invalid Resource')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
 
         with self.assertRaises(HttpError):
-            preserve_internal_ip_address(compute, self.project, self.region,
-                                         self.internal_ip_address_body)
+            wait_for_region_operation(compute, self.project, self.region, {})
 
     def test_preserve_external_ip_success(self):
         request_builder = RequestMockBuilder(
@@ -404,7 +407,8 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.successResponse, '{"foo": "bar"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        preserve_external_ip_address_operation = preserve_external_ip_address(compute, self.project, self.region, self.external_ip_address_body)
+        preserve_external_ip_address_operation = preserve_external_ip_address(
+            compute, self.project, self.region, self.external_ip_address_body)
         self.assertEqual(
             preserve_external_ip_address_operation,
             {
@@ -422,6 +426,7 @@ class BasicGoogleAPICalls(unittest.TestCase):
         with self.assertRaises(HttpError):
             preserve_external_ip_address(compute, self.project, self.region,
                                          self.external_ip_address_body)
+
 
 class CheckNetworkAutoMode(unittest.TestCase):
     project = "mock_project"
@@ -485,6 +490,7 @@ class CheckNetworkAutoMode(unittest.TestCase):
 class WaitForOperation(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
+    region = "mock_us_central1"
     http = HttpMock(datafile("compute_rest.json"), {
         "status": "200"})
     errorResponse = httplib2.Response({
@@ -496,7 +502,7 @@ class WaitForOperation(unittest.TestCase):
     })
 
     @timeout_decorator.timeout(3, timeout_exception=StopIteration)
-    def test_basic_waiting(self):
+    def test_basic_zone_waiting(self):
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
@@ -506,10 +512,10 @@ class WaitForOperation(unittest.TestCase):
                         requestBuilder=request_builder)
 
         with self.assertRaises(StopIteration):
-            wait_for_operation(compute, self.project,
-                               self.zone, {})
+            wait_for_zone_operation(compute, self.project,
+                                    self.zone, {})
 
-    def test_error_in_response(self):
+    def test_error_in_zone_waiting(self):
         request_builder = RequestMockBuilder(
             {
                 "compute.zoneOperations.get": (
@@ -519,59 +525,32 @@ class WaitForOperation(unittest.TestCase):
                         requestBuilder=request_builder)
 
         with self.assertRaises(ZoneOperationsError):
-            wait_for_operation(compute, self.project,
-                               self.zone, {})
+            wait_for_zone_operation(compute, self.project,
+                                    self.zone, {})
 
+    @timeout_decorator.timeout(3, timeout_exception=StopIteration)
+    def test_basic_region_waiting(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.regionOperations.get": (
+                    self.successResponse,
+                    '{"status":"RUNNING"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
 
-class ModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
-    new_instance = "mock_new_instance"
-    new_network_info = {
-        "network": "mock_new_network",
-        "subnetwork": "mock_new_subnet"}
+        with self.assertRaises(StopIteration):
+            wait_for_region_operation(compute, self.project,
+                                      self.region, {})
 
-    def test_basic(self):
-        instance_template = {
-            'networkInterfaces': [{
-                "network": "legacy"}],
-            'name': 'mock_old_instance'}
+    def test_error_in_region_waiting(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.regionOperations.get": (
+                    self.successResponse,
+                    '{"status":"DONE", "error":"something wrong"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
 
-        new_instance_template = modify_instance_template_with_new_network(
-            instance_template,
-            self.new_instance,
-            self.new_network_info)
-        self.assertEqual(new_instance_template['name'], self.new_instance)
-        self.assertEqual(new_instance_template['networkInterfaces'][0],
-                         self.new_network_info)
-
-    def test_invalid_instance_template(self):
-        instance_template = {}
-
-        with self.assertRaises(AttributeNotExistError):
-            modify_instance_template_with_new_network(instance_template,
-                                                      self.new_instance,
-                                                      self.new_network_info)
-        instance_template = {
-            'networkInterfaces': []}
-
-        with self.assertRaises(AttributeNotExistError):
-            modify_instance_template_with_new_network(instance_template,
-                                                      self.new_instance,
-                                                      self.new_network_info)
-
-        instance_template = {
-            'name': 'mock_old_instance'}
-
-        with self.assertRaises(AttributeNotExistError):
-            modify_instance_template_with_new_network(instance_template,
-                                                      self.new_instance,
-                                                      self.new_network_info)
-
-        instance_template = {
-            'networkInterfaces': {},
-            'name': 'mock_old_instance'}
-        with self.assertRaises(InvalidTypeError):
-            modify_instance_template_with_new_network(instance_template,
-                                                      self.new_instance,
-                                                      self.new_network_info)
-
-
+        with self.assertRaises(RegionOperationsError):
+            wait_for_region_operation(compute, self.project,
+                                      self.region, {})
