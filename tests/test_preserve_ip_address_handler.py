@@ -86,17 +86,6 @@ class PreserveIPAddressHandler(unittest.TestCase):
         "name": "example-external-address",
         "address": "35.203.14.22"
     }
-    alreadyExistsResponse = httplib2.Response({
-        "status": 400,
-        "reason": "HttpMock response: the IP address already exists"})
-    staticIPNameExistsResponse = httplib2.Response({
-        "status": 400,
-        "reason": "HttpMock response: the IP's name already exists"
-    })
-    otherErrorResponse = httplib2.Response({
-        "status": 404,
-        "reason": "HttpMock response: invalid request"
-    })
 
     new_network_info = {
         "network": "https://www.googleapis.com/compute/v1/projects/mock_project/global/networks/mock_target_network",
