@@ -591,7 +591,7 @@ def get_instance_status(compute, project, zone, instance):
         if "not found" in error_reason:
             return InstanceStatus.NOTEXISTS
         else:
-            raise HttpError
+            raise e
     return InstanceStatus(instance_template['status'])
 
 def generate_external_ip_address_body(external_ip_address, new_instance_name):
