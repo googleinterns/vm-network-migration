@@ -42,13 +42,18 @@ Run the script by terminal, for example:
 import copy
 import time
 import warnings
+from enum import Enum
 
 import google.auth
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 
-
+class InstanceStatus(Enum):
+    NOTEXISTS = None
+    RUNNING = "RUNNING"
+    STOPPING = "STOPPING"
+    TERMINATED = "TERMINATED"
 def stop_instance(compute, project, zone, instance) -> dict:
     """ Stop the instance.
 
@@ -482,13 +487,20 @@ def rollback_original_instance(compute, project, zone, instance,
         Raises:
             googleapiclient.errors.HttpError: invalid request
     """
+
     warnings.warn(
         'VM network migration is failed. Rolling back to the original VM.',
         Warning)
-
-    print(original_instance_template)
-
-    if not instance_deleted:
+    instance_status = get_instance_status(compute, project, zone, instance)
+    if instance_status == InstanceStatus.RUNNING:
+        pass
+    elif instance_status == InstanceStatus.NOTEXISTS:
+        recreate_original_instance_operation = create_instance(compute, project,
+                                                               zone,
+                                                               original_instance_template)
+        wait_for_zone_operation(compute, project, zone,
+                                recreate_original_instance_operation['name'])
+    else:
         for disk_info in all_disks_info:
             print('attach_disk_operation is running')
             attach_disk_operation = attach_disk(compute, project, zone,
@@ -501,12 +513,7 @@ def rollback_original_instance(compute, project, zone, instance,
                                                   instance)
         wait_for_zone_operation(compute, project, zone,
                                 start_instance_operation['name'])
-    else:
-        recreate_original_instance_operation = create_instance(compute, project,
-                                                               zone,
-                                                               original_instance_template)
-        wait_for_zone_operation(compute, project, zone,
-                                recreate_original_instance_operation['name'])
+
 
 
 
@@ -578,6 +585,18 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
 
     return new_network_interface
 
+def get_instance_status(compute, project, zone, instance):
+    try:
+        instance_template = retrieve_instance_template(compute, project, zone,
+                                   instance)
+    except HttpError as e:
+        error_reason = e._get_reason()
+        print(error_reason)
+        if "not found" in error_reason:
+            return InstanceStatus.NOTEXISTS
+        else:
+            raise HttpError
+    return InstanceStatus(instance_template['status'])
 
 def generate_external_ip_address_body(external_ip_address, new_instance_name):
     """Generate external IP address.
