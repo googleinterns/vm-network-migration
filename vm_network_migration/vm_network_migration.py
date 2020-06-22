@@ -48,7 +48,7 @@ import google.auth
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
-
+from vm_network_migration.operations import Operations
 class InstanceStatus(Enum):
     NOTEXISTS = None
     RUNNING = "RUNNING"
@@ -293,67 +293,6 @@ def delete_instance(compute, project, zone, instance) -> dict:
         instance=instance).execute()
 
 
-def wait_for_zone_operation(compute, project, zone, operation):
-    """ Keep waiting for a zone operation until it finishes
-
-        Args:
-            compute: google API compute engine service
-            project: project ID
-            zone: zone of the VM
-            operation: name of the Operations resource to return
-
-        Returns:
-            a deserialized object of the response
-
-        Raises:
-            ZoneOperationsError: if the operation has an error
-            googleapiclient.errors.HttpError: invalid request
-    """
-    print('Waiting ...')
-    while True:
-        result = compute.zoneOperations().get(
-            project=project,
-            zone=zone,
-            operation=operation).execute()
-        if result['status'] == 'DONE':
-            print("The current operation is done.")
-            if 'error' in result:
-                raise ZoneOperationsError(result['error'])
-            return result
-        time.sleep(1)
-
-
-def wait_for_region_operation(compute, project, region, operation):
-    """ Keep waiting for a region operation until it finishes
-
-        Args:
-            compute: google API compute engine service
-            project: project ID
-            region: zone of the VM
-            operation: name of the Operations resource to return
-
-        Returns:
-            a deserialized object of the response
-
-        Raises:
-            RegionOperationsError: if the operation has an error
-            googleapiclient.errors.HttpError: invalid request
-    """
-    print('Waiting ...')
-    while True:
-        result = compute.regionOperations().get(
-            project=project,
-            region=region,
-            operation=operation).execute()
-        if result['status'] == 'DONE':
-            print("The current operation is done.")
-            if 'error' in result:
-                print('Region operations error', result['error'])
-                raise RegionOperationsError(result['error'])
-            return result
-        time.sleep(1)
-
-
 def get_zone(compute, project, zone) -> dict:
     """ Get zone information
 
@@ -470,6 +409,7 @@ def rollback_failure_protection(compute, project, zone, instance,
 
 def rollback_original_instance(compute, project, zone, instance,
                                original_instance_template, all_disks_info):
+    operations = Operations(compute, project, zone, "")
     """ Roll back to the original VM. Reattach the disks to the
     original VM and restart it.
 
@@ -494,21 +434,18 @@ def rollback_original_instance(compute, project, zone, instance,
         recreate_original_instance_operation = create_instance(compute, project,
                                                                zone,
                                                                original_instance_template)
-        wait_for_zone_operation(compute, project, zone,
-                                recreate_original_instance_operation['name'])
+        operations.wait_for_zone_operation(recreate_original_instance_operation['name'])
     else:
         for disk_info in all_disks_info:
             print('attach_disk_operation is running')
             attach_disk_operation = attach_disk(compute, project, zone,
                                                 instance, disk_info)
-            wait_for_zone_operation(compute, project, zone,
-                                    attach_disk_operation['name'])
+            operations.wait_for_zone_operation(attach_disk_operation['name'])
         print('Restarting the original VM')
         print('start_instance_operation is running')
         start_instance_operation = start_instance(compute, project, zone,
                                                   instance)
-        wait_for_zone_operation(compute, project, zone,
-                                start_instance_operation['name'])
+        operations.wait_for_zone_operation(start_instance_operation['name'])
 
 
 
@@ -517,6 +454,7 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                                   new_network_info, original_network_interface,
                                   region,
                                   preserve_external_ip) -> dict:
+    operations = Operations(compute, project, "", region)
     """Preserve the external IP address.
 
     Args:
@@ -554,8 +492,7 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
                 preserve_external_ip_operation = preserve_external_ip_address(
                     compute, project, region,
                     external_ip_address_body)
-                wait_for_region_operation(compute, project, region,
-                                          preserve_external_ip_operation[
+                operations.wait_for_region_operation(preserve_external_ip_operation[
                                               'name'])
             except HttpError as e:
                 error_reason = e._get_reason()
@@ -625,6 +562,7 @@ def generate_timestamp_string() -> str:
 
 def main(project, zone, original_instance, new_instance, network, subnetwork,
          preserve_external_ip=False):
+
     """ Execute the migration process.
 
         Args:
@@ -697,13 +635,12 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         print('Modifying instance template')
         new_instance_template = modify_instance_template_with_new_network(
             instance_template, new_instance, new_network_interface)
-
+        operations = Operations(compute, project, zone, region)
         print('Stopping the VM')
         print('stop_instance_operation is running')
         stop_instance_operation = stop_instance(compute, project, zone,
                                                 original_instance)
-        wait_for_zone_operation(compute, project, zone,
-                                stop_instance_operation['name'])
+        operations.wait_for_zone_operation(stop_instance_operation['name'])
 
         print('Detaching the disks')
         for disk_info in all_disks_info:
@@ -711,21 +648,18 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
             print('detach_disk_operation is running')
             detach_disk_operation = detach_disk(compute, project, zone,
                                                 original_instance, disk)
-            wait_for_zone_operation(compute, project, zone,
-                                    detach_disk_operation['name'])
+            operations.wait_for_zone_operation(detach_disk_operation['name'])
 
         print('Deleting the old VM')
         print('delete_instance_operation is running')
         delete_instance_operation = delete_instance(compute, project, zone,
                                                     original_instance)
-        wait_for_zone_operation(compute, project, zone,
-                                delete_instance_operation['name'])
+        operations.wait_for_zone_operation(delete_instance_operation['name'])
         print('Creating a new VM')
         print('create_instance_operation is running')
         create_instance_operation = create_instance(compute, project, zone,
                                                     new_instance_template)
-        wait_for_zone_operation(compute, project, zone,
-                                create_instance_operation['name'])
+        operations.wait_for_zone_operation(create_instance_operation['name'])
     except:
         rollback_failure_protection(compute, project, zone, original_instance,
                                     original_instance_template, all_disks_info)

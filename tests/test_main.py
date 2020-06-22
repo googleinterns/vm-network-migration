@@ -63,7 +63,7 @@ def read_json_file(filename):
 @patch(
     "vm_network_migration.vm_network_migration.retrieve_instance_template")  # index: 3
 @patch(
-    "vm_network_migration.vm_network_migration.wait_for_zone_operation")  # index: 2
+    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index: 2
 @patch("vm_network_migration.vm_network_migration.stop_instance")  # index: 1
 @patch("google.auth.default")  # index 0
 class MainFlowLogic(unittest.TestCase):
@@ -269,7 +269,7 @@ class MainFlowLogic(unittest.TestCase):
 @patch(
     "vm_network_migration.vm_network_migration.retrieve_instance_template")  # index: 3
 @patch(
-    "vm_network_migration.vm_network_migration.wait_for_zone_operation")  # index: 2
+    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index: 2
 @patch("vm_network_migration.vm_network_migration.stop_instance")  # index: 1
 @patch("google.auth.default")  # index 0
 class MainFlowHttpErrorHandling(unittest.TestCase):

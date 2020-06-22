@@ -55,7 +55,7 @@ def read_json_file(filename):
 
 
 @patch(
-    "vm_network_migration.vm_network_migration.wait_for_region_operation")  # index: 7
+    "vm_network_migration.operations.Operations.wait_for_region_operation")  # index: 7
 @patch(
     "vm_network_migration.vm_network_migration.preserve_external_ip_address")  # index 6
 @patch(
@@ -63,7 +63,7 @@ def read_json_file(filename):
 @patch("vm_network_migration.vm_network_migration.create_instance")  # index: 4
 @patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 3
 @patch(
-    "vm_network_migration.vm_network_migration.wait_for_zone_operation")  # index: 2
+    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index: 2
 @patch("vm_network_migration.vm_network_migration.start_instance")  # index: 1
 @patch("google.auth.default")  # index 0
 class PreserveIPAddressHandler(unittest.TestCase):

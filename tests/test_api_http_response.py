@@ -353,8 +353,8 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.successResponse, '{"status": "DONE"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        wait_response = wait_for_zone_operation(compute, self.project,
-                                                self.zone, {})
+        operations = Operations(compute, self.project, self.region, self.zone)
+        wait_response = operations.wait_for_zone_operation({})
 
         self.assertEqual(
             wait_response,
@@ -369,9 +369,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b'Invalid Resource')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-
+        operations = Operations(compute, self.project, self.region, self.zone)
         with self.assertRaises(HttpError):
-            wait_for_zone_operation(compute, self.project, self.zone, {})
+            operations.wait_for_zone_operation({})
 
     def test_wait_for_region_operation_success(self):
         request_builder = RequestMockBuilder(
@@ -380,8 +380,8 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.successResponse, '{"status": "DONE"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-        wait_response = wait_for_region_operation(compute, self.project,
-                                                  self.region, {})
+        operations = Operations(compute, self.project, self.region, self.zone)
+        wait_response = operations.wait_for_region_operation({})
 
         self.assertEqual(
             wait_response,
@@ -396,9 +396,9 @@ class BasicGoogleAPICalls(unittest.TestCase):
                     self.errorResponse, b'Invalid Resource')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-
+        operations = Operations(compute, self.project, self.region, self.zone)
         with self.assertRaises(HttpError):
-            wait_for_region_operation(compute, self.project, self.region, {})
+            operations.wait_for_region_operation({})
 
     def test_preserve_external_ip_success(self):
         request_builder = RequestMockBuilder(
@@ -501,6 +501,7 @@ class WaitForOperation(unittest.TestCase):
         "reason": "HttpMock response: Successful"
     })
 
+
     @timeout_decorator.timeout(3, timeout_exception=StopIteration)
     def test_basic_zone_waiting(self):
         request_builder = RequestMockBuilder(
@@ -510,10 +511,9 @@ class WaitForOperation(unittest.TestCase):
                     '{"status":"RUNNING"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-
+        operations = Operations(compute, self.project, self.zone, self.region)
         with self.assertRaises(StopIteration):
-            wait_for_zone_operation(compute, self.project,
-                                    self.zone, {})
+            operations.wait_for_zone_operation({})
 
     def test_error_in_zone_waiting(self):
         request_builder = RequestMockBuilder(
@@ -523,10 +523,9 @@ class WaitForOperation(unittest.TestCase):
                     '{"status":"DONE", "error":"something wrong"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-
+        operations = Operations(compute, self.project, self.zone, self.region)
         with self.assertRaises(ZoneOperationsError):
-            wait_for_zone_operation(compute, self.project,
-                                    self.zone, {})
+            operations.wait_for_zone_operation({})
 
     @timeout_decorator.timeout(3, timeout_exception=StopIteration)
     def test_basic_region_waiting(self):
@@ -537,10 +536,9 @@ class WaitForOperation(unittest.TestCase):
                     '{"status":"RUNNING"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-
+        operations = Operations(compute, self.project, self.zone, self.region)
         with self.assertRaises(StopIteration):
-            wait_for_region_operation(compute, self.project,
-                                      self.region, {})
+            operations.wait_for_region_operation({})
 
     def test_error_in_region_waiting(self):
         request_builder = RequestMockBuilder(
@@ -550,7 +548,6 @@ class WaitForOperation(unittest.TestCase):
                     '{"status":"DONE", "error":"something wrong"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-
+        operations = Operations(compute, self.project, self.zone, self.region)
         with self.assertRaises(RegionOperationsError):
-            wait_for_region_operation(compute, self.project,
-                                      self.region, {})
+            operations.wait_for_region_operation({})
