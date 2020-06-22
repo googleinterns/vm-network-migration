@@ -42,13 +42,18 @@ Run the script by terminal, for example:
 import copy
 import time
 import warnings
+from enum import Enum
 
 import google.auth
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 
-
+class InstanceStatus(Enum):
+    NOTEXISTS = None
+    RUNNING = "RUNNING"
+    STOPPING = "STOPPING"
+    TERMINATED = "TERMINATED"
 def stop_instance(compute, project, zone, instance) -> dict:
     """ Stop the instance.
 
@@ -432,8 +437,8 @@ def release_static_ip_address(compute, project, region, address_name):
 
 
 def rollback_failure_protection(compute, project, zone, instance,
-                                original_instance_template, all_disks_info=[],
-                                instance_deleted=False)->bool:
+                                original_instance_template,
+                                all_disks_info=[]) ->bool:
     """Try to rollback to the original VM. If the rollback procedure also fails,
     then print out the original VM's instance template in the console
 
@@ -443,15 +448,13 @@ def rollback_failure_protection(compute, project, zone, instance,
             zone: zone of the VM
             instance: name of the VM
             all_disks_info: a list of disks' info. Default value is [].
-            instance_deleted: whether the original VM has been deleted
 
         Returns: True/False for successful/failed rollback
 
     """
     try:
         rollback_original_instance(compute, project, zone, instance,
-                                   original_instance_template,
-                                   all_disks_info, instance_deleted)
+                                   original_instance_template, all_disks_info)
     except Exception as e:
         warnings.warn("Rollback failed.", Warning)
         print(e)
@@ -466,8 +469,7 @@ def rollback_failure_protection(compute, project, zone, instance,
 
 
 def rollback_original_instance(compute, project, zone, instance,
-                               original_instance_template,
-                               all_disks_info, instance_deleted):
+                               original_instance_template, all_disks_info):
     """ Roll back to the original VM. Reattach the disks to the
     original VM and restart it.
 
@@ -477,18 +479,24 @@ def rollback_original_instance(compute, project, zone, instance,
             zone: zone of the VM
             instance: name of the VM
             all_disks_info: a list of disks' info. Default value is [].
-            instance_deleted: whether the original VM has been deleted
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
     """
+
     warnings.warn(
         'VM network migration is failed. Rolling back to the original VM.',
         Warning)
-
-    print(original_instance_template)
-
-    if not instance_deleted:
+    instance_status = get_instance_status(compute, project, zone, instance)
+    if instance_status == InstanceStatus.RUNNING:
+        pass
+    elif instance_status == InstanceStatus.NOTEXISTS:
+        recreate_original_instance_operation = create_instance(compute, project,
+                                                               zone,
+                                                               original_instance_template)
+        wait_for_zone_operation(compute, project, zone,
+                                recreate_original_instance_operation['name'])
+    else:
         for disk_info in all_disks_info:
             print('attach_disk_operation is running')
             attach_disk_operation = attach_disk(compute, project, zone,
@@ -501,12 +509,7 @@ def rollback_original_instance(compute, project, zone, instance,
                                                   instance)
         wait_for_zone_operation(compute, project, zone,
                                 start_instance_operation['name'])
-    else:
-        recreate_original_instance_operation = create_instance(compute, project,
-                                                               zone,
-                                                               original_instance_template)
-        wait_for_zone_operation(compute, project, zone,
-                                recreate_original_instance_operation['name'])
+
 
 
 
@@ -578,6 +581,18 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
 
     return new_network_interface
 
+def get_instance_status(compute, project, zone, instance):
+    try:
+        instance_template = retrieve_instance_template(compute, project, zone,
+                                   instance)
+    except HttpError as e:
+        error_reason = e._get_reason()
+        print(error_reason)
+        if "not found" in error_reason:
+            return InstanceStatus.NOTEXISTS
+        else:
+            raise e
+    return InstanceStatus(instance_template['status'])
 
 def generate_external_ip_address_body(external_ip_address, new_instance_name):
     """Generate external IP address.
@@ -656,14 +671,16 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
             # same as the network name
             subnetwork = network
 
-    instance_template = retrieve_instance_template(compute, project, zone,
-                                                   original_instance)
+
+    original_instance_template = {}
+    all_disks_info = []
     try:
+        instance_template = retrieve_instance_template(compute, project, zone,
+                                                       original_instance)
+        original_instance_template = copy.deepcopy(instance_template)
         all_disks_info = get_disks_info_from_instance_template(
             instance_template)
 
-
-        original_instance_template = copy.deepcopy(instance_template)
         region = get_zone(compute, project, zone)['region']
         region_name = region.split('regions/')[1]
 
@@ -680,27 +697,14 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         print('Modifying instance template')
         new_instance_template = modify_instance_template_with_new_network(
             instance_template, new_instance, new_network_interface)
-    except Exception as e:
-        print(e)
-        print('An error happens. '
-              'Migration is terminated. '
-              'The original VM is running.')
-        return
 
-    try:
         print('Stopping the VM')
         print('stop_instance_operation is running')
         stop_instance_operation = stop_instance(compute, project, zone,
                                                 original_instance)
         wait_for_zone_operation(compute, project, zone,
                                 stop_instance_operation['name'])
-    except:
-        rollback_failure_protection(compute, project, zone, original_instance,
-                                    original_instance_template, [], False)
-        return
 
-
-    try:
         print('Detaching the disks')
         for disk_info in all_disks_info:
             disk = disk_info['deviceName']
@@ -716,13 +720,6 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
                                                     original_instance)
         wait_for_zone_operation(compute, project, zone,
                                 delete_instance_operation['name'])
-    except:
-        rollback_failure_protection(compute, project, zone, original_instance,
-                                    original_instance_template,
-                                    all_disks_info, False)
-        return
-
-    try:
         print('Creating a new VM')
         print('create_instance_operation is running')
         create_instance_operation = create_instance(compute, project, zone,
@@ -731,7 +728,6 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
                                 create_instance_operation['name'])
     except:
         rollback_failure_protection(compute, project, zone, original_instance,
-                                    original_instance_template, all_disks_info,
-                                    True)
+                                    original_instance_template, all_disks_info)
         return
     print('The migration is successful.')

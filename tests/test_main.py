@@ -328,9 +328,10 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         target_network = "target-network"
         target_subnetwork = "target-subnetwork"
 
-        with self.assertRaises(HttpError):
-            main(self.project, self.zone, original_instance, new_instance,
-                 target_network, target_subnetwork)
+        main(self.project, self.zone, original_instance, new_instance,
+             target_network, target_subnetwork)
+        # check rollback is called
+        mocks[10].assert_called()
 
     def test_detach_disk_failed(self, *mocks):
         mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
@@ -418,7 +419,6 @@ class MainFlowHttpErrorHandling(unittest.TestCase):
         self.assertEqual(mocks[10].call_args[0][4], original_instance_template)
         self.assertEqual(mocks[10].call_args[0][5],
                          original_instance_template["disks"])
-        self.assertEqual(mocks[10].call_args[0][6], False)
 
     def test_preserve_ip_address_handler_failed_with_non_http_error(self,
                                                                     *mocks):
