@@ -82,7 +82,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
-                                    self.original_instance_template, disk, True)
+                                    self.original_instance_template, disk)
         # recreate the original instance
         mocks[4].assert_called()
         # no disks are reattached
@@ -95,7 +95,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
-                                    self.original_instance_template, disk, True)
+                                    self.original_instance_template, disk)
         # recreate the original instance
         mocks[4].assert_not_called()
         # disks are reattached
@@ -108,7 +108,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
-                                    self.original_instance_template, disk, True)
+                                    self.original_instance_template, disk)
         # recreate the original instance
         mocks[4].assert_not_called()
         # disks are not reattached
@@ -123,7 +123,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
                                     self.original_instance_template,
-                                    single_disk, False)
+                                    single_disk)
         # check the disk is reattached
         self.assertTrue(mocks[3].call_count, 1)
         # check the instance restarts
@@ -157,8 +157,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         self.assertFalse(
             rollback_failure_protection(self.compute, self.project, self.zone,
                                         self.instance,
-                                        self.original_instance_template, disk,
-                                        False))
+                                        self.original_instance_template, disk))
 
     def test_attach_disk_failed(self, *mocks):
         # An error happens during the rollback procedure
@@ -166,8 +165,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         self.assertFalse(rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
-                                    self.original_instance_template, disk,
-                                    False))
+                                    self.original_instance_template, disk))
 
 
     def test_wait_for_zone_operation_failed(self, *mocks):
@@ -176,5 +174,4 @@ class RollBackOriginalInstance(unittest.TestCase):
         disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         self.assertFalse(rollback_failure_protection(self.compute, self.project, self.zone,
                                     self.instance,
-                                    self.original_instance_template, disk,
-                                    False))
+                                    self.original_instance_template, disk))

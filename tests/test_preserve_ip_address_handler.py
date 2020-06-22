@@ -52,10 +52,14 @@ def read_json_file(filename):
         res = json.load(f)
         f.close()
     return res
+
+
 @patch(
     "vm_network_migration.vm_network_migration.wait_for_region_operation")  # index: 7
-@patch("vm_network_migration.vm_network_migration.preserve_external_ip_address") # index 6
-@patch("vm_network_migration.vm_network_migration.retrieve_instance_template") # index: 5
+@patch(
+    "vm_network_migration.vm_network_migration.preserve_external_ip_address")  # index 6
+@patch(
+    "vm_network_migration.vm_network_migration.retrieve_instance_template")  # index: 5
 @patch("vm_network_migration.vm_network_migration.create_instance")  # index: 4
 @patch("vm_network_migration.vm_network_migration.attach_disk")  # index: 3
 @patch(
@@ -103,7 +107,8 @@ class PreserveIPAddressHandler(unittest.TestCase):
         mocks[6].return_value = {}
         original_instance_template = read_json_file(
             "sample_instance_template.json")
-        original_network_interface = original_instance_template["networkInterfaces"][0]
+        original_network_interface = \
+        original_instance_template["networkInterfaces"][0]
         new_network_interface = preserve_ip_addresses_handler(self.compute,
                                                               self.project,
                                                               self.new_instance,
@@ -123,7 +128,8 @@ class PreserveIPAddressHandler(unittest.TestCase):
     def test_preserve_external_ip_without_http_error(self, *mocks):
         original_instance_template = read_json_file(
             "sample_instance_template.json")
-        original_network_interface = original_instance_template["networkInterfaces"][0]
+        original_network_interface = \
+        original_instance_template["networkInterfaces"][0]
         new_network_interface = preserve_ip_addresses_handler(self.compute,
                                                               self.project,
                                                               self.new_instance,
@@ -145,7 +151,8 @@ class PreserveIPAddressHandler(unittest.TestCase):
         mocks[6].side_effect = HttpError(resp=self.errorResponse, content=b'')
         original_instance_template = read_json_file(
             "sample_instance_template.json")
-        original_network_interface = original_instance_template["networkInterfaces"][0]
+        original_network_interface = \
+        original_instance_template["networkInterfaces"][0]
         new_network_interface = preserve_ip_addresses_handler(self.compute,
                                                               self.project,
                                                               self.new_instance,
@@ -170,7 +177,8 @@ class PreserveIPAddressHandler(unittest.TestCase):
         mocks[6].side_effect = HttpError(resp=self.errorResponse, content=b'')
         original_instance_template = read_json_file(
             "sample_instance_template.json")
-        original_network_interface = original_instance_template["networkInterfaces"][0]
+        original_network_interface = \
+        original_instance_template["networkInterfaces"][0]
         new_network_interface = preserve_ip_addresses_handler(self.compute,
                                                               self.project,
                                                               self.new_instance,
@@ -194,7 +202,8 @@ class PreserveIPAddressHandler(unittest.TestCase):
         mocks[6].side_effect = HttpError(resp=self.errorResponse, content=b'')
         original_instance_template = read_json_file(
             "sample_instance_template.json")
-        original_network_interface = original_instance_template["networkInterfaces"][0]
+        original_network_interface = \
+        original_instance_template["networkInterfaces"][0]
         new_network_interface = preserve_ip_addresses_handler(self.compute,
                                                               self.project,
                                                               self.new_instance,
@@ -215,7 +224,8 @@ class PreserveIPAddressHandler(unittest.TestCase):
         # in the new instance template
         original_instance_template = read_json_file(
             "sample_instance_template_no_natIP.json")
-        original_network_interface = original_instance_template["networkInterfaces"][0]
+        original_network_interface = \
+        original_instance_template["networkInterfaces"][0]
         new_network_interface = preserve_ip_addresses_handler(self.compute,
                                                               self.project,
                                                               self.new_instance,
@@ -236,7 +246,8 @@ class PreserveIPAddressHandler(unittest.TestCase):
         # in the new instance template
         original_instance_template = read_json_file(
             "sample_instance_template_no_external_ip.json")
-        original_network_interface = original_instance_template["networkInterfaces"][0]
+        original_network_interface = \
+        original_instance_template["networkInterfaces"][0]
         new_network_interface = preserve_ip_addresses_handler(self.compute,
                                                               self.project,
                                                               self.new_instance,
