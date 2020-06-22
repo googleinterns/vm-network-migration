@@ -117,7 +117,7 @@ class RollBackOriginalInstance(unittest.TestCase):
         mocks[1].assert_not_called()
 
     def test_single_disk_instance_rollback(self, *mocks):
-        mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
+
         mocks[5].return_value = {'status': "TERMINATED"}
         single_disk = ['{"deviceName": "mock_disk_0", "boot":true}']
         rollback_failure_protection(self.compute, self.project, self.zone,
@@ -130,7 +130,6 @@ class RollBackOriginalInstance(unittest.TestCase):
         self.assertEqual(mocks[1].call_args[0][3], self.instance)
 
     def test_no_disk_info(self, *mocks):
-        mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         mocks[5].return_value = {
             'status': "TERMINATED"}
         rollback_failure_protection(self.compute, self.project, self.zone,
@@ -140,7 +139,6 @@ class RollBackOriginalInstance(unittest.TestCase):
         self.assertEqual(mocks[1].call_args[0][3], self.instance)
 
     def test_multi_disks_instance_rollback(self, *mocks):
-        mocks[0].return_value = (self.MOCK_CREDENTIALS, self.project)
         mocks[5].return_value = {
             'status': "TERMINATED"}
         multi_disk = ['{"deviceName": "mock_disk_0", "boot":true}',
