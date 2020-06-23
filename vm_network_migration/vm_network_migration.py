@@ -569,6 +569,7 @@ def preserve_ip_addresses_handler2(compute, project, new_instance_name,
                 'The external IP address is reserved as a static IP address.')
             return external_ip
 
+    # Use an ephemeral internal IP for the new VM
 
     return None
 
@@ -704,11 +705,12 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         new_address = preserve_ip_addresses_handler2(compute, project, new_instance, external_ip, region, preserve_external_ip)
 
         modify_instance_template_with_external_ip(instance_template, new_address)
-
+        # delete internal ip
+        del instance_template['networkInterfaces'][0]['networkIP']
         print('Modifying instance template')
         new_instance_template = modify_instance_template_with_new_network(
             instance_template, new_instance, new_network_info)
-        modify_instance_template_with_new_name(instance_template, new_instance)
+        new_instance_template = modify_instance_template_with_new_name(instance_template, new_instance)
         operations = Operations(compute, project, zone, region)
         print('Stopping the VM')
         print('stop_instance_operation is running')
@@ -731,10 +733,12 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
         operations.wait_for_zone_operation(delete_instance_operation['name'])
         print('Creating a new VM')
         print('create_instance_operation is running')
+        print(new_instance_template)
         create_instance_operation = create_instance(compute, project, zone,
                                                     new_instance_template)
         operations.wait_for_zone_operation(create_instance_operation['name'])
-    except:
+    except Exception as e:
+        print(e)
         rollback_failure_protection(compute, project, zone, original_instance,
                                     original_instance_template, all_disks_info)
         return
