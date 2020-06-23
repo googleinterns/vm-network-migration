@@ -155,7 +155,7 @@ class Instance:
         self.operations.wait_for_zone_operation(attach_disk_operation['name'])
         return attach_disk_operation
 
-    def attach_disks(self, disks):
+    def attach_disks(self):
         """Attach a disk to the instance
 
         Args:

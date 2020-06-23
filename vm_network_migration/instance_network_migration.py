@@ -6,7 +6,7 @@ from vm_network_migration.address import Address
 from vm_network_migration.instance import Instance, InstanceStatus
 from vm_network_migration.subnet_network import SubnetNetwork
 import warnings
-
+from vm_network_migration.errors import *
 class InstanceNetworkMigration:
     def __init__(self, project, zone):
         self.compute = self.set_compute_engine()
@@ -40,7 +40,7 @@ class InstanceNetworkMigration:
 
     def generate_address(self, instance_template):
         address = Address(self.compute, self.project, self.region)
-        address.retrieve_ip_from_instance_template(
+        address.retrieve_ip_from_network_interface(
             instance_template['networkInterfaces'][0])
         return address
 
@@ -49,8 +49,23 @@ class InstanceNetworkMigration:
                                 self.region, network, subnetwork)
         return network
 
-    def main(self, original_instance_name, new_instance_name, network_name,
+    def network_migration(self, original_instance_name, new_instance_name, network_name,
              subnetwork_name, preserve_external_ip):
+        if preserve_external_ip:
+            warnings.warn(
+                'You choose to preserve the external IP. If the original instance '
+                'has an ephemeral IP, it will be reserved as a static external IP after the '
+                'execution.',
+                Warning)
+            continue_execution = input(
+                'Do you still want to preserve the external IP? y/n: ')
+            if continue_execution == 'n':
+                preserve_external_ip = False
+
+        if new_instance_name == original_instance_name:
+            raise UnchangedInstanceNameError(
+                'The new VM should not have the same name as the original VM')
+
         original_instance = Instance(self.compute, self.project,
                                      original_instance_name, self.region,
                                      self.zone, None)

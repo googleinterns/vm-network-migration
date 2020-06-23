@@ -10,7 +10,21 @@ class SubnetNetwork():
         self.network_link = None
         self.subnetwork_link = None
         self.generate_new_network_info()
+        self.check_subnetwork_validation()
 
+    def check_subnetwork_validation(self):
+        # If the network is auto, then the subnetwork name is optional.
+        # Otherwise it should be specified
+        if self.subnetwork != None:
+            pass
+        automode_status = self.check_network_auto_mode()
+        if self.subnetwork is None:
+            if not automode_status:
+                raise MissingSubnetworkError('No specified subnetwork')
+            else:
+                # the network is in auto mode, the default subnetwork name is the
+                # same as the network name
+                self.subnetwork = self.network
 
     def get_network(self) -> dict:
         """ Get the network information.

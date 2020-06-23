@@ -13,10 +13,9 @@ class Address:
         self.region = region
         self.operations = Operations(compute, project, None, region)
         self.external_ip = external_ip
-        self.internal_ip = None
 
-    def retrieve_ip_from_instance_template(self, network_interface):
-        if 'accessConfigs' in network_interface and 'natIP' in network_interface:
+    def retrieve_ip_from_network_interface(self, network_interface):
+        if 'accessConfigs' in network_interface and 'natIP' in network_interface['accessConfigs'][0]:
             self.external_ip = network_interface['accessConfigs'][0][
                 'natIP']
 
@@ -64,8 +63,8 @@ class Address:
             else:
                 print(
                     'The external IP address is reserved as a static IP address.')
-
-        self.external_ip = None
+        else:
+            self.external_ip = None
 
     def preserve_external_ip_address(self, address_body):
         """ Preserve the external IP address.
