@@ -239,18 +239,15 @@ def modify_instance_template_with_new_network(instance_template, new_instance,
         Returns:
             a dict of the new network interface
     """
-    if 'networkInterfaces' not in instance_template:
-        raise AttributeNotExistError(
-            'networkInterfaces is not in instance_template')
-    elif not isinstance(instance_template['networkInterfaces'], list):
-        raise InvalidTypeError('Invalid value type')
-    if 'name' not in instance_template:
-        raise AttributeNotExistError('name is not in instance_template')
-    instance_template['networkInterfaces'][0] = new_network_info
-    instance_template['name'] = new_instance
+    instance_template['networkInterfaces'][0]['network'] = new_network_info['network']
+    instance_template['networkInterfaces'][0]['subnetwork'] = new_network_info[
+        'subnetwork']
+
     return instance_template
 
-
+def modify_instance_template_with_new_name(instance_template, new_instance):
+    instance_template['name'] = new_instance
+    return instance_template
 def create_instance(compute, project, zone, instance_template) -> dict:
     """ Create the instance using instance template
 
@@ -518,6 +515,63 @@ def preserve_ip_addresses_handler(compute, project, new_instance_name,
 
     return new_network_interface
 
+
+def preserve_ip_addresses_handler2(compute, project, new_instance_name,
+                                  external_ip,
+                                  region,
+                                  preserve_external_ip) -> dict:
+    operations = Operations(compute, project, "", region)
+    """Preserve the external IP address.
+
+    Args:
+        compute: google API compute engine service
+        project: project ID
+        new_instance_name: name of the new VM
+        new_network_info: selfLinks of current network and subnet
+        original_network_interface: network interface of the original VM
+        region: region of original VM
+        preserve_external_ip: preserve the external ip or not
+
+    Returns:
+        network interface of the new VM
+    """
+
+
+    if preserve_external_ip:
+        print('Preserving the external IP address')
+        # There is no external ip assigned to the original VM
+        # An ephemeral external ip will be assigned to the new VM
+
+        external_ip_address_body = generate_external_ip_address_body(
+            external_ip, new_instance_name)
+        try:
+            preserve_external_ip_operation = preserve_external_ip_address(
+                compute, project, region,
+                external_ip_address_body)
+            operations.wait_for_region_operation(preserve_external_ip_operation[
+                                          'name'])
+        except HttpError as e:
+            error_reason = e._get_reason()
+            # The external IP is already preserved as a static IP,
+            # or the current name of the external IP already exists
+            if 'already' in error_reason:
+                warnings.warn(error_reason, Warning)
+                return external_ip
+            else:
+                warnings.warn(
+                    'Failed to preserve the external IP address as a static IP.',
+                    Warning)
+                print(e._get_reason())
+                print('An ephemeral external IP address will be assigned.')
+                return None
+        else:
+            print(
+                'The external IP address is reserved as a static IP address.')
+            return external_ip
+
+
+    return None
+
 def get_instance_status(compute, project, zone, instance):
     try:
         instance_template = retrieve_instance_template(compute, project, zone,
@@ -559,6 +613,22 @@ def generate_timestamp_string() -> str:
     """
     return str(time.strftime("%s", time.gmtime()))
 
+def modify_instance_template_with_external_ip(instance_template, external_ip) -> dict:
+    #no unittest
+    if external_ip == None:
+        if 'accessConfigs' in instance_template['networkInterfaces'][0]:
+            del instance_template['networkInterfaces'][0]['accessConfigs']
+    else:
+        instance_template['networkInterfaces'][0]['accessConfigs'][0][
+            'natIP'] = external_ip
+    return instance_template
+
+def get_external_ip(instance_template)->str:
+    #no unittest
+    try:
+        return instance_template['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+    except:
+        return None
 
 def main(project, zone, original_instance, new_instance, network, subnetwork,
          preserve_external_ip=False):
@@ -620,21 +690,25 @@ def main(project, zone, original_instance, new_instance, network, subnetwork,
             instance_template)
 
         region = get_zone(compute, project, zone)['region']
-        region_name = region.split('regions/')[1]
 
         new_network_info = generate_new_network_info(compute, project, region,
                                                      network, subnetwork)
-        original_network_interface = instance_template['networkInterfaces'][0]
-        new_network_interface = preserve_ip_addresses_handler(compute, project,
-                                                              new_instance,
-                                                              new_network_info,
-                                                              original_network_interface,
-                                                              region_name,
-                                                              preserve_external_ip)
+        # new_network_interface = preserve_ip_addresses_handler(compute, project,
+        #                                                       new_instance,
+        #                                                       new_network_info,
+        #                                                       original_network_interface,
+        #                                                       region_name,
+        #                                                       preserve_external_ip)
+        external_ip = get_external_ip(instance_template)
+
+        new_address = preserve_ip_addresses_handler2(compute, project, new_instance, external_ip, region, preserve_external_ip)
+
+        modify_instance_template_with_external_ip(instance_template, new_address)
 
         print('Modifying instance template')
         new_instance_template = modify_instance_template_with_new_network(
-            instance_template, new_instance, new_network_interface)
+            instance_template, new_instance, new_network_info)
+        modify_instance_template_with_new_name(instance_template, new_instance)
         operations = Operations(compute, project, zone, region)
         print('Stopping the VM')
         print('stop_instance_operation is running')
