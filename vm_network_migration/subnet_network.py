@@ -9,8 +9,8 @@ class SubnetNetwork():
         self.subnetwork = subnetwork
         self.network_link = None
         self.subnetwork_link = None
-        self.generate_new_network_info()
-        self.check_subnetwork_validation()
+
+
 
     def check_subnetwork_validation(self):
         # If the network is auto, then the subnetwork name is optional.

@@ -47,6 +47,9 @@ class InstanceNetworkMigration:
     def generate_network(self, network, subnetwork):
         network = SubnetNetwork(self.compute, self.project, self.zone,
                                 self.region, network, subnetwork)
+        network.check_subnetwork_validation()
+        network.generate_new_network_info()
+
         return network
 
     def network_migration(self, original_instance_name, new_instance_name, network_name,

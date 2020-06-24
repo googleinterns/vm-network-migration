@@ -166,9 +166,9 @@ class TestGenerateExternalIPAddressBody(unittest.TestCase):
         self.assertTrue(self.region in external_ip_address_body["name"])
 
 @patch(
-    "vm_network_migration.operations.Operations.wait_for_region_operation")  # index: 7
+    "vm_network_migration.operations.Operations.wait_for_region_operation")  # index: 1
 @patch(
-    "vm_network_migration.address.Address.preserve_external_ip_address")  # index 6
+    "vm_network_migration.address.Address.preserve_external_ip_address")  # index 0
 class PreserveIPAddressHandler(unittest.TestCase):
     def setUp(self) -> None:
         self.MOCK_CREDENTIALS = mock.Mock(spec=google.auth.credentials.Credentials)
