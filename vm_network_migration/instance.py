@@ -79,8 +79,8 @@ class Instance:
         stop_instance_operation = self.compute.instances().stop(
             project=self.project,
             zone=self.zone,
-            instance=self.instance).execute()
-        Operations.wait_for_zone_operation(stop_instance_operation['name'])
+            instance=self.name).execute()
+        self.operations.wait_for_zone_operation(stop_instance_operation['name'])
         return stop_instance_operation
 
     def get_disks_info_from_instance_template(self) -> list:
@@ -125,12 +125,11 @@ class Instance:
         return detach_disk_operation
 
     def detach_disks(self):
-        if 'disks' not in self.instance_template:
-            raise AttributeNotExistError('No boot disks was found.')
-        for disk in self.instance_template['disks']:
+        disks = self.get_disks_info_from_instance_template()
+        for disk in disks:
             self.detach_disk(disk)
 
-    def attach_disk(self):
+    def attach_disk(self, disk):
         """Attach a disk to the instance
 
         Args:
@@ -171,9 +170,8 @@ class Instance:
         Raises:
             googleapiclient.errors.HttpError: invalid request
         """
-        if 'disks' not in self.instance_template:
-            raise AttributeNotExistError('No boot disks was found.')
-        for disk in self.instance_template['disks']:
+        disks = self.get_disks_info_from_instance_template()
+        for disk in disks:
             self.attach_disk(disk)
 
     def modify_instance_template_with_new_name(self, new_name):
@@ -206,8 +204,11 @@ class Instance:
                 del self.instance_template['networkInterfaces'][0][
                     'accessConfigs']
         else:
+            if 'accessConfigs' not in self.instance_template['networkInterfaces'][0]:
+                self.instance_template['networkInterfaces'][0]['accessConfigs'] = [{}]
             self.instance_template['networkInterfaces'][0]['accessConfigs'][0][
                 'natIP'] = external_ip
+
         if 'networkIP' in self.instance_template['networkInterfaces'][0]:
             del self.instance_template['networkInterfaces'][0]['networkIP']
         return self.instance_template
