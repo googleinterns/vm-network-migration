@@ -1,3 +1,20 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""
+Test instance_network_migration.py
+"""
+
 from unittest.mock import patch
 
 import httplib2
@@ -291,7 +308,7 @@ class TestNetworkMigration(unittest.TestCase):
             "status": 404,
             "reason": "HttpMock response: the IP address already exists"})
         request_builder.responses["compute.addresses.insert"] = (
-        errorResponse, b'')
+            errorResponse, b'')
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
         mocks[0].return_value = compute
@@ -328,7 +345,7 @@ class TestNetworkMigration(unittest.TestCase):
             "status": 200,
             "reason": "H"})
         request_builder.responses["compute.networks.get"] = (
-        successResponse, b'')
+            successResponse, b'')
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
         mocks[0].return_value = compute

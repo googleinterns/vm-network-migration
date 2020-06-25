@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Test googleapi http calls
+Test address.py
 """
 
 import httplib2

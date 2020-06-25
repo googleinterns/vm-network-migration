@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Test googleapi http calls
+Test subnet_network.py
 """
 
-from unittest.mock import patch
-
 import httplib2
+import mock
 import unittest2 as unittest
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
@@ -25,7 +24,7 @@ from googleapiclient.http import RequestMockBuilder
 from utils import *
 from vm_network_migration.subnet_network import SubnetNetwork
 from vm_network_migration.vm_network_migration import *
-import mock
+
 
 class TestCheckSubnetworkValidation(unittest.TestCase):
 
@@ -37,7 +36,6 @@ class TestCheckSubnetworkValidation(unittest.TestCase):
         SubnetNetwork.check_subnetwork_validation(subnet_network)
         self.assertEqual(subnet_network.subnetwork, mock_subnetwork_name)
 
-
     def test_subnetwork_is_none_in_auto_mode(self):
         network_name = "mock-network"
         subnet_network = mock.MagicMock()
@@ -46,7 +44,6 @@ class TestCheckSubnetworkValidation(unittest.TestCase):
         subnet_network.check_network_auto_mode.return_value = True
         SubnetNetwork.check_subnetwork_validation(subnet_network)
         self.assertEqual(subnet_network.subnetwork, network_name)
-
 
     def test_subnetwork_not_none_in_custom_mode(self):
         subnetwork_name = "mock-subnetwork"
@@ -57,7 +54,6 @@ class TestCheckSubnetworkValidation(unittest.TestCase):
         subnet_network.check_network_auto_mode.return_value = False
         SubnetNetwork.check_subnetwork_validation(subnet_network)
         self.assertEqual(subnet_network.subnetwork, subnetwork_name)
-
 
     def test_subnetwork_is_none_in_custom_mode(self):
         network_name = "mock-network"
@@ -71,7 +67,6 @@ class TestCheckSubnetworkValidation(unittest.TestCase):
 
 
 class TestGetNetwork(unittest.TestCase):
-
     project = "mock_project"
     zone = "mock_us_central1_a"
     region = "mock_us_central1"
@@ -101,7 +96,6 @@ class TestGetNetwork(unittest.TestCase):
                 "name": "bar"}
         )
 
-
     def test_preserve_external_ip_failure(self):
         request_builder = RequestMockBuilder(
             {
@@ -115,15 +109,20 @@ class TestGetNetwork(unittest.TestCase):
         with self.assertRaises(HttpError):
             subnet.get_network()
 
+
 class TestGenerateNewNetworkInfo(unittest.TestCase):
     def test_basic(self):
         subnet_network = mock.MagicMock()
-        subnet_network.get_network.return_value = {'selfLink': 'https://www.googleapis.com/compute/v1/projects/mock_project/global/networks/target-network'}
+        subnet_network.get_network.return_value = {
+            'selfLink': 'https://www.googleapis.com/compute/v1/projects/mock_project/global/networks/target-network'}
         subnet_network.subnetwork = 'target-subnetwork'
         subnet_network.region = 'mock-region'
         SubnetNetwork.generate_new_network_info(subnet_network)
-        self.assertEqual(subnet_network.network_link,subnet_network.get_network.return_value['selfLink'])
-        self.assertEqual(subnet_network.subnetwork_link, 'regions/mock-region/subnetworks/target-subnetwork')
+        self.assertEqual(subnet_network.network_link,
+                         subnet_network.get_network.return_value['selfLink'])
+        self.assertEqual(subnet_network.subnetwork_link,
+                         'regions/mock-region/subnetworks/target-subnetwork')
+
 
 class TestCheckNetworkAutoMode(unittest.TestCase):
 

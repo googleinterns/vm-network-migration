@@ -1,12 +1,29 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""
+Test instance.py
+"""
+
 from unittest.mock import patch
 
 import httplib2
+import mock
 import unittest2 as unittest
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
-import mock
 from vm_network_migration.instance import (
     Instance,
     InstanceStatus,
@@ -161,9 +178,9 @@ class TestStopInstance(unittest.TestCase):
 class TestGetDisksInfoFromInstanceTemplate(unittest.TestCase):
 
     def test_basic(self):
-
         instance = mock.MagicMock()
-        instance.instance_template = read_json_file("sample_instance_template.json")
+        instance.instance_template = read_json_file(
+            "sample_instance_template.json")
         disks = Instance.get_disks_info_from_instance_template(instance)
         self.assertEqual(disks, instance.instance_template['disks'])
 
@@ -274,8 +291,10 @@ class TestAttachDisk(unittest.TestCase):
 class TestModifyInstanceTemplateWithNewName(unittest.TestCase):
     def test_basic(self):
         instance = mock.MagicMock()
-        instance.instance_template = {"name": "original-instance"}
-        Instance.modify_instance_template_with_new_name(instance, "new-instance")
+        instance.instance_template = {
+            "name": "original-instance"}
+        Instance.modify_instance_template_with_new_name(instance,
+                                                        "new-instance")
         self.assertEqual(instance.instance_template["name"], "new-instance")
 
 
@@ -289,7 +308,8 @@ class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
         instance.instance_template = instance_template
         new_network_link = "new_network_link"
         new_subnetwork_link = "new_subnetwork_link"
-        Instance.modify_instance_template_with_new_network(instance, new_network_link,
+        Instance.modify_instance_template_with_new_network(instance,
+                                                           new_network_link,
                                                            new_subnetwork_link)
         self.assertEqual(
             instance.instance_template['networkInterfaces'][0]['network'],
@@ -305,7 +325,8 @@ class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
         instance.instance_template = instance_template
         new_network_link = "new_network_link"
         new_subnetwork_link = "new_subnetwork_link"
-        Instance.modify_instance_template_with_new_network(instance, new_network_link,
+        Instance.modify_instance_template_with_new_network(instance,
+                                                           new_network_link,
                                                            new_subnetwork_link)
         self.assertEqual(
             instance.instance_template['networkInterfaces'][0]['network'],
@@ -315,10 +336,8 @@ class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
             new_subnetwork_link)
 
 
-
 class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
     def test_external_ip_is_none(self):
-
         instance = mock.MagicMock()
         instance.instance_template = read_json_file(
             "sample_instance_template_legacy_network.json")
@@ -478,22 +497,19 @@ class TestCreateInstance(unittest.TestCase):
 
 class TestGetInstanceStatus(unittest.TestCase):
 
-
     def test_instance_with_status_running(self):
-
         instance = mock.MagicMock()
-        instance.retrieve_instance_template.return_value = {"status":"RUNNING"}
+        instance.retrieve_instance_template.return_value = {
+            "status": "RUNNING"}
         instance_status = Instance.get_instance_status(instance)
         self.assertEqual(instance_status, InstanceStatus.RUNNING)
 
     def test_instance_with_status_stopping(self):
-
-
         instance = mock.MagicMock()
-        instance.retrieve_instance_template.return_value = {"status":"STOPPING"}
+        instance.retrieve_instance_template.return_value = {
+            "status": "STOPPING"}
         instance_status = Instance.get_instance_status(instance)
         self.assertEqual(instance_status, InstanceStatus.STOPPING)
-
 
     def test_instance_with_status_terminated(self):
         instance = mock.MagicMock()
@@ -502,17 +518,17 @@ class TestGetInstanceStatus(unittest.TestCase):
         instance_status = Instance.get_instance_status(instance)
         self.assertEqual(instance_status, InstanceStatus.TERMINATED)
 
-
     def test_instance_with_status_delete(self):
         errorResponse = httplib2.Response({
             "status": 400})
         errorResponse.reason = "HttpMock response: instance is not found"
         instance = mock.MagicMock()
-        instance.retrieve_instance_template.side_effect = HttpError(resp=errorResponse, content=b'')
+        instance.retrieve_instance_template.side_effect = HttpError(
+            resp=errorResponse, content=b'')
         instance_status = Instance.get_instance_status(instance)
         self.assertEqual(instance_status, InstanceStatus.NOTEXISTS)
-    def test_instance_with_other_http_error(self):
 
+    def test_instance_with_other_http_error(self):
         errorResponse = httplib2.Response({
             "status": 400})
         errorResponse.reason = "HttpMock response: others"
