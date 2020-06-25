@@ -14,7 +14,7 @@ class InstanceNetworkMigration:
         self.zone = zone
         self.region = self.get_region()
         self.origin_instance = None
-        self.new_instance_name = None
+        self.new_instance = None
 
     def set_compute_engine(self):
         credentials, default_project = google.auth.default()
@@ -64,26 +64,26 @@ class InstanceNetworkMigration:
                 'Do you still want to preserve the external IP? y/n: ')
             if continue_execution == 'n':
                 preserve_external_ip = False
-
-        if new_instance_name == original_instance_name:
-            raise UnchangedInstanceNameError(
-                'The new VM should not have the same name as the original VM')
-
-        original_instance = Instance(self.compute, self.project,
-                                     original_instance_name, self.region,
-                                     self.zone, None)
         try:
+            if new_instance_name == original_instance_name:
+                raise UnchangedInstanceNameError(
+                    'The new VM should not have the same name as the original VM. The migration process didn\'t start')
+
+            original_instance = Instance(self.compute, self.project,
+                                         original_instance_name, self.region,
+                                         self.zone, None)
+
             original_instance.retrieve_instance_template()
 
-            new_instance = Instance(self.compute, self.project, new_instance_name,
+            self.new_instance = Instance(self.compute, self.project, new_instance_name,
                                     self.region, self.zone, copy.deepcopy(
                     original_instance.instance_template))
-            new_instance.address = self.generate_address(
-                new_instance.instance_template)
-            new_instance.address.preserve_ip_addresses_handler(preserve_external_ip)
-            new_instance.network = self.generate_network(network_name,
+            self.new_instance.address = self.generate_address(
+                self.new_instance.instance_template)
+            self.new_instance.address.preserve_ip_addresses_handler(preserve_external_ip)
+            self.new_instance.network = self.generate_network(network_name,
                                                          subnetwork_name)
-            new_instance.update_instance_template()
+            self.new_instance.update_instance_template()
 
             original_instance.stop_instance()
 
@@ -99,13 +99,13 @@ class InstanceNetworkMigration:
             original_instance.delete_instance()
             print('Creating a new VM.')
             print('create_instance_operation is running.')
-            print('DEBUGGING:', new_instance.instance_template)
+            print('DEBUGGING:', self.new_instance.instance_template)
 
-            new_instance.create_instance()
+            self.new_instance.create_instance()
             print('The migration is successful.')
 
         except Exception as e:
-            print(e)
+            warnings.warn(str(e), Warning)
             self.rollback_failure_protection()
             return
 
@@ -129,7 +129,7 @@ class InstanceNetworkMigration:
             warnings.warn(
                 'VM network migration is failed. Rolling back to the original VM.',
                 Warning)
-            if self.origin_instance.instance_template == None:
+            if self.origin_instance == None or self.origin_instance.instance_template == None:
                 print('Cannot get instance\'s resource. Please check the parameters and try again.')
                 pass
             instance_status = self.origin_instance.get_instance_status()
