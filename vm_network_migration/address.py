@@ -1,3 +1,19 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+""" Address class describes a instance's IP address and handle the related methods
+
+"""
 import warnings
 
 from googleapiclient.errors import HttpError
@@ -8,6 +24,13 @@ from vm_network_migration.utils import generate_timestamp_string
 
 class Address:
     def __init__(self, compute, project, region, external_ip=None):
+        """ Initialize an Address object
+        Args:
+            compute: google api compute engine
+            project: project ID
+            region: region of the instance
+            external_ip: external IP address, such as "123.123.123.123"
+        """
         self.compute = compute
         self.project = project
         self.region = region
@@ -15,6 +38,28 @@ class Address:
         self.external_ip = external_ip
 
     def retrieve_ip_from_network_interface(self, network_interface):
+        """ Get external IP address from the network interface dict
+        and update self.external_ip
+
+        Args:
+            network_interface: the network interface dictionary, such as
+            {
+              "network": "https://www.googleapis.com/compute/v1/projects/mock_project/global/networks/default",
+              "networkIP": "10.128.0.9",
+              "accessConfigs": [
+                {
+                  "type": "ONE_TO_ONE_NAT",
+                  "name": "External NAT",
+                  "natIP": "23.24.5.64",
+                  "networkTier": "PREMIUM",
+                  "kind": "compute#accessConfig"
+                }
+              ]
+            }
+
+        Returns: None
+
+        """
         if 'accessConfigs' in network_interface and 'natIP' in network_interface['accessConfigs'][0]:
             self.external_ip = network_interface['accessConfigs'][0][
                 'natIP']
@@ -22,19 +67,11 @@ class Address:
             self.external_ip = None
 
     def preserve_ip_addresses_handler(self, preserve_external_ip):
-        """Preserve the external IP address.
+        """Preserve the IP address.
 
         Args:
-            compute: google API compute engine service
-            project: project ID
-            new_instance_name: name of the new VM
-            new_network_info: selfLinks of current network and subnet
-            original_network_interface: network interface of the original VM
-            region: region of original VM
-            preserve_external_ip: preserve the external ip or not
+            preserve_external_ip: bool for preserving the external ip or not
 
-        Returns:
-            network interface of the new VM
         """
 
         if preserve_external_ip and self.external_ip != None:
@@ -72,9 +109,6 @@ class Address:
         """ Preserve the external IP address.
 
         Args:
-            compute: google API compute engine service
-            project: project ID
-            region: project region
             address_body: internal IP address information, such as
                {
                   name: "ADDRESS_NAME",
@@ -96,10 +130,6 @@ class Address:
 
     def generate_external_ip_address_body(self):
         """Generate external IP address.
-
-        Args:
-            external_ip_address: IPV4 format address
-            new_instance_name: name of the new VM
 
         Returns:
               {
