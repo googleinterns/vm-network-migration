@@ -14,7 +14,6 @@
 """
 Test googleapi http calls
 """
-from unittest.mock import patch
 
 import httplib2
 import mock
@@ -118,7 +117,8 @@ class TestGenerateExternalIPAddressBody(unittest.TestCase):
         address.external_ip = external_ip_address
         address.project = "mock-project"
         address.region = "mock-region"
-        external_ip_address_body = Address.generate_external_ip_address_body(address)
+        external_ip_address_body = Address.generate_external_ip_address_body(
+            address)
         self.assertEqual(external_ip_address_body["address"],
                          external_ip_address)
 
@@ -126,19 +126,16 @@ class TestGenerateExternalIPAddressBody(unittest.TestCase):
         self.assertTrue(address.region in external_ip_address_body["name"])
 
 
-
 class TestPreserveIPAddressHandler(unittest.TestCase):
     def setUp(self) -> None:
-
         self.errorResponse = httplib2.Response({
             "status": 404,
             "reason": "HttpMock response: invalid network"})
 
-
     def test_not_preserve_external_ip(self):
         address = mock.MagicMock()
         address.external_ip = "123.123.123.123"
-        Address.preserve_ip_addresses_handler(address,False)
+        Address.preserve_ip_addresses_handler(address, False)
         self.assertIsNone(address.external_ip)
 
     def test_external_ip_is_none(self):
@@ -156,11 +153,11 @@ class TestPreserveIPAddressHandler(unittest.TestCase):
         self.assertTrue(address.external_ip, "123.123.123.123")
 
     def test_preserve_an_existing_static_external_ip(self):
-
         self.errorResponse.reason = "HttpMock response: the IP's name already exists"
         address = mock.MagicMock()
         address.external_ip = "123.123.123.123"
-        address.preserve_external_ip_address.side_effect = HttpError(resp=self.errorResponse, content=b'')
+        address.preserve_external_ip_address.side_effect = HttpError(
+            resp=self.errorResponse, content=b'')
         Address.preserve_ip_addresses_handler(address, True)
         self.assertTrue(address.external_ip, "123.123.123.123")
 
