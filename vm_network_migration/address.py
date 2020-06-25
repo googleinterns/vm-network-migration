@@ -18,6 +18,8 @@ class Address:
         if 'accessConfigs' in network_interface and 'natIP' in network_interface['accessConfigs'][0]:
             self.external_ip = network_interface['accessConfigs'][0][
                 'natIP']
+        else:
+            self.external_ip = None
 
     def preserve_ip_addresses_handler(self, preserve_external_ip):
         """Preserve the external IP address.
