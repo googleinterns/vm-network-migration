@@ -14,7 +14,9 @@
 """ Operations class: support operation related methods
 """
 import time
+
 from vm_network_migration.errors import *
+
 
 class Operations:
     def __init__(self, compute, project, zone=None, region=None):

@@ -60,7 +60,8 @@ class Address:
         Returns: None
 
         """
-        if 'accessConfigs' in network_interface and 'natIP' in network_interface['accessConfigs'][0]:
+        if 'accessConfigs' in network_interface and 'natIP' in \
+                network_interface['accessConfigs'][0]:
             self.external_ip = network_interface['accessConfigs'][0][
                 'natIP']
         else:

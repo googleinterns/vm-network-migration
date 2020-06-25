@@ -15,6 +15,8 @@
 
 """
 import time
+
+
 def generate_timestamp_string() -> str:
     """Generate the current timestamp.
 

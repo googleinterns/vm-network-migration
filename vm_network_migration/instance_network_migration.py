@@ -40,14 +40,19 @@ Run the script by terminal, for example:
 
 """
 import copy
+import warnings
 
 import google.auth
 from googleapiclient import discovery
 from vm_network_migration.address import Address
-from vm_network_migration.instance import Instance, InstanceStatus
-from vm_network_migration.subnet_network import SubnetNetwork
-import warnings
 from vm_network_migration.errors import *
+from vm_network_migration.instance import (
+    Instance,
+    InstanceStatus,
+)
+from vm_network_migration.subnet_network import SubnetNetwork
+
+
 class InstanceNetworkMigration:
     def __init__(self, project, zone):
         """ Initialize a InstanceNetworkMigration object
@@ -116,8 +121,9 @@ class InstanceNetworkMigration:
 
         return network
 
-    def network_migration(self, original_instance_name, new_instance_name, network_name,
-             subnetwork_name, preserve_external_ip):
+    def network_migration(self, original_instance_name, new_instance_name,
+                          network_name,
+                          subnetwork_name, preserve_external_ip):
         """ The main method of the instance network migration process
 
         Args:
@@ -146,19 +152,22 @@ class InstanceNetworkMigration:
                     'The new VM should not have the same name as the original VM. The migration process didn\'t start')
 
             self.original_instance = Instance(self.compute, self.project,
-                                         original_instance_name, self.region,
-                                         self.zone, None)
+                                              original_instance_name,
+                                              self.region,
+                                              self.zone, None)
 
             self.original_instance.retrieve_instance_template()
 
-            self.new_instance = Instance(self.compute, self.project, new_instance_name,
-                                    self.region, self.zone, copy.deepcopy(
+            self.new_instance = Instance(self.compute, self.project,
+                                         new_instance_name,
+                                         self.region, self.zone, copy.deepcopy(
                     self.original_instance.instance_template))
             self.new_instance.address = self.generate_address(
                 self.new_instance.instance_template)
-            self.new_instance.address.preserve_ip_addresses_handler(preserve_external_ip)
+            self.new_instance.address.preserve_ip_addresses_handler(
+                preserve_external_ip)
             self.new_instance.network = self.generate_network(network_name,
-                                                         subnetwork_name)
+                                                              subnetwork_name)
             self.new_instance.update_instance_template()
 
             self.original_instance.stop_instance()
@@ -185,8 +194,6 @@ class InstanceNetworkMigration:
             self.rollback_failure_protection()
             return
 
-
-
     def rollback_original_instance(self):
         """ Roll back to the original VM. Reattach the disks to the
         original instance and restart it.
@@ -199,7 +206,8 @@ class InstanceNetworkMigration:
             'VM network migration is failed. Rolling back to the original VM.',
             Warning)
         if self.original_instance == None or self.original_instance.instance_template == None:
-            print('Cannot get instance\'s resource. Please check the parameters and try again.')
+            print(
+                'Cannot get instance\'s resource. Please check the parameters and try again.')
             return
         instance_status = self.original_instance.get_instance_status()
 

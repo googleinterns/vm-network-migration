@@ -15,8 +15,11 @@
 
 """
 from vm_network_migration.errors import *
+
+
 class SubnetNetwork():
-    def __init__(self, compute, project, zone, region, network, subnetwork=None):
+    def __init__(self, compute, project, zone, region, network,
+                 subnetwork=None):
         """ Initialize a SubnetNetwork object.
             If the network is auto, then the subnetwork name is optional;
             otherwise, it should be specified
@@ -36,8 +39,6 @@ class SubnetNetwork():
         self.subnetwork = subnetwork
         self.network_link = None
         self.subnetwork_link = None
-
-
 
     def check_subnetwork_validation(self):
         """ Check if the current subnetwork is a potential valid subnetwork
@@ -74,7 +75,7 @@ class SubnetNetwork():
     def generate_new_network_info(self):
         network_parameters = self.get_network()
         self.network_link = network_parameters['selfLink']
-        self.subnetwork_link = 'regions/'+ self.region + '/subnetworks/' + self.subnetwork
+        self.subnetwork_link = 'regions/' + self.region + '/subnetworks/' + self.subnetwork
 
     def check_network_auto_mode(self) -> bool:
         """ Check if the network is in auto mode
@@ -91,4 +92,3 @@ class SubnetNetwork():
                 'The target network is not a subnetwork mode network')
         auto_mode_status = network_info['autoCreateSubnetworks']
         return auto_mode_status
-

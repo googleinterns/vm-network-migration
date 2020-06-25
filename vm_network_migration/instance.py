@@ -14,8 +14,9 @@
 """ Instance class: describe an instance
     InstanceStatus class: describe an instance's current status
 """
-from googleapiclient.errors import HttpError
 from enum import Enum
+
+from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.operations import Operations
 
@@ -209,8 +210,10 @@ class Instance(object):
                 del self.instance_template['networkInterfaces'][0][
                     'accessConfigs']
         else:
-            if 'accessConfigs' not in self.instance_template['networkInterfaces'][0]:
-                self.instance_template['networkInterfaces'][0]['accessConfigs'] = [{}]
+            if 'accessConfigs' not in \
+                    self.instance_template['networkInterfaces'][0]:
+                self.instance_template['networkInterfaces'][0][
+                    'accessConfigs'] = [{}]
             self.instance_template['networkInterfaces'][0]['accessConfigs'][0][
                 'natIP'] = external_ip
 
@@ -280,7 +283,8 @@ class Instance(object):
             project=self.project,
             zone=self.zone,
             instance=self.name).execute()
-        self.operations.wait_for_zone_operation(delete_instance_operation['name'])
+        self.operations.wait_for_zone_operation(
+            delete_instance_operation['name'])
         return delete_instance_operation
 
 
@@ -292,6 +296,7 @@ class InstanceStatus(Enum):
     RUNNING = "RUNNING"
     STOPPING = "STOPPING"
     TERMINATED = "TERMINATED"
+
     def __eq__(self, other):
         """ Override __eq__ function
 
