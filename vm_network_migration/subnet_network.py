@@ -47,7 +47,7 @@ class SubnetNetwork():
     def generate_new_network_info(self):
         network_parameters = self.get_network()
         self.network_link = network_parameters['selfLink']
-        self.subnetwork_link = self.network_link.split('global')[0] + 'regions/' + self.region + '/subnetworks/' + self.subnetwork
+        self.subnetwork_link = self.region + '/subnetworks/' + self.subnetwork
 
     def check_network_auto_mode(self) -> bool:
         """ Check if the network is in auto mode
@@ -69,5 +69,6 @@ class SubnetNetwork():
             raise InvalidTargetNetworkError(
                 'The target network is not a subnetwork mode network')
         auto_mode_status = network_info['autoCreateSubnetworks']
+        print('222222:', auto_mode_status)
         return auto_mode_status
 

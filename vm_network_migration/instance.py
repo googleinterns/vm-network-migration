@@ -4,7 +4,7 @@ from vm_network_migration.errors import *
 from vm_network_migration.operations import Operations
 
 
-class Instance:
+class Instance(object):
     def __init__(self, compute, project, name, region, zone,
                  instance_template=None):
         self.compute = compute
@@ -126,8 +126,8 @@ class Instance:
 
     def detach_disks(self):
         disks = self.get_disks_info_from_instance_template()
-        for disk in disks:
-            self.detach_disk(disk)
+        for diskInfo in disks:
+            self.detach_disk(diskInfo['deviceName'])
 
     def attach_disk(self, disk):
         """Attach a disk to the instance
@@ -171,8 +171,8 @@ class Instance:
             googleapiclient.errors.HttpError: invalid request
         """
         disks = self.get_disks_info_from_instance_template()
-        for disk in disks:
-            self.attach_disk(disk)
+        for diskInfo in disks:
+            self.attach_disk(diskInfo['deviceName'])
 
     def modify_instance_template_with_new_name(self, new_name):
         self.instance_template['name'] = new_name
@@ -284,3 +284,5 @@ class InstanceStatus(Enum):
     RUNNING = "RUNNING"
     STOPPING = "STOPPING"
     TERMINATED = "TERMINATED"
+    def __eq__(self, other):
+        return self.value == other.value

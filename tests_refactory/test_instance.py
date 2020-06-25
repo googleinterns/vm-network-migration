@@ -1,5 +1,3 @@
-import json
-import os
 from unittest.mock import patch
 
 import httplib2
@@ -7,38 +5,12 @@ import unittest2 as unittest
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
+from utils import *
 from vm_network_migration.instance import (
     Instance,
     InstanceStatus,
 )
 from vm_network_migration.vm_network_migration import *
-
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-
-
-def datafile(filename):
-    """Generate path of the file
-    Args:
-        filename: file name
-
-    Returns: the file path
-
-    """
-    return os.path.join(DATA_DIR, filename)
-
-
-def read_json_file(filename):
-    """Read *.json file
-    Args:
-        filename: json file name
-
-    Returns: a Python object
-
-    """
-    with open(datafile(filename)) as f:
-        res = json.load(f)
-        f.close()
-    return res
 
 
 class TestRetrieveInstanceTemplate(unittest.TestCase):

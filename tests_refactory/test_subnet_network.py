@@ -15,46 +15,17 @@
 Test googleapi http calls
 """
 
-import json
-import os
+from unittest.mock import patch
 
 import httplib2
-import timeout_decorator
 import unittest2 as unittest
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
-from vm_network_migration.vm_network_migration import *
+from utils import *
 from vm_network_migration.subnet_network import SubnetNetwork
-import mock
-from unittest.mock import patch
-from google.auth import credentials
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+from vm_network_migration.vm_network_migration import *
 
-
-def datafile(filename):
-    """Generate path of the file
-    Args:
-        filename: file name
-
-    Returns: the file path
-
-    """
-    return os.path.join(DATA_DIR, filename)
-
-
-def read_json_file(filename):
-    """Read *.json file
-    Args:
-        filename: json file name
-
-    Returns: a Python object
-
-    """
-    with open(datafile(filename)) as f:
-        res = json.load(f)
-        f.close()
-    return res
 
 @patch(
     "vm_network_migration.subnet_network.SubnetNetwork.generate_new_network_info")  # index 0
