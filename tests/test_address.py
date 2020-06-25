@@ -23,8 +23,7 @@ from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
 from vm_network_migration.address import Address
-from vm_network_migration.vm_network_migration import *
-
+from googleapiclient.http import HttpError
 
 class TestRetrieveIpFromInstanceTemplate(unittest.TestCase):
 
@@ -104,10 +103,10 @@ class TestPreserveExternalIpAddress(unittest.TestCase):
                 )})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
-
+        address = Address(compute, self.project, self.region)
         with self.assertRaises(HttpError):
-            preserve_external_ip_address(compute, self.project, self.region,
-                                         self.external_ip_address_body)
+            address.preserve_external_ip_address(
+                self.external_ip_address_body)
 
 
 class TestGenerateExternalIPAddressBody(unittest.TestCase):

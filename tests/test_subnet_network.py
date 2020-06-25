@@ -23,8 +23,7 @@ from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
 from vm_network_migration.subnet_network import SubnetNetwork
-from vm_network_migration.vm_network_migration import *
-
+from vm_network_migration.errors import *
 
 class TestCheckSubnetworkValidation(unittest.TestCase):
 

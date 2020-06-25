@@ -21,8 +21,10 @@ import unittest2 as unittest
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
+from googleapiclient.http import HttpError
+from vm_network_migration.operations import Operations
+from vm_network_migration.errors import *
 from utils import *
-from vm_network_migration.vm_network_migration import *
 
 
 class TestWaitForZoneOperation(unittest.TestCase):

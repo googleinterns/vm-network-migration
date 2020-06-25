@@ -23,14 +23,13 @@ import unittest2 as unittest
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
+from googleapiclient.http import HttpError
 from utils import *
 from vm_network_migration.instance import (
     InstanceStatus,
 )
 from vm_network_migration.instance_network_migration import InstanceNetworkMigration
 from vm_network_migration.subnet_network import SubnetNetwork
-from vm_network_migration.vm_network_migration import *
-
 
 @patch(
     "vm_network_migration.instance_network_migration.InstanceNetworkMigration.set_compute_engine")  # index 0
@@ -51,7 +50,7 @@ class TestGetRegion(unittest.TestCase):
         request_builder = RequestMockBuilder(
             {
                 "compute.zones.get": (
-                    self.successResponse, '{"region": "mock_region"}')})
+                    self.successResponse, '{"region": "regions/mock_region"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
         mocks[0].return_value = compute
@@ -381,8 +380,7 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-network",
                                                      "mock-subnetwork",
                                                      False)
-
-        instance_network_migration.new_instance.create_instance.assert_not_called()
+        self.assertIsNone(instance_network_migration.new_instance)
         mocks[2].assert_called()
 
     def test_no_subnetwork_in_auto_network_mode(self, *mocks):
