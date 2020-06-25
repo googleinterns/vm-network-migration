@@ -1,3 +1,19 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+""" Instance class: describe an instance
+    InstanceStatus class: describe an instance's current status
+"""
 from googleapiclient.errors import HttpError
 from enum import Enum
 from vm_network_migration.errors import *
@@ -7,6 +23,16 @@ from vm_network_migration.operations import Operations
 class Instance(object):
     def __init__(self, compute, project, name, region, zone,
                  instance_template=None):
+        """ Initialize an instance object
+
+        Args:
+            compute: google compute engine
+            project: project ID
+            name: name of the instance
+            region: region of the instance
+            zone: zone of the instance
+            instance_template: the instance template of the instance
+        """
         self.compute = compute
         self.name = name
         self.region = region
@@ -20,14 +46,8 @@ class Instance(object):
     def retrieve_instance_template(self) -> dict:
         """ Get the instance template from an instance.
 
-        Args:
-            compute: google API compute engine service
-            project: project ID
-            zone: zone of the VM
-            instance: name of the VM
-
         Returns:
-            instance template
+            instance template of self.instance
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
@@ -40,12 +60,6 @@ class Instance(object):
 
     def start_instance(self) -> dict:
         """ Start the instance.
-
-        Args:
-            compute: google API compute engine service
-            project: project ID
-            zone: zone of the VM
-            instance: name of the VM
 
         Returns:
             a deserialized object of the response
@@ -64,12 +78,6 @@ class Instance(object):
     def stop_instance(self) -> dict:
         """ Stop the instance.
 
-        Args:
-            compute: google API compute engine service
-            project: project ID
-            zone: zone of the VM
-            instance: name of the VM
-
         Returns:
             a deserialized object of the response
 
@@ -86,9 +94,6 @@ class Instance(object):
     def get_disks_info_from_instance_template(self) -> list:
         """ Get disks' info from the instance template.
 
-        Args:
-            instance_template: a dict of the instance template
-
         Returns:
             a list of disks' info
 
@@ -103,10 +108,6 @@ class Instance(object):
         """ Detach a disk from the instance
 
         Args:
-            compute: google API compute engine service
-            project: project ID
-            zone: zone of the VM
-            instance: name of the VM
             disk: name of the disk
 
         Returns:
@@ -125,6 +126,11 @@ class Instance(object):
         return detach_disk_operation
 
     def detach_disks(self):
+        """ Detach all the disks retrieved from self.instance_template
+
+        Returns: None
+
+        """
         disks = self.get_disks_info_from_instance_template()
         for diskInfo in disks:
             self.detach_disk(diskInfo['deviceName'])
@@ -133,10 +139,6 @@ class Instance(object):
         """Attach a disk to the instance
 
         Args:
-            compute: google API compute engine service
-            project: project ID
-            zone: zone of the VM
-            instance: name of the VM
             disk: deserialized info of the disk
 
         Returns:
@@ -155,40 +157,36 @@ class Instance(object):
         return attach_disk_operation
 
     def attach_disks(self):
-        """Attach a disk to the instance
+        """ Attach all the disks retrieved from self.instance_template
 
-        Args:
-            compute: google API compute engine service
-            project: project ID
-            zone: zone of the VM
-            instance: name of the VM
-            disk: deserialized info of the disk
-
-        Returns:
-            a deserialized object of the response
-
-        Raises:
-            googleapiclient.errors.HttpError: invalid request
+        Returns: None
         """
         disks = self.get_disks_info_from_instance_template()
         for diskInfo in disks:
             self.attach_disk(diskInfo['deviceName'])
 
     def modify_instance_template_with_new_name(self, new_name):
+        """ Modify the instance template with the new name
+
+        Args:
+            new_name: new instance name
+
+        Returns: modified instance template
+
+        """
         self.instance_template['name'] = new_name
         return self.instance_template
 
     def modify_instance_template_with_new_network(self, new_network_link,
                                                   new_subnetwork_link) -> dict:
-        """ Modify the instance template with the new network interface
+        """ Modify the instance template with the new network links
 
             Args:
-                instance_template: dictionary of the instance template
-                new_instance: name of the new VM
-                new_network_info: dictionary of the new network interface
+                new_network_link: the selflink of the network
+                new_subnetwork_link: the selflink of the subnetwork
 
             Returns:
-                a dict of the new network interface
+                modified instance template
         """
         self.instance_template['networkInterfaces'][0][
             'network'] = new_network_link
@@ -197,7 +195,14 @@ class Instance(object):
         return self.instance_template
 
     def modify_instance_template_with_external_ip(self, external_ip) -> dict:
-        # no unittest
+        """ Modify the instance template with the given external IP address
+
+        Args:
+            external_ip: external IP address, such as "123.213.213.123"
+
+        Returns: modified instance template
+
+        """
         if external_ip == None:
             if 'accessConfigs' in self.instance_template['networkInterfaces'][
                 0]:
@@ -214,6 +219,11 @@ class Instance(object):
         return self.instance_template
 
     def update_instance_template(self):
+        """ Update the instance template with current attributes
+
+        Returns: None
+
+        """
         if self.address == None or self.network == None:
             raise AttributeNotExistError('Missing address or network object.')
         self.modify_instance_template_with_new_name(self.name)
@@ -222,11 +232,18 @@ class Instance(object):
             self.network.network_link, self.network.subnetwork_link)
 
     def get_instance_status(self):
+        """ Get current instance's status.
+
+        Returns: an InstanceStatus object
+        Raises: HttpError for incorrect response
+
+        """
         try:
             instance_template = self.retrieve_instance_template()
         except HttpError as e:
             error_reason = e._get_reason()
             print(error_reason)
+            # if instance is not found, it has a NOTEXISTS status
             if "not found" in error_reason:
                 return InstanceStatus.NOTEXISTS
             else:
@@ -234,16 +251,10 @@ class Instance(object):
         return InstanceStatus(instance_template['status'])
 
     def create_instance(self) -> dict:
-        """ Create the instance using instance template
-
-            Args:
-                compute: google API compute engine service
-                project: project ID
-                zone: zone of the VM
-                instance_template: instance template
+        """ Create the instance using self.instance_template
 
             Returns:
-                a dict of the new network interface
+                a deserialized object of the response
 
             Raises:
                 googleapiclient.errors.HttpError: invalid request
@@ -257,13 +268,7 @@ class Instance(object):
         return create_instance_operation
 
     def delete_instance(self) -> dict:
-        """ delete the instance
-
-            Args:
-                compute: google API compute engine service
-                project: project ID
-                zone: zone of the VM
-                instance: name of the instance
+        """ Delete the instance
 
             Returns:
                 a deserialized object of the response
@@ -280,9 +285,20 @@ class Instance(object):
 
 
 class InstanceStatus(Enum):
+    """
+    An Enum class for instance's status
+    """
     NOTEXISTS = None
     RUNNING = "RUNNING"
     STOPPING = "STOPPING"
     TERMINATED = "TERMINATED"
     def __eq__(self, other):
+        """ Override __eq__ function
+
+        Args:
+            other: another InstanceStatus object
+
+        Returns: True/False
+
+        """
         return self.value == other.value
