@@ -6,6 +6,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
+import mock
 from vm_network_migration.instance import (
     Instance,
     InstanceStatus,
@@ -158,23 +159,20 @@ class TestStopInstance(unittest.TestCase):
 
 
 class TestGetDisksInfoFromInstanceTemplate(unittest.TestCase):
-    project = "mock_project"
-    zone = "mock_us_central1_a"
-    instance_name = "mock_instance"
-    region = "mock_us_central1"
 
     def test_basic(self):
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone, {
-                                "disks": ["disk1", "disk2"]})
-        disks = instance.get_disks_info_from_instance_template()
-        self.assertEqual(disks, ["disk1", "disk2"])
+
+        instance = mock.MagicMock()
+        instance.instance_template = read_json_file("sample_instance_template.json")
+        disks = Instance.get_disks_info_from_instance_template(instance)
+        self.assertEqual(disks, instance.instance_template['disks'])
 
     def test_no_disks(self):
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone, {})
+        instance = mock.MagicMock()
+        instance.instance_template = read_json_file(
+            "sample_instance_template_with_no_disks.json")
         with self.assertRaises(AttributeNotExistError):
-            instance.get_disks_info_from_instance_template()
+            Instance.get_disks_info_from_instance_template(instance)
 
 
 @patch(
@@ -274,33 +272,24 @@ class TestAttachDisk(unittest.TestCase):
 
 
 class TestModifyInstanceTemplateWithNewName(unittest.TestCase):
-    project = "mock_project"
-    zone = "mock_us_central1_a"
-    instance_name = "mock_instance"
-    region = "mock_us_central1"
-
     def test_basic(self):
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone, {
-                                "name": "origin-instance"})
-        instance.modify_instance_template_with_new_name("new-instance")
+        instance = mock.MagicMock()
+        instance.instance_template = {"name": "original-instance"}
+        Instance.modify_instance_template_with_new_name(instance, "new-instance")
         self.assertEqual(instance.instance_template["name"], "new-instance")
 
 
 class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
-    project = "mock_project"
-    zone = "mock_us_central1_a"
-    instance_name = "mock_instance"
-    region = "mock_us_central1"
 
-    def test_basic(self):
+    def test_instance_with_subnet(self):
         instance_template = read_json_file(
             "sample_instance_template.json")
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone, instance_template)
+
+        instance = mock.MagicMock()
+        instance.instance_template = instance_template
         new_network_link = "new_network_link"
         new_subnetwork_link = "new_subnetwork_link"
-        instance.modify_instance_template_with_new_network(new_network_link,
+        Instance.modify_instance_template_with_new_network(instance, new_network_link,
                                                            new_subnetwork_link)
         self.assertEqual(
             instance.instance_template['networkInterfaces'][0]['network'],
@@ -312,11 +301,11 @@ class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
     def test_instance_with_legacy_network(self):
         instance_template = read_json_file(
             "sample_instance_template_legacy_network.json")
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone, instance_template)
+        instance = mock.MagicMock()
+        instance.instance_template = instance_template
         new_network_link = "new_network_link"
         new_subnetwork_link = "new_subnetwork_link"
-        instance.modify_instance_template_with_new_network(new_network_link,
+        Instance.modify_instance_template_with_new_network(instance, new_network_link,
                                                            new_subnetwork_link)
         self.assertEqual(
             instance.instance_template['networkInterfaces'][0]['network'],
@@ -326,76 +315,69 @@ class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
             new_subnetwork_link)
 
 
+
 class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
-    project = "mock_project"
-    zone = "mock_us_central1_a"
-    instance_name = "mock_instance"
-    region = "mock_us_central1"
-
     def test_external_ip_is_none(self):
-        instance_template = read_json_file(
-            "sample_instance_template_legacy_network.json")
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone, instance_template)
 
-        instance.modify_instance_template_with_external_ip(None)
+        instance = mock.MagicMock()
+        instance.instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        Instance.modify_instance_template_with_external_ip(instance, None)
         self.assertFalse(
             "accessConfigs" in instance.instance_template['networkInterfaces'][
                 0])
         self.assertFalse(
-            "networkIP" in instance_template['networkInterfaces'][0])
+            "networkIP" in instance.instance_template['networkInterfaces'][0])
 
         instance.instance_template = read_json_file(
             "sample_instance_template_no_external_ip.json")
-        instance.modify_instance_template_with_external_ip(None)
+        Instance.modify_instance_template_with_external_ip(instance, None)
         self.assertFalse(
             "accessConfigs" in instance.instance_template['networkInterfaces'][
                 0])
         self.assertFalse(
-            "networkIP" in instance_template['networkInterfaces'][0])
+            "networkIP" in instance.instance_template['networkInterfaces'][0])
 
         instance.instance_template = read_json_file(
             "sample_instance_template_no_natIP.json")
-        instance.modify_instance_template_with_external_ip(None)
+        Instance.modify_instance_template_with_external_ip(instance, None)
         self.assertFalse(
             "accessConfigs" in instance.instance_template['networkInterfaces'][
                 0])
         self.assertFalse(
-            "networkIP" in instance_template['networkInterfaces'][0])
+            "networkIP" in instance.instance_template['networkInterfaces'][0])
 
     def test_external_ip_not_none(self):
         mock_ip = "125.125.125.125"
-        instance_template = read_json_file(
+        instance = mock.MagicMock()
+        instance.instance_template = read_json_file(
             "sample_instance_template_legacy_network.json")
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone, instance_template)
-
-        instance.modify_instance_template_with_external_ip(mock_ip)
+        Instance.modify_instance_template_with_external_ip(instance, mock_ip)
         self.assertTrue(
             instance.instance_template['networkInterfaces'][0]['accessConfigs'][
                 0]['natIP'], mock_ip)
         self.assertFalse(
-            "networkIP" in instance_template['networkInterfaces'][0])
+            "networkIP" in instance.instance_template['networkInterfaces'][0])
 
         instance.instance_template = read_json_file(
             "sample_instance_template_no_external_ip.json")
 
-        instance.modify_instance_template_with_external_ip(mock_ip)
+        Instance.modify_instance_template_with_external_ip(instance, mock_ip)
         self.assertTrue(
             instance.instance_template['networkInterfaces'][0]['accessConfigs'][
                 0]['natIP'], mock_ip)
         self.assertFalse(
-            "networkIP" in instance_template['networkInterfaces'][0])
+            "networkIP" in instance.instance_template['networkInterfaces'][0])
 
         instance.instance_template = read_json_file(
             "sample_instance_template_no_natIP.json")
 
-        instance.modify_instance_template_with_external_ip(mock_ip)
+        Instance.modify_instance_template_with_external_ip(instance, mock_ip)
         self.assertTrue(
             instance.instance_template['networkInterfaces'][0]['accessConfigs'][
                 0]['natIP'], mock_ip)
         self.assertFalse(
-            "networkIP" in instance_template['networkInterfaces'][0])
+            "networkIP" in instance.instance_template['networkInterfaces'][0])
 
 
 @patch(
@@ -494,53 +476,48 @@ class TestCreateInstance(unittest.TestCase):
             instance.create_instance()
 
 
-@patch(
-    "vm_network_migration.instance.Instance.retrieve_instance_template")  # index 0
 class TestGetInstanceStatus(unittest.TestCase):
-    project = "mock_project"
-    zone = "mock_us_central1_a"
-    instance_name = "mock_instance"
-    region = "mock_us_central1"
 
-    def test_instance_with_status_running(self, *mocks):
-        mocks[0].return_value = {
-            "status": "RUNNING"}
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone)
-        instance_status = instance.get_instance_status()
-        self.assertEqual(instance_status.name, InstanceStatus.RUNNING.name)
 
-    def test_instance_with_status_stopping(self, *mocks):
-        mocks[0].return_value = {
-            "status": "STOPPING"}
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone)
-        instance_status = instance.get_instance_status()
-        self.assertEqual(instance_status.name, InstanceStatus.STOPPING.name)
+    def test_instance_with_status_running(self):
 
-    def test_instance_with_status_terminated(self, *mocks):
-        mocks[0].return_value = {
+        instance = mock.MagicMock()
+        instance.retrieve_instance_template.return_value = {"status":"RUNNING"}
+        instance_status = Instance.get_instance_status(instance)
+        self.assertEqual(instance_status, InstanceStatus.RUNNING)
+
+    def test_instance_with_status_stopping(self):
+
+
+        instance = mock.MagicMock()
+        instance.retrieve_instance_template.return_value = {"status":"STOPPING"}
+        instance_status = Instance.get_instance_status(instance)
+        self.assertEqual(instance_status, InstanceStatus.STOPPING)
+
+
+    def test_instance_with_status_terminated(self):
+        instance = mock.MagicMock()
+        instance.retrieve_instance_template.return_value = {
             "status": "TERMINATED"}
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone)
-        instance_status = instance.get_instance_status()
-        self.assertEqual(instance_status.name, InstanceStatus.TERMINATED.name)
+        instance_status = Instance.get_instance_status(instance)
+        self.assertEqual(instance_status, InstanceStatus.TERMINATED)
 
-    def test_instance_with_status_delete(self, *mocks):
+
+    def test_instance_with_status_delete(self):
         errorResponse = httplib2.Response({
             "status": 400})
         errorResponse.reason = "HttpMock response: instance is not found"
-        mocks[0].side_effect = HttpError(resp=errorResponse, content=b'')
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone)
-        instance_status = instance.get_instance_status()
-        self.assertEqual(instance_status.name, InstanceStatus.NOTEXISTS.name)
+        instance = mock.MagicMock()
+        instance.retrieve_instance_template.side_effect = HttpError(resp=errorResponse, content=b'')
+        instance_status = Instance.get_instance_status(instance)
+        self.assertEqual(instance_status, InstanceStatus.NOTEXISTS)
+    def test_instance_with_other_http_error(self):
 
-    def test_instance_with_other_http_error(self, *mocks):
         errorResponse = httplib2.Response({
             "status": 400})
-        mocks[0].side_effect = HttpError(resp=errorResponse, content=b'')
-        instance = Instance("", self.project, self.instance_name,
-                            self.region, self.zone)
+        errorResponse.reason = "HttpMock response: others"
+        instance = mock.MagicMock()
+        instance.retrieve_instance_template.side_effect = HttpError(
+            resp=errorResponse, content=b'')
         with self.assertRaises(HttpError):
-            instance.get_instance_status()
+            Instance.get_instance_status(instance)
