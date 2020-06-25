@@ -1,8 +1,31 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+""" Operations class: support operation related methods
+"""
 import time
 from vm_network_migration.errors import *
 
 class Operations:
     def __init__(self, compute, project, zone=None, region=None):
+        """ Initialize an Operation object
+
+        Args:
+            compute: google compute engine
+            project: project ID
+            zone: zone name
+            region: region name
+        """
         self.compute = compute
         self.project = project
         self.zone = zone
@@ -12,9 +35,6 @@ class Operations:
         """ Keep waiting for a zone operation until it finishes
 
             Args:
-                compute: google API compute engine service
-                project: project ID
-                zone: zone of the VM
                 operation: name of the Operations resource to return
 
             Returns:
@@ -41,9 +61,6 @@ class Operations:
         """ Keep waiting for a region operation until it finishes
 
             Args:
-                compute: google API compute engine service
-                project: project ID
-                region: zone of the VM
                 operation: name of the Operations resource to return
 
             Returns:
