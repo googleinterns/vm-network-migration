@@ -240,6 +240,17 @@ class TestDetachDisk(unittest.TestCase):
             instance.detach_disk("mock-disk")
 
 
+class TestDetachDisks(unittest.TestCase):
+    def test_basic(self):
+        instance = mock.MagicMock()
+        disks = [{
+                     "deviceName": 1}, {
+                     "deviceName": 2}]
+        instance.get_disks_info_from_instance_template.return_value = disks
+        Instance.detach_disks(instance)
+        self.assertEqual(instance.detach_disk.call_count, len(disks))
+
+
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
 class TestAttachDisk(unittest.TestCase):
@@ -286,6 +297,17 @@ class TestAttachDisk(unittest.TestCase):
 
         with self.assertRaises(HttpError):
             instance.attach_disk("mock-disk")
+
+
+class TestAttachDisks(unittest.TestCase):
+    def test_basic(self):
+        instance = mock.MagicMock()
+        disks = [{
+                     "deviceName": 1}, {
+                     "deviceName": 2}]
+        instance.get_disks_info_from_instance_template.return_value = disks
+        Instance.attach_disks(instance)
+        self.assertEqual(instance.attach_disk.call_count, len(disks))
 
 
 class TestModifyInstanceTemplateWithNewName(unittest.TestCase):

@@ -40,7 +40,7 @@ def build_request_builder(instance_template, target_subnet_network_template):
         "compute.instances.get": (
             successResponse, json.dumps(instance_template)),
         "compute.zones.get": (
-            successResponse, '{"region":"mock-region"}'),
+            successResponse, '{"region":"http://regions/mock-region"}'),
         "compute.networks.get": (
             successResponse,
             json.dumps(target_subnet_network_template)

@@ -173,6 +173,35 @@ class TestNetworkMigration(unittest.TestCase):
         self.http = HttpMock(datafile("compute_rest.json"), {
             "status": "200"})
 
+    def test_basic_migration(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+
+        instance_network_migration = InstanceNetworkMigration(self.project,
+                                                              self.zone)
+        instance_network_migration.network_migration("original-instance",
+                                                     "new-instance",
+                                                     "mock-network",
+                                                     "mock-subnetwork", False)
+        new_instance_template = instance_network_migration.new_instance.instance_template
+        instance_network_migration.new_instance.create_instance.assert_called()
+        mocks[2].assert_not_called()
+
+        # compare two instance template
+        for k, v in instance_template.items():
+            if k == "name":
+                self.assertNotEqual(new_instance_template["name"], v)
+            elif k == "networkInterfaces":
+                pass
+            else:
+                self.assertEqual(new_instance_template[k], v)
+
     def test_migrate_without_preserving_ip(self, *mocks):
         instance_template = read_json_file(
             "sample_instance_template_legacy_network.json")
@@ -185,7 +214,6 @@ class TestNetworkMigration(unittest.TestCase):
 
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
-        instance_network_migration.new_instance = mock.MagicMock()
         instance_network_migration.network_migration("original-instance",
                                                      "new-instance",
                                                      "mock-network",
@@ -217,7 +245,6 @@ class TestNetworkMigration(unittest.TestCase):
 
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
-        instance_network_migration.new_instance = mock.MagicMock()
         instance_network_migration.network_migration("original-instance",
                                                      "new-instance",
                                                      "mock-network",
@@ -248,7 +275,6 @@ class TestNetworkMigration(unittest.TestCase):
 
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
-        instance_network_migration.new_instance = mock.MagicMock()
         instance_network_migration.network_migration("original-instance",
                                                      "new-instance",
                                                      "mock-network",
@@ -279,7 +305,6 @@ class TestNetworkMigration(unittest.TestCase):
 
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
-        instance_network_migration.new_instance = mock.MagicMock()
         instance_network_migration.network_migration("original-instance",
                                                      "new-instance",
                                                      "mock-network",
@@ -315,8 +340,6 @@ class TestNetworkMigration(unittest.TestCase):
 
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
-        instance_network_migration.new_instance = mock.MagicMock()
-
         instance_network_migration.network_migration("original-instance",
                                                      "new-instance",
                                                      "mock-network",
@@ -352,7 +375,6 @@ class TestNetworkMigration(unittest.TestCase):
 
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
-        instance_network_migration.new_instance = mock.MagicMock()
 
         instance_network_migration.network_migration("original-instance",
                                                      "original-instance",
@@ -375,7 +397,6 @@ class TestNetworkMigration(unittest.TestCase):
 
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
-        instance_network_migration.new_instance = mock.MagicMock()
         instance_network_migration.network_migration("original-instance",
                                                      "new-instance",
                                                      "mock-network",
@@ -407,7 +428,6 @@ class TestNetworkMigration(unittest.TestCase):
         mocks[0].return_value = compute
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
-        instance_network_migration.new_instance = mock.MagicMock()
         instance_network_migration.network_migration("original-instance",
                                                      "new-instance",
                                                      "mock-network",
@@ -415,3 +435,198 @@ class TestNetworkMigration(unittest.TestCase):
                                                      False)
         instance_network_migration.new_instance.create_instance.assert_not_called()
         mocks[2].assert_called()
+
+    def test_error_in_instance_get(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        errorResponse = httplib2.Response({
+            "status": 400,
+            "reason": "H"})
+        request_builder.responses["compute.instances.get"] = (
+            errorResponse, b'')
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+
+        instance_network_migration = InstanceNetworkMigration(self.project,
+                                                              self.zone)
+
+        instance_network_migration.network_migration("original-instance",
+                                                     "original-instance",
+                                                     "mock-network",
+                                                     "mock-subnetwork",
+                                                     False)
+
+        mocks[2].assert_called()
+
+    def test_error_in_zones_get(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        errorResponse = httplib2.Response({
+            "status": 400,
+            "reason": "H"})
+        request_builder.responses["compute.zones.get"] = (
+            errorResponse, b'')
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+        # failed to initialize an InstanceNetworkMigration object
+        with self.assertRaises(HttpError):
+            instance_network_migration = InstanceNetworkMigration(self.project,
+                                                                  self.zone)
+
+    def test_error_in_networks_get(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        errorResponse = httplib2.Response({
+            "status": 400,
+            "reason": "H"})
+        request_builder.responses["compute.networks.get"] = (
+            errorResponse, b'')
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+        instance_network_migration = InstanceNetworkMigration(self.project,
+                                                              self.zone)
+
+        instance_network_migration.network_migration("original-instance",
+                                                     "new-instance",
+                                                     "mock-network",
+                                                     "mock-subnetwork",
+                                                     False)
+
+        instance_network_migration.new_instance.create_instance.assert_not_called()
+        mocks[2].assert_called()
+
+    def test_error_in_addresses_insert(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        errorResponse = httplib2.Response({
+            "status": 400,
+            "reason": "H"})
+        request_builder.responses["compute.addresses.insert"] = (
+            errorResponse, b'')
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+        instance_network_migration = InstanceNetworkMigration(self.project,
+                                                              self.zone)
+        instance_network_migration.network_migration("original-instance",
+                                                     "new-instance",
+                                                     "mock-network",
+                                                     "mock-subnetwork",
+                                                     False)
+
+        instance_network_migration.new_instance.create_instance.assert_called()
+        mocks[2].assert_not_called()
+
+    def test_error_in_instances_stop(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        errorResponse = httplib2.Response({
+            "status": 400,
+            "reason": "H"})
+        request_builder.responses["compute.instances.stop"] = (
+            errorResponse, b'')
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+        instance_network_migration = InstanceNetworkMigration(self.project,
+                                                              self.zone)
+        instance_network_migration.network_migration("original-instance",
+                                                     "new-instance",
+                                                     "mock-network",
+                                                     "mock-subnetwork",
+                                                     False)
+
+        instance_network_migration.new_instance.create_instance.assert_not_called()
+        mocks[2].assert_called()
+
+    def test_error_in_instance_detach_disk(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        errorResponse = httplib2.Response({
+            "status": 400,
+            "reason": "H"})
+        request_builder.responses["compute.instances.detachDisk"] = (
+            errorResponse, b'')
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+        instance_network_migration = InstanceNetworkMigration(self.project,
+                                                              self.zone)
+
+        instance_network_migration.network_migration("original-instance",
+                                                     "new-instance",
+                                                     "mock-network",
+                                                     "mock-subnetwork",
+                                                     False)
+
+        instance_network_migration.new_instance.create_instance.assert_not_called()
+        mocks[2].assert_called()
+
+    def test_error_in_instance_insert(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+        instance_network_migration = InstanceNetworkMigration(self.project,
+                                                              self.zone)
+        mocks[1].side_effect = Exception
+        instance_network_migration.network_migration("original-instance",
+                                                     "new-instance",
+                                                     "mock-network",
+                                                     "mock-subnetwork",
+                                                     False)
+
+        instance_network_migration.new_instance.create_instance.assert_called()
+        mocks[2].assert_called()
+
+    def test_error_in_instance_delete(self, *mocks):
+        instance_template = read_json_file(
+            "sample_instance_template_legacy_network.json")
+        network_template = read_json_file("sample_auto_mode_network.json")
+        request_builder = build_request_builder(instance_template,
+                                                network_template)
+        errorResponse = httplib2.Response({
+            "status": 400,
+            "reason": "H"})
+        request_builder.responses["compute.instances.delete"] = (
+            errorResponse, b'')
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        mocks[0].return_value = compute
+        instance_network_migration = InstanceNetworkMigration(self.project,
+                                                              self.zone)
+        mocks[1].side_effect = Exception
+        instance_network_migration.network_migration("original-instance",
+                                                     "new-instance",
+                                                     "mock-network",
+                                                     "mock-subnetwork",
+                                                     False)
+
+        instance_network_migration.new_instance.create_instance.assert_not_called()
+        mocks[2].assert_called()
+
