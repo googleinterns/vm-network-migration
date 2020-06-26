@@ -150,14 +150,11 @@ class InstanceNetworkMigration:
             if new_instance_name == original_instance_name:
                 raise UnchangedInstanceNameError(
                     'The new VM should not have the same name as the original VM. The migration process didn\'t start')
-
+            print('Retrieving the original instance template.')
             self.original_instance = Instance(self.compute, self.project,
                                               original_instance_name,
                                               self.region,
                                               self.zone, None)
-
-            print('Retreive the original instance template.')
-            self.original_instance.retrieve_instance_template()
 
             self.new_instance = Instance(self.compute, self.project,
                                          new_instance_name,
