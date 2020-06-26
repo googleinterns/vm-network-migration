@@ -156,6 +156,7 @@ class InstanceNetworkMigration:
                                               self.region,
                                               self.zone, None)
 
+            print('Retreive the original instance template.')
             self.original_instance.retrieve_instance_template()
 
             self.new_instance = Instance(self.compute, self.project,
@@ -164,13 +165,13 @@ class InstanceNetworkMigration:
                     self.original_instance.instance_template))
             self.new_instance.address = self.generate_address(
                 self.new_instance.instance_template)
+
+            print('Modifying IP address.')
             self.new_instance.address.preserve_ip_addresses_handler(
                 preserve_external_ip)
             self.new_instance.network = self.generate_network(network_name,
                                                               subnetwork_name)
             self.new_instance.update_instance_template()
-
-            self.original_instance.stop_instance()
 
             print('Stopping the VM.')
             print('stop_instance_operation is running.')
@@ -182,11 +183,12 @@ class InstanceNetworkMigration:
             print('Deleting the old VM.')
             print('delete_instance_operation is running.')
             self.original_instance.delete_instance()
+
             print('Creating a new VM.')
             print('create_instance_operation is running.')
             print('DEBUGGING:', self.new_instance.instance_template)
-
             self.new_instance.create_instance()
+
             print('The migration is successful.')
 
         except Exception as e:
