@@ -21,10 +21,10 @@ import httplib2
 import mock
 import unittest2 as unittest
 from googleapiclient.discovery import build
+from googleapiclient.http import HttpError
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
-from googleapiclient.http import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.instance import (
     Instance,
@@ -74,10 +74,9 @@ class TestRetrieveInstanceTemplate(unittest.TestCase):
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
         instance = Instance(compute, self.project, self.instance_name,
-                            self.region, self.zone)
+                            self.region, self.zone, "mock-template")
         with self.assertRaises(HttpError):
             instance.retrieve_instance_template()
-        self.assertIsNone(instance.instance_template)
 
 
 @patch(
@@ -245,8 +244,8 @@ class TestDetachDisks(unittest.TestCase):
     def test_basic(self):
         instance = mock.MagicMock()
         disks = [{
-                     "deviceName": 1}, {
-                     "deviceName": 2}]
+            "deviceName": 1}, {
+            "deviceName": 2}]
         instance.get_disks_info_from_instance_template.return_value = disks
         Instance.detach_disks(instance)
         self.assertEqual(instance.detach_disk.call_count, len(disks))
@@ -304,8 +303,8 @@ class TestAttachDisks(unittest.TestCase):
     def test_basic(self):
         instance = mock.MagicMock()
         disks = [{
-                     "deviceName": 1}, {
-                     "deviceName": 2}]
+            "deviceName": 1}, {
+            "deviceName": 2}]
         instance.get_disks_info_from_instance_template.return_value = disks
         Instance.attach_disks(instance)
         self.assertEqual(instance.attach_disk.call_count, len(disks))
@@ -365,9 +364,12 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
         instance.instance_template = read_json_file(
             "sample_instance_template_legacy_network.json")
         Instance.modify_instance_template_with_external_ip(instance, None)
-        self.assertFalse(
+        self.assertTrue(
             "accessConfigs" in instance.instance_template['networkInterfaces'][
                 0])
+        self.assertFalse(
+            "natIP" in instance.instance_template['networkInterfaces'][
+                0]["accessConfigs"][0])
         self.assertFalse(
             "networkIP" in instance.instance_template['networkInterfaces'][0])
 
@@ -383,9 +385,12 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
         instance.instance_template = read_json_file(
             "sample_instance_template_no_natIP.json")
         Instance.modify_instance_template_with_external_ip(instance, None)
-        self.assertFalse(
+        self.assertTrue(
             "accessConfigs" in instance.instance_template['networkInterfaces'][
                 0])
+        self.assertFalse(
+            "natIP" in instance.instance_template['networkInterfaces'][
+                0]["accessConfigs"][0])
         self.assertFalse(
             "networkIP" in instance.instance_template['networkInterfaces'][0])
 

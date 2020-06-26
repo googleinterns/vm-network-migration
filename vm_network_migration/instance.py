@@ -39,7 +39,10 @@ class Instance(object):
         self.region = region
         self.project = project
         self.zone = zone
-        self.instance_template = instance_template
+        if instance_template == None:
+            self.retrieve_instance_template()
+        else:
+            self.instance_template = instance_template
         self.network = None
         self.address = None
         self.operations = Operations(compute, project, zone, region)
@@ -207,8 +210,9 @@ class Instance(object):
         if external_ip == None:
             if 'accessConfigs' in self.instance_template['networkInterfaces'][
                 0]:
-                del self.instance_template['networkInterfaces'][0][
-                    'accessConfigs']
+                if 'natIP' in self.instance_template['networkInterfaces'][0]['accessConfigs'][0]:
+                    del self.instance_template['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+
         else:
             if 'accessConfigs' not in \
                     self.instance_template['networkInterfaces'][0]:
