@@ -20,6 +20,7 @@ import mock
 import unittest2 as unittest
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
+from googleapiclient.http import HttpError
 from googleapiclient.http import RequestMockBuilder
 from utils import *
 from vm_network_migration.subnet_network import SubnetNetwork

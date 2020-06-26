@@ -39,10 +39,9 @@ class Instance(object):
         self.region = region
         self.project = project
         self.zone = zone
-        if instance_template == None:
+        self.instance_template = instance_template
+        if self.instance_template == None:
             self.retrieve_instance_template()
-        else:
-            self.instance_template = instance_template
         self.network = None
         self.address = None
         self.operations = Operations(compute, project, zone, region)

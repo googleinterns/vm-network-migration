@@ -226,7 +226,7 @@ class TestNetworkMigration(unittest.TestCase):
             "mock-subnetwork" in new_instance_template['networkInterfaces'][0][
                 'subnetwork'])
         self.assertFalse(
-            "accessConfigs" in new_instance_template['networkInterfaces'][0])
+            "natIP" in new_instance_template['networkInterfaces'][0]['accessConfigs'][0])
         instance_network_migration.new_instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
@@ -411,7 +411,7 @@ class TestNetworkMigration(unittest.TestCase):
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'subnetwork'])
         self.assertFalse(
-            'accessConfigs' in new_instance_template['networkInterfaces'][0])
+            'natIP' in new_instance_template['networkInterfaces'][0]['accessConfigs'][0])
         instance_network_migration.new_instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
