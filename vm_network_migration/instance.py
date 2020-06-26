@@ -168,18 +168,6 @@ class Instance(object):
         for diskInfo in disks:
             self.attach_disk(diskInfo['deviceName'])
 
-    def modify_instance_template_with_new_name(self, new_name):
-        """ Modify the instance template with the new name
-
-        Args:
-            new_name: new instance name
-
-        Returns: modified instance template
-
-        """
-        self.instance_template['name'] = new_name
-        return self.instance_template
-
     def modify_instance_template_with_new_network(self, new_network_link,
                                                   new_subnetwork_link) -> dict:
         """ Modify the instance template with the new network links
@@ -232,7 +220,6 @@ class Instance(object):
         """
         if self.address == None or self.network == None:
             raise AttributeNotExistError('Missing address or network object.')
-        self.modify_instance_template_with_new_name(self.name)
         self.modify_instance_template_with_external_ip(self.address.external_ip)
         self.modify_instance_template_with_new_network(
             self.network.network_link, self.network.subnetwork_link)

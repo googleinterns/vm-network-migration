@@ -30,7 +30,7 @@ Before running:
 Run the script by terminal, for example:
      python3 vm_network_migration.py --project_id=test-project
      --zone=us-central1-a --original_instance_name=instance-legacy
-     --new_instance_name=vm_network_migration-new --network=tests-network
+     --network=tests-network
      --subnetwork=tests-network --preserve_internal_ip=False
      --preserve_external_ip = False --preserve_alias_ip_ranges=False
 
@@ -65,6 +65,6 @@ if __name__ == '__main__':
 
     instance_migration = InstanceNetworkMigration(args.project_id, args.zone)
     instance_migration.network_migration(args.original_instance_name,
-                                         args.new_instance_name, args.network,
+                                         args.network,
                                          args.subnetwork,
                                          args.preserve_external_ip)

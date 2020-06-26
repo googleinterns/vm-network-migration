@@ -15,10 +15,9 @@ Compute Engine resources.
     3. If the original VM uses a Ephemeral internal/external IP and the user chooses to preserve it, then it will become a static internal/external IP after the migration.
     4. Support migrating a VM from a legacy network to a subnetwork, or from one VPC network to another. Within a network, a VM can also be migrated from one subnet to another. Migration from any network to a legacy network is not allowed.
     5. The original VM should only have one NIC.
-    6. The original VM and the new VM will have the same configuration except for the network interface and the instance name. Therefore, they are in the same project, same zone, and same region.
-    7. The new VM and the original VM must have different names.
-    8. The original VM must not be part of any instance group before changing the network it is associated with, since VMs in an instance group have to be in the same network. 
-    9. The original VM is assumed to be standalone. Other cases, for example, if the original instance is served as a backend of other services, such as load balancer, are not considered in the current scope.
+    6. The original VM and the new VM will have the same configuration except for the network interface. Therefore, they are in the same project, same zone, and same region.
+    7. The original VM must not be part of any instance group before changing the network it is associated with, since VMs in an instance group have to be in the same network. 
+    8. The original VM is assumed to be standalone. Other cases, for example, if the original instance is served as a backend of other services, such as load balancer, are not considered in the current scope.
 
 ## Before Running
     1. If not already done, enable the Compute Engine API
@@ -38,7 +37,7 @@ Compute Engine resources.
 ## Run
      python3 vm_network_migration.py --project_id=test-project
      --zone=us-central1-a --original_instance_name=instance-legacy
-     --new_instance_name=vm-new --network=test-network --subnetwork=test-network
+     --network=test-network --subnetwork=test-network
      --preserve_external_ip=False --preserve_internal_ip=False 
      --preserve_alias_ip=False
      

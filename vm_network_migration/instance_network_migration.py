@@ -34,7 +34,7 @@ Before running:
 Run the script by terminal, for example:
      python3 vm_network_migration.py --project_id=test-project
      --zone=us-central1-a --original_instance_name=instance-legacy
-     --new_instance_name=vm_network_migration-new --network=tests-network
+     --network=tests-network
      --subnetwork=tests-network --preserve_internal_ip=False
      --preserve_external_ip = False --preserve_alias_ip_ranges=False
 
@@ -121,14 +121,13 @@ class InstanceNetworkMigration:
 
         return network
 
-    def network_migration(self, original_instance_name, new_instance_name,
+    def network_migration(self, original_instance_name,
                           network_name,
                           subnetwork_name, preserve_external_ip):
         """ The main method of the instance network migration process
 
         Args:
             original_instance_name: original instance's name
-            new_instance_name: new instance's name
             network_name: target network name
             subnetwork_name: target subnetwork name
             preserve_external_ip: True/False
@@ -147,9 +146,6 @@ class InstanceNetworkMigration:
             if continue_execution == 'n':
                 preserve_external_ip = False
         try:
-            if new_instance_name == original_instance_name:
-                raise UnchangedInstanceNameError(
-                    'The new VM should not have the same name as the original VM. The migration process didn\'t start')
             print('Retrieving the original instance template.')
             self.original_instance = Instance(self.compute, self.project,
                                               original_instance_name,
@@ -157,7 +153,7 @@ class InstanceNetworkMigration:
                                               self.zone, None)
 
             self.new_instance = Instance(self.compute, self.project,
-                                         new_instance_name,
+                                         original_instance_name,
                                          self.region, self.zone, copy.deepcopy(
                     self.original_instance.instance_template))
             self.new_instance.address = self.generate_address(

@@ -310,16 +310,6 @@ class TestAttachDisks(unittest.TestCase):
         self.assertEqual(instance.attach_disk.call_count, len(disks))
 
 
-class TestModifyInstanceTemplateWithNewName(unittest.TestCase):
-    def test_basic(self):
-        instance = mock.MagicMock()
-        instance.instance_template = {
-            "name": "original-instance"}
-        Instance.modify_instance_template_with_new_name(instance,
-                                                        "new-instance")
-        self.assertEqual(instance.instance_template["name"], "new-instance")
-
-
 class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
 
     def test_instance_with_subnet(self):
