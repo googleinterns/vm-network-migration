@@ -36,7 +36,7 @@ Run the script by terminal, for example:
 
 """
 import argparse
-from vm_network_migration.vm_network_migration import *
+from vm_network_migration.instance_network_migration import InstanceNetworkMigration
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -62,8 +62,9 @@ if __name__ == '__main__':
         help='Preserve the external IP address')
 
     args = parser.parse_args()
-    # main(args.project_id, args.zone, args.original_instance_name,
-    #      args.new_instance_name, args.network, args.subnetwork)
-    main(args.project_id, args.zone, args.original_instance_name,
-          args.new_instance_name, args.network, args.subnetwork,
-          args.preserve_external_ip)
+
+    instance_migration = InstanceNetworkMigration(args.project_id, args.zone)
+    instance_migration.network_migration(args.original_instance_name,
+                                         args.new_instance_name, args.network,
+                                         args.subnetwork,
+                                         args.preserve_external_ip)
