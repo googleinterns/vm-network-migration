@@ -25,9 +25,9 @@ from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from googleapiclient.http import HttpError
 from utils import *
-from vm_network_migration.instance import (
-    InstanceStatus,
-)
+from vm_network_migration.instance import InstanceStatus
+
+from vm_network_migration.errors import *
 from vm_network_migration.instance_network_migration import InstanceNetworkMigration
 from vm_network_migration.subnet_network import SubnetNetwork
 
@@ -120,9 +120,9 @@ class TestRollbackFailureProtection(unittest.TestCase):
     def test_rollback_failure(self):
         instance_network_migration = mock.MagicMock()
         instance_network_migration.rollback_original_instance.side_effect = Exception
-        rollback_result = InstanceNetworkMigration.rollback_failure_protection(
-            instance_network_migration)
-        self.assertFalse(rollback_result)
+        with self.assertRaises(RollbackError):
+            InstanceNetworkMigration.rollback_failure_protection(
+                instance_network_migration)
 
 
 class TestGenerateAddress(unittest.TestCase):

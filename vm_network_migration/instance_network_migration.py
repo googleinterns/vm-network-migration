@@ -224,7 +224,7 @@ class InstanceNetworkMigration:
         then print out the original VM's instance template in the console
 
             Returns: True/False for successful/failed rollback
-
+            Raises: RollbackError
         """
         try:
             self.rollback_original_instance()
@@ -235,7 +235,7 @@ class InstanceNetworkMigration:
                 "The original VM may have been deleted. "
                 "The instance template of the original VM is: ")
             print(self.original_instance.instance_template)
-            return False
+            raise RollbackError("Rollback to the original VM is failed.")
 
         print('Rollback finished. The original VM is running.')
         return True
