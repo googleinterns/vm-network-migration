@@ -74,6 +74,7 @@ class InstanceGroupFactory:
                                                  instanceGroup=self.instance_group_name).execute()
 
 
+
 class InstanceGroupStatus(Enum):
     """
     An Enum class for instance group's status

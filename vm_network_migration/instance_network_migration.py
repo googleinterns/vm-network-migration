@@ -115,10 +115,11 @@ class InstanceNetworkMigration:
                 preserve_external_ip = False
         try:
             print('Retrieving the original instance template.')
-            self.instance = Instance(self.compute, self.project,
-                                              original_instance_name,
-                                              self.region,
-                                              self.zone, None)
+            if self.instance == None:
+                self.instance = Instance(self.compute, self.project,
+                                                  original_instance_name,
+                                                  self.region,
+                                                  self.zone, None)
             address_factory = AddressFactory(self.compute, self.project, self.region)
             self.instance.address = address_factory.generate_address(
                 self.instance.original_instance_template)

@@ -22,7 +22,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
         self.zone = zone
         self.instances = self.retrieve_instances()
         self.original_instance_group_configs = self.get_instance_group_configs()
-        self.current_instance_group_configs = None
+        self.new_instance_group_configs = None
         self.status = self.get_status()
         self.network = None
         self.operation = Operations(self.compute, self.project, self.zone, None)
@@ -119,7 +119,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
             project=self.project,
             zone=self.zone,
             InstanceGroup=self.instance_group_name,
-            body=instance_selfLink)
+            body={"instances":[{"instance": instance_selfLink}]})
         self.operation.wait_for_zone_operation(add_instance_operation)
         return add_instance_operation
 
@@ -135,6 +135,31 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 raise AddInstanceToInstanceGroupError(
                     'Failed to add all instances back to the instance group.')
 
+    def modify_instance_group_configs_with_new_network(self, new_network_link,
+                                                       new_subnetwork_link,
+                                                       instance_group_configs) -> dict:
+        """ Modify the instance template with the new network links
 
+            Args:
+                new_network_link: the selflink of the network
+                new_subnetwork_link: the selflink of the subnetwork
 
+            Returns:
+                modified instance template
+        """
+        instance_group_configs['network'] = new_network_link
+        instance_group_configs['subnetwork'] = new_subnetwork_link
+        return instance_group_configs
 
+    def update_new_instance_group_configs(self):
+        """ Update the new configs with current attributes
+
+        Returns: None
+
+        """
+        if self.network == None:
+            raise AttributeNotExistError('Missing network object.')
+        self.new_instance_group_configs = \
+            self.modify_instance_group_configs_with_new_network(
+            self.network.network_link, self.network.subnetwork_link,
+            self.new_instance_group_configs)

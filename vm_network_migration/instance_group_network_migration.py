@@ -52,8 +52,10 @@ from vm_network_migration.instance import (
 )
 from vm_network_migration.subnet_network import SubnetNetwork
 from vm_network_migration.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.subnet_network import SubnetNetworkFactory
 from googleapiclient.http import HttpError
 from vm_network_migration.instance_group import InstanceGroupFactory
+from vm_network_migration.instance_network_migration import InstanceNetworkMigration
 class InstanceGroupNetworkMigration:
     def __init__(self, project, region, zone, instance_group_name):
         """ Initialize a InstanceNetworkMigration object
@@ -97,10 +99,32 @@ class InstanceGroupNetworkMigration:
         Returns: None
 
         """
+        if isinstance(self.instance_group, UnmanagedInstanceGroup):
+            self.migrate_unmanaged_instance_group(network_name, subnetwork_name, preserve_external_ip)
+        else:
+            self.migrate_managed_instance_group(network_name, subnetwork_name)
+
+    def migrate_unmanaged_instance_group(self, network_name, subnetwork_name, preserve_external_ip):
+        subnetwork_factory = SubnetNetworkFactory(self.compute, self.project,
+                                                  self.zone, self.region)
+        self.instance_group.network = subnetwork_factory.generate_network(
+            network_name,
+            subnetwork_name)
+        instance_network_migration = InstanceNetworkMigration(self.project, self.zone)
+        print("Migrating all the instances in the instance group to the new network.")
+        for instance in self.instance_group.instances:
+            instance_network_migration.instance = instance
+            instance_network_migration.network_migration(None, network_name, subnetwork_name, preserve_external_ip)
+        self.instance_group.update_new_instance_group_configs()
+        print("Deleting the original instance group.")
+        self.instance_group.delete_instance_group()
+        print("Creating a new instance group in the new network.")
+        self.instance_group.create_instance_group(self.instance_group.new_instance_group_configs)
+        print("Adding the instances back to the new instance group")
+        self.instance_group.add_all_instances()
+
+    def migrate_managed_instance_group(self, network_name, subnetwork_name):
         pass
-
-
-
 
     def rollback_original_instance_group(self):
         """ Roll back to the original VM. Reattach the disks to the
