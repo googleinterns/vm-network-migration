@@ -39,17 +39,18 @@ Run the script by terminal, for example:
      --preserve_external_ip = False --preserve_alias_ip_ranges=False
 
 """
+import copy
 import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.address import Address, AddressFactory
+from vm_network_migration.address import Address
 from vm_network_migration.errors import *
 from vm_network_migration.instance import (
     Instance,
     InstanceStatus,
 )
-from vm_network_migration.subnet_network import SubnetNetwork, SubnetNetworkFactory
+from vm_network_migration.subnet_network import SubnetNetwork
 
 
 class InstanceNetworkMigration:
@@ -88,36 +89,36 @@ class InstanceNetworkMigration:
             project=self.project,
             zone=self.zone).execute()['region'].split('regions/')[1]
 
-    # def generate_address(self, instance_template):
-    #     """ Generate an address object
-    #
-    #     Args:
-    #         instance_template: the instance template which contains the IP address information
-    #
-    #     Returns: an Address object
-    #
-    #     """
-    #     address = Address(self.compute, self.project, self.region)
-    #     address.retrieve_ip_from_network_interface(
-    #         instance_template['networkInterfaces'][0])
-    #     return address
-    #
-    # def generate_network(self, network, subnetwork):
-    #     """ Generate a network object
-    #
-    #     Args:
-    #         network: network name
-    #         subnetwork: subnetwork name
-    #
-    #     Returns: a SubnetNetwork object
-    #
-    #     """
-    #     network = SubnetNetwork(self.compute, self.project, self.zone,
-    #                             self.region, network, subnetwork)
-    #     network.check_subnetwork_validation()
-    #     network.generate_new_network_info()
-    #
-    #     return network
+    def generate_address(self, instance_template):
+        """ Generate an address object
+
+        Args:
+            instance_template: the instance template which contains the IP address information
+
+        Returns: an Address object
+
+        """
+        address = Address(self.compute, self.project, self.region)
+        address.retrieve_ip_from_network_interface(
+            instance_template['networkInterfaces'][0])
+        return address
+
+    def generate_network(self, network, subnetwork):
+        """ Generate a network object
+
+        Args:
+            network: network name
+            subnetwork: subnetwork name
+
+        Returns: a SubnetNetwork object
+
+        """
+        network = SubnetNetwork(self.compute, self.project, self.zone,
+                                self.region, network, subnetwork)
+        network.check_subnetwork_validation()
+        network.generate_new_network_info()
+
+        return network
 
     def network_migration(self, original_instance_name,
                           network_name,
@@ -149,15 +150,13 @@ class InstanceNetworkMigration:
                                               original_instance_name,
                                               self.region,
                                               self.zone, None)
-            address_factory = AddressFactory(self.compute, self.project, self.region)
-            self.instance.address = address_factory.generate_address(
+            self.instance.address = self.generate_address(
                 self.instance.original_instance_template)
 
             print('Modifying IP address.')
             self.instance.address.preserve_ip_addresses_handler(
                 preserve_external_ip)
-            subnetwork_factory = SubnetNetworkFactory(self.compute, self.project, self.zone, self.region)
-            self.instance.network = subnetwork_factory.generate_network(network_name,
+            self.instance.network = self.generate_network(network_name,
                                                               subnetwork_name)
             self.instance.update_instance_template()
 

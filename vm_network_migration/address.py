@@ -145,3 +145,23 @@ class Address:
             'name'] = self.project + '-' + self.region + '-' + generate_timestamp_string()
         external_ip_address_body['address'] = self.external_ip
         return external_ip_address_body
+
+class AddressFactory:
+    def __init__(self, compute, project, region):
+        self.compute = compute
+        self.project = project
+        self.region = region
+
+    def generate_address(self, instance_template):
+        """ Generate an address object
+
+        Args:
+            instance_template: the instance template which contains the IP address information
+
+        Returns: an Address object
+
+        """
+        address = Address(self.compute, self.project, self.region)
+        address.retrieve_ip_from_network_interface(
+            instance_template['networkInterfaces'][0])
+        return address
