@@ -75,38 +75,38 @@ class TestRollbackOriginalInstance(unittest.TestCase):
 
     def test_rollback_without_original_instance_template(self):
         instance_network_migration = mock.MagicMock()
-        instance_network_migration.original_instance.instance_template = None
+        instance_network_migration.instance.original_instance_template = None
         InstanceNetworkMigration.rollback_original_instance(
             instance_network_migration)
         instance_network_migration.get_instance_status.assert_not_called()
 
     def test_rollback_with_running_instance(self):
         instance_network_migration = mock.MagicMock()
-        instance_network_migration.original_instance.instance_template = "mock_template"
-        instance_network_migration.original_instance.get_instance_status.return_value = InstanceStatus.RUNNING
+        instance_network_migration.instance.original_instance_template = "mock_template"
+        instance_network_migration.instance.get_instance_status.return_value = InstanceStatus.RUNNING
         InstanceNetworkMigration.rollback_original_instance(
             instance_network_migration)
 
-        instance_network_migration.original_instance.create_instance.assert_not_called()
-        instance_network_migration.original_instance.attach_disks.assert_not_called()
+        instance_network_migration.instance.create_instance.assert_not_called()
+        instance_network_migration.instance.attach_disks.assert_not_called()
 
     def test_rollback_with_deleted_instance(self):
         instance_network_migration = mock.MagicMock()
-        instance_network_migration.original_instance.instance_template = "mock_template"
-        instance_network_migration.original_instance.get_instance_status.return_value = InstanceStatus.NOTEXISTS
+        instance_network_migration.instance.original_instance_template = "mock_template"
+        instance_network_migration.instance.get_instance_status.return_value = InstanceStatus.NOTEXISTS
         InstanceNetworkMigration.rollback_original_instance(
             instance_network_migration)
-        instance_network_migration.original_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
 
     def test_rollback_with_terminated_instance(self):
         instance_network_migration = mock.MagicMock()
-        instance_network_migration.original_instance.instance_template = "mock_template"
-        instance_network_migration.original_instance.get_instance_status.return_value = InstanceStatus.TERMINATED
+        instance_network_migration.instance.original_instance_template = "mock_template"
+        instance_network_migration.instance.get_instance_status.return_value = InstanceStatus.TERMINATED
         InstanceNetworkMigration.rollback_original_instance(
             instance_network_migration)
-        instance_network_migration.original_instance.create_instance.assert_not_called()
-        instance_network_migration.original_instance.attach_disks.assert_called()
-        instance_network_migration.original_instance.start_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_not_called()
+        instance_network_migration.instance.attach_disks.assert_called()
+        instance_network_migration.instance.start_instance.assert_called()
 
 
 class TestRollbackFailureProtection(unittest.TestCase):
@@ -187,14 +187,14 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration.network_migration("original-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", False)
-        new_instance_template = instance_network_migration.new_instance.instance_template
-        instance_network_migration.new_instance.create_instance.assert_called()
+        new_instance_template = instance_network_migration.instance.new_instance_template
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
         # compare two instance template
         for k, v in instance_template.items():
             if k == "networkInterfaces":
-                pass
+                self.assertNotEqual(new_instance_template[k], v)
             else:
                 self.assertEqual(new_instance_template[k], v)
 
@@ -213,7 +213,7 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration.network_migration("original-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", False)
-        new_instance_template = instance_network_migration.new_instance.instance_template
+        new_instance_template = instance_network_migration.instance.new_instance_template
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -222,7 +222,7 @@ class TestNetworkMigration(unittest.TestCase):
                 'subnetwork'])
         self.assertFalse(
             "natIP" in new_instance_template['networkInterfaces'][0]['accessConfigs'][0])
-        instance_network_migration.new_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
     def test_migrate_no_external_ip_instance_without_preserving_ip(self,
@@ -242,7 +242,7 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration.network_migration("original-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", False)
-        new_instance_template = instance_network_migration.new_instance.instance_template
+        new_instance_template = instance_network_migration.instance.new_instance_template
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -251,7 +251,7 @@ class TestNetworkMigration(unittest.TestCase):
                 'subnetwork'])
         self.assertFalse(
             'accessConfigs' in new_instance_template['networkInterfaces'][0])
-        instance_network_migration.new_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
     def test_migrate_with_preserving_ip(self, *mocks):
@@ -270,7 +270,7 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration.network_migration("original-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", True)
-        new_instance_template = instance_network_migration.new_instance.instance_template
+        new_instance_template = instance_network_migration.instance.new_instance_template
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -280,7 +280,7 @@ class TestNetworkMigration(unittest.TestCase):
         self.assertEqual(
             new_instance_template['networkInterfaces'][0]['accessConfigs'],
             instance_template['networkInterfaces'][0]['accessConfigs'])
-        instance_network_migration.new_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
     def test_migrate_no_external_ip_instance_with_preserving_ip(self, *mocks):
@@ -298,7 +298,7 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration.network_migration("original-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", True)
-        new_instance_template = instance_network_migration.new_instance.instance_template
+        new_instance_template = instance_network_migration.instance.new_instance_template
 
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
@@ -309,7 +309,7 @@ class TestNetworkMigration(unittest.TestCase):
         self.assertFalse(
             'accessConfigs' in new_instance_template['networkInterfaces'][0])
 
-        instance_network_migration.new_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
     def test_preserving_a_static_ip(self, *mocks):
@@ -332,7 +332,7 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration.network_migration("original-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", True)
-        new_instance_template = instance_network_migration.new_instance.instance_template
+        new_instance_template = instance_network_migration.instance.new_instance_template
 
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
@@ -343,7 +343,7 @@ class TestNetworkMigration(unittest.TestCase):
         self.assertEqual(
             new_instance_template['networkInterfaces'][0]['accessConfigs'],
             instance_template['networkInterfaces'][0]['accessConfigs'])
-        instance_network_migration.new_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
     def test_no_subnetwork_in_auto_network_mode(self, *mocks):
@@ -363,7 +363,7 @@ class TestNetworkMigration(unittest.TestCase):
                                                      None,
                                                      False)
 
-        new_instance_template = instance_network_migration.new_instance.instance_template
+        new_instance_template = instance_network_migration.instance.new_instance_template
 
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
@@ -373,7 +373,7 @@ class TestNetworkMigration(unittest.TestCase):
                 'subnetwork'])
         self.assertFalse(
             'natIP' in new_instance_template['networkInterfaces'][0]['accessConfigs'][0])
-        instance_network_migration.new_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
     def test_no_subnetwork_in_non_auto_network_mode(self, *mocks):
@@ -391,7 +391,7 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-network",
                                                      None,
                                                      False)
-        instance_network_migration.new_instance.create_instance.assert_not_called()
+        instance_network_migration.instance.create_instance.assert_not_called()
         mocks[2].assert_called()
 
     def test_error_in_instance_get(self, *mocks):
@@ -435,8 +435,7 @@ class TestNetworkMigration(unittest.TestCase):
         mocks[0].return_value = compute
         # failed to initialize an InstanceNetworkMigration object
         with self.assertRaises(HttpError):
-            instance_network_migration = InstanceNetworkMigration(self.project,
-                                                                  self.zone)
+            InstanceNetworkMigration(self.project, self.zone)
 
     def test_error_in_networks_get(self, *mocks):
         instance_template = read_json_file(
@@ -460,7 +459,7 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-subnetwork",
                                                      False)
 
-        instance_network_migration.new_instance.create_instance.assert_not_called()
+        instance_network_migration.instance.create_instance.assert_not_called()
         mocks[2].assert_called()
 
     def test_error_in_addresses_insert(self, *mocks):
@@ -484,7 +483,7 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-subnetwork",
                                                      False)
 
-        instance_network_migration.new_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
     def test_error_in_instances_stop(self, *mocks):
@@ -508,7 +507,7 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-subnetwork",
                                                      False)
 
-        instance_network_migration.new_instance.create_instance.assert_not_called()
+        instance_network_migration.instance.create_instance.assert_not_called()
         mocks[2].assert_called()
 
     def test_error_in_instance_detach_disk(self, *mocks):
@@ -533,7 +532,7 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-subnetwork",
                                                      False)
 
-        instance_network_migration.new_instance.create_instance.assert_not_called()
+        instance_network_migration.instance.create_instance.assert_not_called()
         mocks[2].assert_called()
 
     def test_error_in_instance_insert(self, *mocks):
@@ -553,7 +552,7 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-subnetwork",
                                                      False)
 
-        instance_network_migration.new_instance.create_instance.assert_called()
+        instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_called()
 
     def test_error_in_instance_delete(self, *mocks):
@@ -578,6 +577,6 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-subnetwork",
                                                      False)
 
-        instance_network_migration.new_instance.create_instance.assert_not_called()
+        instance_network_migration.instance.create_instance.assert_not_called()
         mocks[2].assert_called()
 

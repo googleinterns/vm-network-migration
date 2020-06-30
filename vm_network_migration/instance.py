@@ -15,7 +15,7 @@
     InstanceStatus class: describe an instance's current status
 """
 from enum import Enum
-
+from copy import deepcopy
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.operations import Operations
@@ -40,14 +40,15 @@ class Instance(object):
         self.region = region
         self.project = project
         self.zone = zone
-        self.instance_template = instance_template
-        if self.instance_template == None:
-            self.retrieve_instance_template()
+        self.original_instance_template = instance_template
+        if self.original_instance_template == None:
+            self.original_instance_template = self.retrieve_instance_template()
+        self.new_instance_template = deepcopy(self.original_instance_template)
         self.network = None
         self.address = None
         self.operations = Operations(compute, project, zone, region)
         self.status = self.get_instance_status()
-        self.selfLink = None
+        self.selfLink = self.get_selfLink(self.original_instance_template)
 
 
     def retrieve_instance_template(self) -> dict:
@@ -59,13 +60,16 @@ class Instance(object):
         Raises:
             googleapiclient.errors.HttpError: invalid request
         """
-        self.instance_template = self.compute.instances().get(
+        instance_template = self.compute.instances().get(
             project=self.project,
             zone=self.zone,
             instance=self.name).execute()
-        if 'selfLink' in self.instance_template:
-            self.selfLink = self.instance_template['selfLink']
-        return self.instance_template
+
+        return instance_template
+
+    def get_selfLink(self, instance_template):
+        if 'selfLink' in instance_template:
+            return self.original_instance_template['selfLink']
 
     def start_instance(self) -> dict:
         """ Start the instance.
@@ -109,9 +113,9 @@ class Instance(object):
         Raises:
             AttributeNotExistError: No disks on the VM
         """
-        if 'disks' not in self.instance_template:
+        if 'disks' not in self.original_instance_template:
             raise AttributeNotExistError('No disks are attached on the VM')
-        return self.instance_template['disks']
+        return self.original_instance_template['disks']
 
     def detach_disk(self, disk) -> dict:
         """ Detach a disk from the instance
@@ -175,7 +179,7 @@ class Instance(object):
             self.attach_disk(diskInfo['deviceName'])
 
     def modify_instance_template_with_new_network(self, new_network_link,
-                                                  new_subnetwork_link) -> dict:
+                                                  new_subnetwork_link, instance_template) -> dict:
         """ Modify the instance template with the new network links
 
             Args:
@@ -185,13 +189,13 @@ class Instance(object):
             Returns:
                 modified instance template
         """
-        self.instance_template['networkInterfaces'][0][
+        instance_template['networkInterfaces'][0][
             'network'] = new_network_link
-        self.instance_template['networkInterfaces'][0][
+        instance_template['networkInterfaces'][0][
             'subnetwork'] = new_subnetwork_link
-        return self.instance_template
+        return instance_template
 
-    def modify_instance_template_with_external_ip(self, external_ip) -> dict:
+    def modify_instance_template_with_external_ip(self, external_ip, instance_template) -> dict:
         """ Modify the instance template with the given external IP address
 
         Args:
@@ -201,22 +205,22 @@ class Instance(object):
 
         """
         if external_ip == None:
-            if 'accessConfigs' in self.instance_template['networkInterfaces'][
+            if 'accessConfigs' in instance_template['networkInterfaces'][
                 0]:
-                if 'natIP' in self.instance_template['networkInterfaces'][0]['accessConfigs'][0]:
-                    del self.instance_template['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+                if 'natIP' in instance_template['networkInterfaces'][0]['accessConfigs'][0]:
+                    del instance_template['networkInterfaces'][0]['accessConfigs'][0]['natIP']
 
         else:
             if 'accessConfigs' not in \
-                    self.instance_template['networkInterfaces'][0]:
-                self.instance_template['networkInterfaces'][0][
+                    instance_template['networkInterfaces'][0]:
+                instance_template['networkInterfaces'][0][
                     'accessConfigs'] = [{}]
-            self.instance_template['networkInterfaces'][0]['accessConfigs'][0][
+            instance_template['networkInterfaces'][0]['accessConfigs'][0][
                 'natIP'] = external_ip
 
-        if 'networkIP' in self.instance_template['networkInterfaces'][0]:
-            del self.instance_template['networkInterfaces'][0]['networkIP']
-        return self.instance_template
+        if 'networkIP' in instance_template['networkInterfaces'][0]:
+            del instance_template['networkInterfaces'][0]['networkIP']
+        return instance_template
 
     def update_instance_template(self):
         """ Update the instance template with current attributes
@@ -226,9 +230,9 @@ class Instance(object):
         """
         if self.address == None or self.network == None:
             raise AttributeNotExistError('Missing address or network object.')
-        self.modify_instance_template_with_external_ip(self.address.external_ip)
-        self.modify_instance_template_with_new_network(
-            self.network.network_link, self.network.subnetwork_link)
+        self.new_instance_template = self.modify_instance_template_with_external_ip(self.address.external_ip, self.new_instance_template)
+        self.new_instance_template = self.modify_instance_template_with_new_network(
+            self.network.network_link, self.network.subnetwork_link, self.new_instance_template)
 
     def get_instance_status(self):
         """ Get current instance's status.
@@ -249,7 +253,7 @@ class Instance(object):
                 raise e
         return InstanceStatus(instance_template['status'])
 
-    def create_instance(self) -> dict:
+    def create_instance(self, instance_template) -> dict:
         """ Create the instance using self.instance_template
 
             Returns:
@@ -261,7 +265,7 @@ class Instance(object):
         create_instance_operation = self.compute.instances().insert(
             project=self.project,
             zone=self.zone,
-            body=self.instance_template).execute()
+            body=instance_template).execute()
         self.operations.wait_for_zone_operation(
             create_instance_operation['name'])
         return create_instance_operation
