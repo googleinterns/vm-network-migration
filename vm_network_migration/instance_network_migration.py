@@ -65,8 +65,7 @@ class InstanceNetworkMigration:
         self.project = project
         self.zone = zone
         self.region = self.get_region()
-        self.original_instance = None
-        self.new_instance = None
+        self.instance = None
 
     def set_compute_engine(self):
         """ Credential setup
@@ -147,40 +146,35 @@ class InstanceNetworkMigration:
                 preserve_external_ip = False
         try:
             print('Retrieving the original instance template.')
-            self.original_instance = Instance(self.compute, self.project,
+            self.instance = Instance(self.compute, self.project,
                                               original_instance_name,
                                               self.region,
                                               self.zone, None)
-
-            self.new_instance = Instance(self.compute, self.project,
-                                         original_instance_name,
-                                         self.region, self.zone, copy.deepcopy(
-                    self.original_instance.instance_template))
-            self.new_instance.address = self.generate_address(
-                self.new_instance.instance_template)
+            self.instance.address = self.generate_address(
+                self.instance.original_instance_template)
 
             print('Modifying IP address.')
-            self.new_instance.address.preserve_ip_addresses_handler(
+            self.instance.address.preserve_ip_addresses_handler(
                 preserve_external_ip)
-            self.new_instance.network = self.generate_network(network_name,
+            self.instance.network = self.generate_network(network_name,
                                                               subnetwork_name)
-            self.new_instance.update_instance_template()
+            self.instance.update_instance_template()
 
             print('Stopping the VM.')
             print('stop_instance_operation is running.')
-            self.original_instance.stop_instance()
+            self.instance.stop_instance()
 
             print('Detaching the disks.')
-            self.original_instance.detach_disks()
+            self.instance.detach_disks()
 
             print('Deleting the old VM.')
             print('delete_instance_operation is running.')
-            self.original_instance.delete_instance()
+            self.instance.delete_instance()
 
             print('Creating a new VM.')
             print('create_instance_operation is running.')
-            print('DEBUGGING:', self.new_instance.instance_template)
-            self.new_instance.create_instance()
+            print('DEBUGGING:', self.instance.new_instance_template)
+            self.instance.create_instance(self.instance.new_instance_template)
 
             print('The migration is successful.')
 
@@ -200,24 +194,24 @@ class InstanceNetworkMigration:
         warnings.warn(
             'VM network migration is failed. Rolling back to the original VM.',
             Warning)
-        if self.original_instance == None or self.original_instance.instance_template == None:
+        if self.instance == None or self.instance.original_instance_template == None:
             print(
                 'Cannot get instance\'s resource. Please check the parameters and try again.')
             return
-        instance_status = self.original_instance.get_instance_status()
+        instance_status = self.instance.get_instance_status()
 
         if instance_status == InstanceStatus.RUNNING:
             return
         elif instance_status == InstanceStatus.NOTEXISTS:
             print('Recreating the original VM.')
-            self.original_instance.create_instance()
+            self.instance.create_instance(self.instance.original_instance_template)
         else:
             print('Attaching disks back to the original VM.')
             print('attach_disk_operation is running')
-            self.original_instance.attach_disks()
+            self.instance.attach_disks()
             print('Restarting the original VM')
             print('start_instance_operation is running')
-            self.original_instance.start_instance()
+            self.instance.start_instance()
 
     def rollback_failure_protection(self) -> bool:
         """Try to rollback to the original VM. If the rollback procedure also fails,
@@ -234,7 +228,7 @@ class InstanceNetworkMigration:
             print(
                 "The original VM may have been deleted. "
                 "The instance template of the original VM is: ")
-            print(self.original_instance.instance_template)
+            print(self.instance.original_instance_template)
             raise RollbackError("Rollback to the original VM is failed.")
 
         print('Rollback finished. The original VM is running.')
