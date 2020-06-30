@@ -3,10 +3,11 @@ from vm_network_migration.instance_group import InstanceGroup, \
 from vm_network_migration.instance import Instance
 from vm_network_migration.errors import *
 from googleapiclient.errors import HttpError
+from vm_network_migration.operations import Operations
 
 
 class UnmanagedInstanceGroup(InstanceGroup):
-    def __init__(self, compute, project, instance_group_name, region, zone):
+    def __init__(self, compute, project, instance_group_name, zone):
         """ Initialize an unmanaged instance group object
 
         Args:
@@ -17,13 +18,14 @@ class UnmanagedInstanceGroup(InstanceGroup):
             zone: zone name of the instance group
         """
         super(UnmanagedInstanceGroup, self).__init__(compute, project,
-                                                     instance_group_name,
-                                                     region, zone)
+                                                     instance_group_name)
+        self.zone = zone
         self.instances = self.retrieve_instances()
         self.original_instance_group_configs = self.get_instance_group_configs()
         self.current_instance_group_configs = None
         self.status = self.get_status()
         self.network = None
+        self.operation = Operations(self.compute, self.project, self.zone, None)
 
     def get_instance_group_configs(self):
         """ Get instance group's configurations

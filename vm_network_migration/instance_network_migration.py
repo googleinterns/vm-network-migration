@@ -88,36 +88,6 @@ class InstanceNetworkMigration:
             project=self.project,
             zone=self.zone).execute()['region'].split('regions/')[1]
 
-    # def generate_address(self, instance_template):
-    #     """ Generate an address object
-    #
-    #     Args:
-    #         instance_template: the instance template which contains the IP address information
-    #
-    #     Returns: an Address object
-    #
-    #     """
-    #     address = Address(self.compute, self.project, self.region)
-    #     address.retrieve_ip_from_network_interface(
-    #         instance_template['networkInterfaces'][0])
-    #     return address
-    #
-    # def generate_network(self, network, subnetwork):
-    #     """ Generate a network object
-    #
-    #     Args:
-    #         network: network name
-    #         subnetwork: subnetwork name
-    #
-    #     Returns: a SubnetNetwork object
-    #
-    #     """
-    #     network = SubnetNetwork(self.compute, self.project, self.zone,
-    #                             self.region, network, subnetwork)
-    #     network.check_subnetwork_validation()
-    #     network.generate_new_network_info()
-    #
-    #     return network
 
     def network_migration(self, original_instance_name,
                           network_name,

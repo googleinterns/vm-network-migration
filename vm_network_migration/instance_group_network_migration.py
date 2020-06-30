@@ -51,10 +51,11 @@ from vm_network_migration.instance import (
     InstanceStatus,
 )
 from vm_network_migration.subnet_network import SubnetNetwork
-
-
-class InstanceNetworkMigration:
-    def __init__(self, project, zone):
+from vm_network_migration.unmanaged_instance_group import UnmanagedInstanceGroup
+from googleapiclient.http import HttpError
+from vm_network_migration.instance_group import InstanceGroupFactory
+class InstanceGroupNetworkMigration:
+    def __init__(self, project, region, zone, instance_group_name):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
@@ -64,8 +65,14 @@ class InstanceNetworkMigration:
         self.compute = self.set_compute_engine()
         self.project = project
         self.zone = zone
-        self.region = self.get_region()
-        self.instance = None
+        self.region = region
+        self.instance_group_name = instance_group_name
+        self.instance_group = self.build_instance_group()
+
+    def build_instance_group(self):
+        instance_group_factory = InstanceGroupFactory(self.compute, self.project, self.region, self.zone, self.instance_group_name)
+        instance_group = instance_group_factory.build_instance_group()
+        return instance_group
 
     def set_compute_engine(self):
         """ Credential setup
@@ -76,114 +83,26 @@ class InstanceNetworkMigration:
         credentials, default_project = google.auth.default()
         return discovery.build('compute', 'v1', credentials=credentials)
 
-    def get_region(self) -> dict:
-        """ Get region information
-
-            Returns:
-                region name of the self.zone
-
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
-        """
-        return self.compute.zones().get(
-            project=self.project,
-            zone=self.zone).execute()['region'].split('regions/')[1]
-
-    def generate_address(self, instance_template):
-        """ Generate an address object
-
-        Args:
-            instance_template: the instance template which contains the IP address information
-
-        Returns: an Address object
-
-        """
-        address = Address(self.compute, self.project, self.region)
-        address.retrieve_ip_from_network_interface(
-            instance_template['networkInterfaces'][0])
-        return address
-
-    def generate_network(self, network, subnetwork):
-        """ Generate a network object
-
-        Args:
-            network: network name
-            subnetwork: subnetwork name
-
-        Returns: a SubnetNetwork object
-
-        """
-        network = SubnetNetwork(self.compute, self.project, self.zone,
-                                self.region, network, subnetwork)
-        network.check_subnetwork_validation()
-        network.generate_new_network_info()
-
-        return network
-
-    def network_migration(self, original_instance_name,
+    def network_migration(self,
                           network_name,
                           subnetwork_name, preserve_external_ip):
         """ The main method of the instance network migration process
 
         Args:
-            original_instance_name: original instance's name
             network_name: target network name
             subnetwork_name: target subnetwork name
-            preserve_external_ip: True/False
+            preserve_external_ip: preserve the external IP of the instances
+            in an unmanaged instance group
 
         Returns: None
 
         """
-        if preserve_external_ip:
-            warnings.warn(
-                'You choose to preserve the external IP. If the original instance '
-                'has an ephemeral IP, it will be reserved as a static external IP after the '
-                'execution.',
-                Warning)
-            continue_execution = input(
-                'Do you still want to preserve the external IP? y/n: ')
-            if continue_execution == 'n':
-                preserve_external_ip = False
-        try:
-            print('Retrieving the original instance template.')
-            self.instance = Instance(self.compute, self.project,
-                                              original_instance_name,
-                                              self.region,
-                                              self.zone, None)
-            self.instance.address = self.generate_address(
-                self.instance.original_instance_template)
+        pass
 
-            print('Modifying IP address.')
-            self.instance.address.preserve_ip_addresses_handler(
-                preserve_external_ip)
-            self.instance.network = self.generate_network(network_name,
-                                                              subnetwork_name)
-            self.instance.update_instance_template()
 
-            print('Stopping the VM.')
-            print('stop_instance_operation is running.')
-            self.instance.stop_instance()
 
-            print('Detaching the disks.')
-            self.instance.detach_disks()
 
-            print('Deleting the old VM.')
-            print('delete_instance_operation is running.')
-            self.instance.delete_instance()
-
-            print('Creating a new VM.')
-            print('create_instance_operation is running.')
-            print('DEBUGGING:', self.instance.new_instance_template)
-            self.instance.create_instance(self.instance.new_instance_template)
-
-            print('The migration is successful.')
-
-        except Exception as e:
-            warnings.warn(str(e), Warning)
-            self.rollback_failure_protection()
-            return
-
-    def rollback_original_instance(self):
+    def rollback_original_instance_group(self):
         """ Roll back to the original VM. Reattach the disks to the
         original instance and restart it.
 
@@ -191,27 +110,6 @@ class InstanceNetworkMigration:
                 googleapiclient.errors.HttpError: invalid request
         """
 
-        warnings.warn(
-            'VM network migration is failed. Rolling back to the original VM.',
-            Warning)
-        if self.instance == None or self.instance.original_instance_template == None:
-            print(
-                'Cannot get instance\'s resource. Please check the parameters and try again.')
-            return
-        instance_status = self.instance.get_instance_status()
-
-        if instance_status == InstanceStatus.RUNNING:
-            return
-        elif instance_status == InstanceStatus.NOTEXISTS:
-            print('Recreating the original VM.')
-            self.instance.create_instance(self.instance.original_instance_template)
-        else:
-            print('Attaching disks back to the original VM.')
-            print('attach_disk_operation is running')
-            self.instance.attach_disks()
-            print('Restarting the original VM')
-            print('start_instance_operation is running')
-            self.instance.start_instance()
 
     def rollback_failure_protection(self) -> bool:
         """Try to rollback to the original VM. If the rollback procedure also fails,
@@ -220,16 +118,4 @@ class InstanceNetworkMigration:
             Returns: True/False for successful/failed rollback
             Raises: RollbackError
         """
-        try:
-            self.rollback_original_instance()
-        except Exception as e:
-            warnings.warn("Rollback failed.", Warning)
-            print(e)
-            print(
-                "The original VM may have been deleted. "
-                "The instance template of the original VM is: ")
-            print(self.instance.original_instance_template)
-            raise RollbackError("Rollback to the original VM is failed.")
 
-        print('Rollback finished. The original VM is running.')
-        return True
