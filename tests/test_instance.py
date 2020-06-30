@@ -503,7 +503,7 @@ class TestCreateInstance(unittest.TestCase):
                         requestBuilder=request_builder)
         instance = Instance(compute, self.project, self.instance_name,
                             self.region, self.zone)
-        create_instance_operation = instance.create_instance()
+        create_instance_operation = instance.create_instance(instance.original_instance_template)
 
         self.assertEqual(
             create_instance_operation,
@@ -522,7 +522,7 @@ class TestCreateInstance(unittest.TestCase):
                             self.region, self.zone)
 
         with self.assertRaises(HttpError):
-            instance.create_instance()
+            instance.create_instance(instance.original_instance_template)
 
 
 class TestGetInstanceStatus(unittest.TestCase):
