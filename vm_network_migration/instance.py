@@ -23,7 +23,7 @@ from vm_network_migration.operations import Operations
 
 class Instance(object):
     def __init__(self, compute, project, name, region, zone,
-                 instance_template=None):
+                 instance_template=None, status=None):
         """ Initialize an instance object
 
         Args:
@@ -33,6 +33,7 @@ class Instance(object):
             region: region of the instance
             zone: zone of the instance
             instance_template: the instance template of the instance
+            stauts:instance's status
         """
         self.compute = compute
         self.name = name
@@ -46,6 +47,7 @@ class Instance(object):
         self.address = None
         self.operations = Operations(compute, project, zone, region)
         self.status = self.get_instance_status()
+        self.selfLink = None
 
 
     def retrieve_instance_template(self) -> dict:
@@ -61,6 +63,8 @@ class Instance(object):
             project=self.project,
             zone=self.zone,
             instance=self.name).execute()
+        if 'selfLink' in self.instance_template:
+            self.selfLink = self.instance_template['selfLink']
         return self.instance_template
 
     def start_instance(self) -> dict:
