@@ -1,9 +1,9 @@
-from vm_network_migration.instance_group import InstanceGroup, \
+from vm_network_migration.modules.instance_group import InstanceGroup, \
     InstanceGroupStatus
-from vm_network_migration.instance import Instance
+from vm_network_migration.modules.instance import Instance
 from vm_network_migration.errors import *
 from googleapiclient.errors import HttpError
-from vm_network_migration.operations import Operations
+from vm_network_migration.modules.operations import Operations
 
 
 class UnmanagedInstanceGroup(InstanceGroup):

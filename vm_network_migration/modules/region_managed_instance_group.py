@@ -1,4 +1,4 @@
-from vm_network_migration.managed_instance_group import ManagedInstanceGroup
+from vm_network_migration.modules.managed_instance_group import ManagedInstanceGroup
 
 
 class RegionManagedInstanceGroup(ManagedInstanceGroup):

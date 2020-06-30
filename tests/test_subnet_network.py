@@ -24,7 +24,7 @@ from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
 from vm_network_migration.errors import *
-from vm_network_migration.subnet_network import (
+from vm_network_migration.modules.subnet_network import (
     SubnetNetwork,
     SubnetNetworkFactory,
 )

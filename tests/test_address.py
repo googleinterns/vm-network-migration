@@ -23,7 +23,7 @@ from googleapiclient.http import HttpError
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
-from vm_network_migration.address import (
+from vm_network_migration.modules.address import (
     Address,
     AddressFactory,
 )

@@ -18,7 +18,7 @@ from enum import Enum
 from copy import deepcopy
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
-from vm_network_migration.operations import Operations
+from vm_network_migration.modules.operations import Operations
 
 
 class Instance(object):

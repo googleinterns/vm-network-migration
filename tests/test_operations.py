@@ -22,7 +22,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from googleapiclient.http import HttpError
-from vm_network_migration.operations import Operations
+from vm_network_migration.modules.operations import Operations
 from vm_network_migration.errors import *
 from utils import *
 

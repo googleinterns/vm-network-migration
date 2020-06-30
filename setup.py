@@ -41,6 +41,11 @@ setup(
    author='',
    author_email='',
    test_suite = 'tests',
-   packages=['vm_network_migration'],  #same as name
+   package_dir = {
+       'vm_network_migration': 'vm_network_migration',
+       'vm_network_migration.migrations': 'vm_network_migration/migrations',
+       'vm_network_migration.modules':'vm_network_migration/modules'
+   },
+   packages=['vm_network_migration', 'vm_network_migration.migrations', 'vm_network_migration.modules'],  #same as name
    install_requires=install_requires, #external packages as dependencies
 )

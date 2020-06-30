@@ -44,18 +44,12 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.address import Address
-from vm_network_migration.errors import *
-from vm_network_migration.instance import (
-    Instance,
-    InstanceStatus,
-)
-from vm_network_migration.subnet_network import SubnetNetwork
-from vm_network_migration.unmanaged_instance_group import UnmanagedInstanceGroup
-from vm_network_migration.subnet_network import SubnetNetworkFactory
+
+from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.subnet_network import SubnetNetworkFactory
 from googleapiclient.http import HttpError
-from vm_network_migration.instance_group import InstanceGroupFactory
-from vm_network_migration.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.modules.instance_group import InstanceGroupFactory
+from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
 class InstanceGroupNetworkMigration:
     def __init__(self, project, region, zone, instance_group_name):
         """ Initialize a InstanceNetworkMigration object

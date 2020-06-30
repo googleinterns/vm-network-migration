@@ -18,7 +18,7 @@ import warnings
 
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
-from vm_network_migration.operations import Operations
+from vm_network_migration.modules.operations import Operations
 from vm_network_migration.utils import generate_timestamp_string
 
 

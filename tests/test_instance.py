@@ -26,7 +26,7 @@ from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
 from vm_network_migration.errors import *
-from vm_network_migration.instance import (
+from vm_network_migration.modules.instance import (
     Instance,
     InstanceStatus,
 )
@@ -79,9 +79,9 @@ class TestRetrieveInstanceTemplate(unittest.TestCase):
             instance.retrieve_instance_template()
 
 
-@patch("vm_network_migration.instance.Instance.get_instance_status")
+@patch("vm_network_migration.modules.instance.Instance.get_instance_status")
 @patch(
-    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
+    "vm_network_migration.modules.operations.Operations.wait_for_zone_operation")  # index 0
 class TestStartInstance(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
@@ -128,9 +128,9 @@ class TestStartInstance(unittest.TestCase):
             instance.start_instance()
 
 
-@patch("vm_network_migration.instance.Instance.get_instance_status")
+@patch("vm_network_migration.modules.instance.Instance.get_instance_status")
 @patch(
-    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
+    "vm_network_migration.modules.operations.Operations.wait_for_zone_operation")  # index 0
 class TestStopInstance(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
@@ -194,9 +194,9 @@ class TestGetDisksInfoFromInstanceTemplate(unittest.TestCase):
             Instance.get_disks_info_from_instance_template(instance)
 
 
-@patch("vm_network_migration.instance.Instance.get_instance_status")
+@patch("vm_network_migration.modules.instance.Instance.get_instance_status")
 @patch(
-    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
+    "vm_network_migration.modules.operations.Operations.wait_for_zone_operation")  # index 0
 class TestDetachDisk(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
@@ -254,9 +254,9 @@ class TestDetachDisks(unittest.TestCase):
         self.assertEqual(instance.detach_disk.call_count, len(disks))
 
 
-@patch("vm_network_migration.instance.Instance.get_instance_status")
+@patch("vm_network_migration.modules.instance.Instance.get_instance_status")
 @patch(
-    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
+    "vm_network_migration.modules.operations.Operations.wait_for_zone_operation")  # index 0
 class TestAttachDisk(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
@@ -427,9 +427,9 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
             "networkIP" in instance_template['networkInterfaces'][0])
 
 
-@patch("vm_network_migration.instance.Instance.get_instance_status")
+@patch("vm_network_migration.modules.instance.Instance.get_instance_status")
 @patch(
-    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
+    "vm_network_migration.modules.operations.Operations.wait_for_zone_operation")  # index 0
 class TestDeleteInstance(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
@@ -476,9 +476,9 @@ class TestDeleteInstance(unittest.TestCase):
             instance.delete_instance()
 
 
-@patch("vm_network_migration.instance.Instance.get_instance_status")
+@patch("vm_network_migration.modules.instance.Instance.get_instance_status")
 @patch(
-    "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
+    "vm_network_migration.modules.operations.Operations.wait_for_zone_operation")  # index 0
 class TestCreateInstance(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"

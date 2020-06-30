@@ -1,8 +1,8 @@
 from enum import Enum
-from vm_network_migration.operations import Operations
-from vm_network_migration.single_zone_managed_instance_group import SingleZoneManagedInstanceGroup
-from vm_network_migration.region_managed_instance_group import RegionManagedInstanceGroup
-from vm_network_migration.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.operations import Operations
+from vm_network_migration.modules.single_zone_managed_instance_group import SingleZoneManagedInstanceGroup
+from vm_network_migration.modules.region_managed_instance_group import RegionManagedInstanceGroup
+from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from googleapiclient.http import HttpError
 
 class InstanceGroup(object):

@@ -26,12 +26,12 @@ from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
 from vm_network_migration.errors import *
-from vm_network_migration.instance import InstanceStatus
-from vm_network_migration.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.modules.instance import InstanceStatus
+from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
 
 
 @patch(
-    "vm_network_migration.instance_network_migration.InstanceNetworkMigration.set_compute_engine")  # index 0
+    "vm_network_migration.migrations.instance_network_migration.InstanceNetworkMigration.set_compute_engine")  # index 0
 class TestGetRegion(unittest.TestCase):
     project = "mock_project"
     zone = "mock_us_central1_a"
@@ -125,10 +125,10 @@ class TestRollbackFailureProtection(unittest.TestCase):
 
 
 @patch(
-    "vm_network_migration.instance_network_migration.InstanceNetworkMigration.rollback_failure_protection")  # index 2
-@patch("vm_network_migration.instance.Instance.create_instance")  # index 1
+    "vm_network_migration.migrations.instance_network_migration.InstanceNetworkMigration.rollback_failure_protection")  # index 2
+@patch("vm_network_migration.modules.instance.Instance.create_instance")  # index 1
 @patch(
-    "vm_network_migration.instance_network_migration.InstanceNetworkMigration.set_compute_engine")  # index 0
+    "vm_network_migration.migrations.instance_network_migration.InstanceNetworkMigration.set_compute_engine")  # index 0
 class TestNetworkMigration(unittest.TestCase):
     def setUp(self) -> None:
         self.project = "mock_project"
