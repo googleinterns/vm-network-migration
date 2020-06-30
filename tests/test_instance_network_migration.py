@@ -21,15 +21,14 @@ import httplib2
 import mock
 import unittest2 as unittest
 from googleapiclient.discovery import build
+from googleapiclient.http import HttpError
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
-from googleapiclient.http import HttpError
 from utils import *
-from vm_network_migration.instance import InstanceStatus
-
 from vm_network_migration.errors import *
+from vm_network_migration.instance import InstanceStatus
 from vm_network_migration.instance_network_migration import InstanceNetworkMigration
-from vm_network_migration.subnet_network import SubnetNetwork
+
 
 @patch(
     "vm_network_migration.instance_network_migration.InstanceNetworkMigration.set_compute_engine")  # index 0
@@ -125,41 +124,6 @@ class TestRollbackFailureProtection(unittest.TestCase):
                 instance_network_migration)
 
 
-class TestGenerateAddress(unittest.TestCase):
-
-    def test_generate_address(self):
-        instance_network_migration = mock.MagicMock()
-        instance_template = read_json_file("sample_instance_template.json")
-        address = InstanceNetworkMigration.generate_address(
-            instance_network_migration, instance_template)
-        self.assertEqual(address.project, instance_network_migration.project)
-        self.assertEqual(address.region, instance_network_migration.region)
-        self.assertEqual(address.external_ip,
-                         instance_template['networkInterfaces'][0][
-                             'accessConfigs'][0]['natIP'])
-
-    def test_generate_address_no_external_ip(self):
-        instance_network_migration = mock.MagicMock()
-        instance_template = read_json_file(
-            "sample_instance_template_no_external_ip.json")
-        address = InstanceNetworkMigration.generate_address(
-            instance_network_migration, instance_template)
-        self.assertEqual(address.project, instance_network_migration.project)
-        self.assertEqual(address.region, instance_network_migration.region)
-        self.assertEqual(address.external_ip, None)
-
-
-class TestGenerateNetwork(unittest.TestCase):
-
-    def test_generate_network(self):
-        instance_network_migration = mock.MagicMock()
-        SubnetNetwork.check_network_auto_mode = mock.MagicMock()
-        network = InstanceNetworkMigration.generate_network(
-            instance_network_migration, "mock-network", "mock-subnetwork")
-        self.assertEqual(network.network, "mock-network")
-        self.assertEqual(network.subnetwork, "mock-subnetwork")
-
-
 @patch(
     "vm_network_migration.instance_network_migration.InstanceNetworkMigration.rollback_failure_protection")  # index 2
 @patch("vm_network_migration.instance.Instance.create_instance")  # index 1
@@ -221,7 +185,8 @@ class TestNetworkMigration(unittest.TestCase):
             "mock-subnetwork" in new_instance_template['networkInterfaces'][0][
                 'subnetwork'])
         self.assertFalse(
-            "natIP" in new_instance_template['networkInterfaces'][0]['accessConfigs'][0])
+            "natIP" in
+            new_instance_template['networkInterfaces'][0]['accessConfigs'][0])
         instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
@@ -372,7 +337,8 @@ class TestNetworkMigration(unittest.TestCase):
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'subnetwork'])
         self.assertFalse(
-            'natIP' in new_instance_template['networkInterfaces'][0]['accessConfigs'][0])
+            'natIP' in
+            new_instance_template['networkInterfaces'][0]['accessConfigs'][0])
         instance_network_migration.instance.create_instance.assert_called()
         mocks[2].assert_not_called()
 
@@ -417,7 +383,6 @@ class TestNetworkMigration(unittest.TestCase):
                                                      "mock-subnetwork",
                                                      False)
         mocks[2].assert_called()
-
 
     def test_error_in_zones_get(self, *mocks):
         instance_template = read_json_file(
@@ -579,4 +544,3 @@ class TestNetworkMigration(unittest.TestCase):
 
         instance_network_migration.instance.create_instance.assert_not_called()
         mocks[2].assert_called()
-

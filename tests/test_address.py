@@ -19,11 +19,15 @@ import httplib2
 import mock
 import unittest2 as unittest
 from googleapiclient.discovery import build
+from googleapiclient.http import HttpError
 from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
-from vm_network_migration.address import Address
-from googleapiclient.http import HttpError
+from vm_network_migration.address import (
+    Address,
+    AddressFactory,
+)
+
 
 class TestRetrieveIpFromInstanceTemplate(unittest.TestCase):
 
@@ -182,3 +186,31 @@ class TestPreserveIPAddressHandler(unittest.TestCase):
             resp=self.errorResponse, content=b'')
         Address.preserve_ip_addresses_handler(address, True)
         self.assertIsNone(address.external_ip)
+
+
+class TestGenerateAddress(unittest.TestCase):
+
+    def test_generate_address(self):
+        instance_network_migration = mock.MagicMock()
+        instance_template = read_json_file("sample_instance_template.json")
+        address_factory = AddressFactory(instance_network_migration.compute,
+                                         instance_network_migration.project,
+                                         instance_network_migration.region)
+        address = address_factory.generate_address(instance_template)
+        self.assertEqual(address.project, instance_network_migration.project)
+        self.assertEqual(address.region, instance_network_migration.region)
+        self.assertEqual(address.external_ip,
+                         instance_template['networkInterfaces'][0][
+                             'accessConfigs'][0]['natIP'])
+
+    def test_generate_address_no_external_ip(self):
+        instance_network_migration = mock.MagicMock()
+        instance_template = read_json_file(
+            "sample_instance_template_no_external_ip.json")
+        address_factory = AddressFactory(instance_network_migration.compute,
+                                         instance_network_migration.project,
+                                         instance_network_migration.region)
+        address = address_factory.generate_address(instance_template)
+        self.assertEqual(address.project, instance_network_migration.project)
+        self.assertEqual(address.region, instance_network_migration.region)
+        self.assertEqual(address.external_ip, None)

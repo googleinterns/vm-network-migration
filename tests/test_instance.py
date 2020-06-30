@@ -16,7 +16,7 @@ Test instance.py
 """
 
 from unittest.mock import patch
-from copy import deepcopy
+
 import httplib2
 import mock
 import unittest2 as unittest
@@ -78,6 +78,7 @@ class TestRetrieveInstanceTemplate(unittest.TestCase):
         with self.assertRaises(HttpError):
             instance.retrieve_instance_template()
 
+
 @patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
@@ -125,6 +126,7 @@ class TestStartInstance(unittest.TestCase):
 
         with self.assertRaises(HttpError):
             instance.start_instance()
+
 
 @patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
@@ -191,6 +193,7 @@ class TestGetDisksInfoFromInstanceTemplate(unittest.TestCase):
         with self.assertRaises(AttributeNotExistError):
             Instance.get_disks_info_from_instance_template(instance)
 
+
 @patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
@@ -249,6 +252,7 @@ class TestDetachDisks(unittest.TestCase):
         instance.get_disks_info_from_instance_template.return_value = disks
         Instance.detach_disks(instance)
         self.assertEqual(instance.detach_disk.call_count, len(disks))
+
 
 @patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
@@ -318,9 +322,10 @@ class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
         instance = mock.MagicMock()
         new_network_link = "new_network_link"
         new_subnetwork_link = "new_subnetwork_link"
-        instance_template = Instance.modify_instance_template_with_new_network(instance,
-                                                           new_network_link,
-                                                           new_subnetwork_link, instance_template)
+        instance_template = Instance.modify_instance_template_with_new_network(
+            instance,
+            new_network_link,
+            new_subnetwork_link, instance_template)
         self.assertEqual(
             instance_template['networkInterfaces'][0]['network'],
             new_network_link)
@@ -334,9 +339,10 @@ class TestModifyInstanceTemplateWithNewNetwork(unittest.TestCase):
         instance = mock.MagicMock()
         new_network_link = "new_network_link"
         new_subnetwork_link = "new_subnetwork_link"
-        instance_template = Instance.modify_instance_template_with_new_network(instance,
-                                                           new_network_link,
-                                                           new_subnetwork_link, instance_template)
+        instance_template = Instance.modify_instance_template_with_new_network(
+            instance,
+            new_network_link,
+            new_subnetwork_link, instance_template)
         self.assertEqual(
             instance_template['networkInterfaces'][0]['network'],
             new_network_link)
@@ -350,7 +356,8 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
         instance = mock.MagicMock()
         instance_template = read_json_file(
             "sample_instance_template_legacy_network.json")
-        instance_template = Instance.modify_instance_template_with_external_ip(instance, None, instance_template)
+        instance_template = Instance.modify_instance_template_with_external_ip(
+            instance, None, instance_template)
         self.assertTrue(
             "accessConfigs" in instance_template['networkInterfaces'][
                 0])
@@ -362,7 +369,8 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
 
         instance_template = read_json_file(
             "sample_instance_template_no_external_ip.json")
-        instance_template = Instance.modify_instance_template_with_external_ip(instance, None, instance_template)
+        instance_template = Instance.modify_instance_template_with_external_ip(
+            instance, None, instance_template)
         self.assertFalse(
             "accessConfigs" in instance_template['networkInterfaces'][
                 0])
@@ -371,7 +379,8 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
 
         instance_template = read_json_file(
             "sample_instance_template_no_natIP.json")
-        instance_template = Instance.modify_instance_template_with_external_ip(instance, None, instance_template)
+        instance_template = Instance.modify_instance_template_with_external_ip(
+            instance, None, instance_template)
         self.assertTrue(
             "accessConfigs" in instance_template['networkInterfaces'][
                 0])
@@ -386,7 +395,8 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
         instance = mock.MagicMock()
         instance_template = read_json_file(
             "sample_instance_template_legacy_network.json")
-        instance_template = Instance.modify_instance_template_with_external_ip(instance, mock_ip, instance_template)
+        instance_template = Instance.modify_instance_template_with_external_ip(
+            instance, mock_ip, instance_template)
 
         self.assertTrue(
             instance_template['networkInterfaces'][0]['accessConfigs'][
@@ -397,7 +407,8 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
         instance_template = read_json_file(
             "sample_instance_template_no_external_ip.json")
 
-        instance_template = Instance.modify_instance_template_with_external_ip(instance, mock_ip, instance_template)
+        instance_template = Instance.modify_instance_template_with_external_ip(
+            instance, mock_ip, instance_template)
         self.assertTrue(
             instance_template['networkInterfaces'][0]['accessConfigs'][
                 0]['natIP'], mock_ip)
@@ -407,12 +418,14 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
         instance_template = read_json_file(
             "sample_instance_template_no_natIP.json")
 
-        instance_template = Instance.modify_instance_template_with_external_ip(instance, mock_ip, instance_template)
+        instance_template = Instance.modify_instance_template_with_external_ip(
+            instance, mock_ip, instance_template)
         self.assertTrue(
             instance_template['networkInterfaces'][0]['accessConfigs'][
                 0]['natIP'], mock_ip)
         self.assertFalse(
             "networkIP" in instance_template['networkInterfaces'][0])
+
 
 @patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
@@ -461,6 +474,7 @@ class TestDeleteInstance(unittest.TestCase):
 
         with self.assertRaises(HttpError):
             instance.delete_instance()
+
 
 @patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(

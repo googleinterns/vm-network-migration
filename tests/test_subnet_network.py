@@ -19,12 +19,16 @@ import httplib2
 import mock
 import unittest2 as unittest
 from googleapiclient.discovery import build
-from googleapiclient.http import HttpMock
 from googleapiclient.http import HttpError
+from googleapiclient.http import HttpMock
 from googleapiclient.http import RequestMockBuilder
 from utils import *
-from vm_network_migration.subnet_network import SubnetNetwork
 from vm_network_migration.errors import *
+from vm_network_migration.subnet_network import (
+    SubnetNetwork,
+    SubnetNetworkFactory,
+)
+
 
 class TestCheckSubnetworkValidation(unittest.TestCase):
 
@@ -139,3 +143,18 @@ class TestCheckNetworkAutoMode(unittest.TestCase):
             "sample_non_auto_mode_network.json")
         auto_mode = SubnetNetwork.check_network_auto_mode(subnet_network)
         self.assertEqual(auto_mode, False)
+
+
+class TestGenerateNetwork(unittest.TestCase):
+
+    def test_generate_network(self):
+        instance_network_migration = mock.MagicMock()
+        SubnetNetwork.check_network_auto_mode = mock.MagicMock()
+        subnet_factory = SubnetNetworkFactory(
+            instance_network_migration.compute,
+            instance_network_migration.project, instance_network_migration.zone,
+            instance_network_migration.region)
+        network = subnet_factory.generate_network("mock-network",
+                                                  "mock-subnetwork")
+        self.assertEqual(network.network, "mock-network")
+        self.assertEqual(network.subnetwork, "mock-subnetwork")
