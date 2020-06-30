@@ -5,6 +5,9 @@ class UnmanagedInstanceGroup(InstanceGroup):
         super(UnmanagedInstanceGroup, self).__init__(compute, project, instance_group_name, region, zone)
         self.instances = []
 
+    def get_instance_group_configs(self):
+        return self.compute.instanceGroups().get(project=self.project, zone=self.zone,
+                                          instanceGroup=self.instance_group_name).execute()
     def list_instances(self):
         """List all the instances in this instance group
 
@@ -12,7 +15,6 @@ class UnmanagedInstanceGroup(InstanceGroup):
 
         """
 
-        request = self.compute.instanceGroups().get(project=self.project, zone=self.zone,
-                                               instanceGroup=self.instance_group_name)
-        response = request.execute()
+
+
 

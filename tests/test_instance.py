@@ -51,7 +51,7 @@ class TestRetrieveInstanceTemplate(unittest.TestCase):
         request_builder = RequestMockBuilder(
             {
                 "compute.instances.get": (
-                    self.successResponse, '{"status": "DONE"}')})
+                    self.successResponse, '{"status": "RUNNING"}')})
         compute = build("compute", "v1", self.http,
                         requestBuilder=request_builder)
         instance = Instance(compute, self.project, self.instance_name,
@@ -61,10 +61,10 @@ class TestRetrieveInstanceTemplate(unittest.TestCase):
         self.assertEqual(
             retrieve_instance_template_operation,
             {
-                "status": "DONE"}
+                "status": "RUNNING"}
         )
         self.assertEqual(instance.instance_template, {
-            "status": "DONE"})
+            "status": "RUNNING"})
 
     def test_retrieve_instance_template_failure(self):
         request_builder = RequestMockBuilder(
@@ -78,7 +78,7 @@ class TestRetrieveInstanceTemplate(unittest.TestCase):
         with self.assertRaises(HttpError):
             instance.retrieve_instance_template()
 
-
+@patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
 class TestStartInstance(unittest.TestCase):
@@ -126,7 +126,7 @@ class TestStartInstance(unittest.TestCase):
         with self.assertRaises(HttpError):
             instance.start_instance()
 
-
+@patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
 class TestStopInstance(unittest.TestCase):
@@ -191,7 +191,7 @@ class TestGetDisksInfoFromInstanceTemplate(unittest.TestCase):
         with self.assertRaises(AttributeNotExistError):
             Instance.get_disks_info_from_instance_template(instance)
 
-
+@patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
 class TestDetachDisk(unittest.TestCase):
@@ -250,7 +250,7 @@ class TestDetachDisks(unittest.TestCase):
         Instance.detach_disks(instance)
         self.assertEqual(instance.detach_disk.call_count, len(disks))
 
-
+@patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
 class TestAttachDisk(unittest.TestCase):
@@ -294,7 +294,6 @@ class TestAttachDisk(unittest.TestCase):
                         requestBuilder=request_builder)
         instance = Instance(compute, self.project, self.instance_name,
                             self.region, self.zone)
-
         with self.assertRaises(HttpError):
             instance.attach_disk("mock-disk")
 
@@ -416,7 +415,7 @@ class TestModifyInstanceTemplateWithExternalIp(unittest.TestCase):
         self.assertFalse(
             "networkIP" in instance.instance_template['networkInterfaces'][0])
 
-
+@patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
 class TestDeleteInstance(unittest.TestCase):
@@ -464,7 +463,7 @@ class TestDeleteInstance(unittest.TestCase):
         with self.assertRaises(HttpError):
             instance.delete_instance()
 
-
+@patch("vm_network_migration.instance.Instance.get_instance_status")
 @patch(
     "vm_network_migration.operations.Operations.wait_for_zone_operation")  # index 0
 class TestCreateInstance(unittest.TestCase):

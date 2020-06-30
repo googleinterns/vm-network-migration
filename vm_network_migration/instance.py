@@ -45,6 +45,8 @@ class Instance(object):
         self.network = None
         self.address = None
         self.operations = Operations(compute, project, zone, region)
+        self.status = self.get_instance_status()
+
 
     def retrieve_instance_template(self) -> dict:
         """ Get the instance template from an instance.
