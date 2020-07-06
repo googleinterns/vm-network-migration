@@ -85,3 +85,30 @@ class Operations:
                     raise RegionOperationsError(result['error'])
                 return result
             time.sleep(1)
+
+    def wait_for_global_operation(self, operation):
+        """ Keep waiting for a region operation until it finishes
+
+            Args:
+                operation: name of the Operations resource to return
+
+            Returns:
+                a deserialized object of the response
+
+            Raises:
+                RegionOperationsError: if the operation has an error
+                googleapiclient.errors.HttpError: invalid request
+        """
+        print('Waiting ...')
+        while True:
+            result = self.compute.globalOperations().get(
+                project=self.project,
+                operation=operation).execute()
+            if result['status'] == 'DONE':
+                print("The current operation is done.")
+                if 'error' in result:
+                    print('Global operations error', result['error'])
+                    raise RegionOperationsError(result['error'])
+                return result
+            time.sleep(1)
+
