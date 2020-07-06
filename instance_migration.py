@@ -36,7 +36,7 @@ Run the script by terminal, for example:
 
 """
 import argparse
-from vm_network_migration.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -47,9 +47,6 @@ if __name__ == '__main__':
     parser.add_argument('--zone', help='The zone name of the original VM.')
     parser.add_argument('--original_instance_name',
                         help='The name of the original VM')
-    parser.add_argument('--new_instance_name',
-                        help='The name of the new VM. It should be'
-                             ' different from the original VM')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
         '--subnetwork',

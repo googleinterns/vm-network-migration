@@ -1,9 +1,10 @@
-from vm_network_migration.modules.instance_group import InstanceGroup, \
-    InstanceGroupStatus
+from vm_network_migration.modules.instance_group import InstanceGroup
 from vm_network_migration.modules.instance import Instance
 from vm_network_migration.errors import *
 from googleapiclient.errors import HttpError
 from vm_network_migration.modules.operations import Operations
+import warnings
+from copy import deepcopy
 
 
 class UnmanagedInstanceGroup(InstanceGroup):
@@ -20,12 +21,26 @@ class UnmanagedInstanceGroup(InstanceGroup):
         super(UnmanagedInstanceGroup, self).__init__(compute, project,
                                                      instance_group_name)
         self.zone = zone
+        self.region = self.get_region()
         self.instances = self.retrieve_instances()
         self.original_instance_group_configs = self.get_instance_group_configs()
-        self.new_instance_group_configs = None
+        self.new_instance_group_configs = deepcopy(self.original_instance_group_configs)
         self.status = self.get_status()
         self.network = None
         self.operation = Operations(self.compute, self.project, self.zone, None)
+
+    def get_region(self) -> dict:
+        """ Get region information
+
+            Returns:
+                region name of the self.zone
+
+            Raises:
+                googleapiclient.errors.HttpError: invalid request
+        """
+        return self.compute.zones().get(
+            project=self.project,
+            zone=self.zone).execute()['region'].split('regions/')[1]
 
     def get_instance_group_configs(self):
         """ Get instance group's configurations
@@ -50,7 +65,9 @@ class UnmanagedInstanceGroup(InstanceGroup):
             instanceGroup=self.instance_group_name)
         while request is not None:
             response = request.execute()
-
+            # no instances in the instance group
+            if 'items' not in response:
+                return []
             for instance_with_named_ports in response['items']:
                 print(instance_with_named_ports)
                 instance_name = \
@@ -73,7 +90,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
             project=self.project,
             zone=self.zone,
             instanceGroup=self.instance_group_name).execute()
-        self.operation.wait_for_zone_operation(delete_instance_group_operation)
+        self.operation.wait_for_zone_operation(delete_instance_group_operation['name'])
         return delete_instance_group_operation
 
     def create_instance_group(self, configs):
@@ -85,26 +102,15 @@ class UnmanagedInstanceGroup(InstanceGroup):
         create_instance_group_operation = self.compute.instanceGroups().insert(
             project=self.project,
             zone=self.zone,
-            body=configs)
+            body=configs).execute()
+        self.operation.wait_for_zone_operation(create_instance_group_operation['name'])
+        if configs == self.original_instance_group_configs:
+            self.migrated = False
+        elif configs == self.new_instance_group_configs:
+            self.migrated = True
         return create_instance_group_operation
 
-    def get_status(self):
-        """ Get the current status of the instance group
 
-        Returns: the instance group's status
-
-        """
-        try:
-            self.get_instance_group_configs()
-        except HttpError as e:
-            error_reason = e._get_reason()
-            print(error_reason)
-            # if instance is not found, it has a NOTEXISTS status
-            if "not found" in error_reason:
-                return InstanceGroupStatus.NOTEXISTS
-            else:
-                raise e
-        return InstanceGroupStatus("EXISTS")
 
     def add_an_instance(self, instance_selfLink):
         """ Add an instance into the instance group
@@ -115,13 +121,23 @@ class UnmanagedInstanceGroup(InstanceGroup):
         Returns:
 
         """
-        add_instance_operation = self.compute.instanceGroups().addInstances(
-            project=self.project,
-            zone=self.zone,
-            InstanceGroup=self.instance_group_name,
-            body={"instances":[{"instance": instance_selfLink}]})
-        self.operation.wait_for_zone_operation(add_instance_operation)
-        return add_instance_operation
+        try:
+            add_instance_operation = self.compute.instanceGroups().addInstances(
+                project=self.project,
+                zone=self.zone,
+                instanceGroup=self.instance_group_name,
+                body={
+                    "instances": [{
+                                      "instance": instance_selfLink}]}).execute()
+            self.operation.wait_for_zone_operation(add_instance_operation['name'])
+            return add_instance_operation
+        except HttpError as e:
+            error_reason = e._get_reason()
+            if 'already' in error_reason:
+                warnings.warn(error_reason, Warning)
+                return
+            else:
+                raise e
 
     def add_all_instances(self):
         """ Add all the instances in self.instances to the current instance group
@@ -161,5 +177,5 @@ class UnmanagedInstanceGroup(InstanceGroup):
             raise AttributeNotExistError('Missing network object.')
         self.new_instance_group_configs = \
             self.modify_instance_group_configs_with_new_network(
-            self.network.network_link, self.network.subnetwork_link,
-            self.new_instance_group_configs)
+                self.network.network_link, self.network.subnetwork_link,
+                self.new_instance_group_configs)
