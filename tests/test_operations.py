@@ -159,3 +159,28 @@ class TestWaitForRegionOperation(unittest.TestCase):
         operations = Operations(compute, self.project, self.zone, self.region)
         with self.assertRaises(RegionOperationsError):
             operations.wait_for_region_operation({})
+
+    @timeout_decorator.timeout(3, timeout_exception=StopIteration)
+    def test_basic_global_waiting(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.globalOperations.get": (
+                    self.successResponse,
+                    '{"status":"RUNNING"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        operations = Operations(compute, self.project, self.zone, self.region)
+        with self.assertRaises(StopIteration):
+            operations.wait_for_global_operation({})
+
+    def test_error_in_global_waiting(self):
+        request_builder = RequestMockBuilder(
+            {
+                "compute.globalOperations.get": (
+                    self.successResponse,
+                    '{"status":"DONE", "error":"something wrong"}')})
+        compute = build("compute", "v1", self.http,
+                        requestBuilder=request_builder)
+        operations = Operations(compute, self.project, self.zone, self.region)
+        with self.assertRaises(RegionOperationsError):
+            operations.wait_for_global_operation({})
