@@ -25,7 +25,7 @@ from googleapiclient.http import RequestMockBuilder
 from utils import *
 from vm_network_migration.modules.address import (
     Address,
-    AddressFactory,
+    AddressHelper,
 )
 
 
@@ -193,7 +193,7 @@ class TestGenerateAddress(unittest.TestCase):
     def test_generate_address(self):
         instance_network_migration = mock.MagicMock()
         instance_template = read_json_file("sample_instance_template.json")
-        address_factory = AddressFactory(instance_network_migration.compute,
+        address_factory = AddressHelper(instance_network_migration.compute,
                                          instance_network_migration.project,
                                          instance_network_migration.region)
         address = address_factory.generate_address(instance_template)
@@ -207,7 +207,7 @@ class TestGenerateAddress(unittest.TestCase):
         instance_network_migration = mock.MagicMock()
         instance_template = read_json_file(
             "sample_instance_template_no_external_ip.json")
-        address_factory = AddressFactory(instance_network_migration.compute,
+        address_factory = AddressHelper(instance_network_migration.compute,
                                          instance_network_migration.project,
                                          instance_network_migration.region)
         address = address_factory.generate_address(instance_template)

@@ -43,7 +43,7 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.modules.address import AddressFactory
+from vm_network_migration.modules.address import AddressHelper
 from vm_network_migration.errors import *
 from vm_network_migration.modules.instance import (
     Instance,
@@ -120,7 +120,7 @@ class InstanceNetworkMigration:
                                                   original_instance_name,
                                                   self.region,
                                                   self.zone, None)
-            address_factory = AddressFactory(self.compute, self.project, self.region)
+            address_factory = AddressHelper(self.compute, self.project, self.region)
             self.instance.address = address_factory.generate_address(
                 self.instance.original_instance_template)
 

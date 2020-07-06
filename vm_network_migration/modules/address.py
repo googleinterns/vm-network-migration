@@ -146,7 +146,7 @@ class Address:
         external_ip_address_body['address'] = self.external_ip
         return external_ip_address_body
 
-class AddressFactory:
+class AddressHelper:
     def __init__(self, compute, project, region):
         self.compute = compute
         self.project = project
