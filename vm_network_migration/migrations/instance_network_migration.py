@@ -43,13 +43,13 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.address import Address, AddressFactory
+from vm_network_migration.modules.address import AddressFactory
 from vm_network_migration.errors import *
-from vm_network_migration.instance import (
+from vm_network_migration.modules.instance import (
     Instance,
     InstanceStatus,
 )
-from vm_network_migration.subnet_network import SubnetNetwork, SubnetNetworkFactory
+from vm_network_migration.modules.subnet_network import SubnetNetworkFactory
 
 
 class InstanceNetworkMigration:
@@ -147,7 +147,7 @@ class InstanceNetworkMigration:
             print('create_instance_operation is running.')
             print('DEBUGGING:', self.instance.new_instance_template)
             self.instance.create_instance(self.instance.new_instance_template)
-
+            self.instance.migrated = True
             print('The migration is successful.')
 
         except Exception as e:
