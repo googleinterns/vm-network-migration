@@ -185,7 +185,6 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", False)
         new_instance_template = instance_network_migration.new_instance.instance_template
@@ -194,9 +193,7 @@ class TestNetworkMigration(unittest.TestCase):
 
         # compare two instance template
         for k, v in instance_template.items():
-            if k == "name":
-                self.assertNotEqual(new_instance_template["name"], v)
-            elif k == "networkInterfaces":
+            if k == "networkInterfaces":
                 pass
             else:
                 self.assertEqual(new_instance_template[k], v)
@@ -214,11 +211,9 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", False)
         new_instance_template = instance_network_migration.new_instance.instance_template
-        self.assertEqual(new_instance_template["name"], "new-instance")
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -245,11 +240,9 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", False)
         new_instance_template = instance_network_migration.new_instance.instance_template
-        self.assertEqual(new_instance_template["name"], "new-instance")
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -275,11 +268,9 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", True)
         new_instance_template = instance_network_migration.new_instance.instance_template
-        self.assertEqual(new_instance_template["name"], "new-instance")
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -305,11 +296,10 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", True)
         new_instance_template = instance_network_migration.new_instance.instance_template
-        self.assertEqual(new_instance_template["name"], "new-instance")
+
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -340,11 +330,10 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork", True)
         new_instance_template = instance_network_migration.new_instance.instance_template
-        self.assertEqual(new_instance_template["name"], "new-instance")
+
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -356,32 +345,6 @@ class TestNetworkMigration(unittest.TestCase):
             instance_template['networkInterfaces'][0]['accessConfigs'])
         instance_network_migration.new_instance.create_instance.assert_called()
         mocks[2].assert_not_called()
-
-    def test_unchanged_new_instance_name(self, *mocks):
-        instance_template = read_json_file(
-            "sample_instance_template_legacy_network.json")
-        network_template = read_json_file("sample_auto_mode_network.json")
-        request_builder = build_request_builder(instance_template,
-                                                network_template)
-        successResponse = httplib2.Response({
-            "status": 200,
-            "reason": "H"})
-        request_builder.responses["compute.networks.get"] = (
-            successResponse, b'')
-        compute = build("compute", "v1", self.http,
-                        requestBuilder=request_builder)
-        mocks[0].return_value = compute
-
-        instance_network_migration = InstanceNetworkMigration(self.project,
-                                                              self.zone)
-
-        instance_network_migration.network_migration("original-instance",
-                                                     "original-instance",
-                                                     "mock-network",
-                                                     "mock-subnetwork",
-                                                     False)
-        self.assertIsNone(instance_network_migration.new_instance)
-        mocks[2].assert_called()
 
     def test_no_subnetwork_in_auto_network_mode(self, *mocks):
         instance_template = read_json_file(
@@ -396,14 +359,12 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      None,
                                                      False)
 
         new_instance_template = instance_network_migration.new_instance.instance_template
 
-        self.assertEqual(new_instance_template["name"], "new-instance")
         self.assertTrue(
             "mock-network" in new_instance_template['networkInterfaces'][0][
                 'network'])
@@ -427,7 +388,6 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      None,
                                                      False)
@@ -453,12 +413,11 @@ class TestNetworkMigration(unittest.TestCase):
                                                               self.zone)
 
         instance_network_migration.network_migration("original-instance",
-                                                     "original-instance",
                                                      "mock-network",
                                                      "mock-subnetwork",
                                                      False)
-
         mocks[2].assert_called()
+
 
     def test_error_in_zones_get(self, *mocks):
         instance_template = read_json_file(
@@ -497,7 +456,6 @@ class TestNetworkMigration(unittest.TestCase):
                                                               self.zone)
 
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork",
                                                      False)
@@ -522,7 +480,6 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork",
                                                      False)
@@ -547,7 +504,6 @@ class TestNetworkMigration(unittest.TestCase):
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork",
                                                      False)
@@ -573,7 +529,6 @@ class TestNetworkMigration(unittest.TestCase):
                                                               self.zone)
 
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork",
                                                      False)
@@ -594,7 +549,6 @@ class TestNetworkMigration(unittest.TestCase):
                                                               self.zone)
         mocks[1].side_effect = Exception
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork",
                                                      False)
@@ -620,7 +574,6 @@ class TestNetworkMigration(unittest.TestCase):
                                                               self.zone)
         mocks[1].side_effect = Exception
         instance_network_migration.network_migration("original-instance",
-                                                     "new-instance",
                                                      "mock-network",
                                                      "mock-subnetwork",
                                                      False)
