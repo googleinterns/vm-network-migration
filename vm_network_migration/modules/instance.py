@@ -23,7 +23,7 @@ from vm_network_migration.modules.operations import Operations
 
 class Instance(object):
     def __init__(self, compute, project, name, region, zone,
-                 instance_template=None, status=None):
+                 instance_template=None):
         """ Initialize an instance object
 
         Args:
@@ -49,7 +49,7 @@ class Instance(object):
         self.operations = Operations(compute, project, zone, region)
         self.status = self.get_instance_status()
         self.selfLink = self.get_selfLink(self.original_instance_template)
-
+        self.migrated = False
 
     def retrieve_instance_template(self) -> dict:
         """ Get the instance template from an instance.
@@ -268,6 +268,10 @@ class Instance(object):
             body=instance_template).execute()
         self.operations.wait_for_zone_operation(
             create_instance_operation['name'])
+        if instance_template == self.original_instance_template:
+            self.migrated = False
+        elif instance_template == self.new_instance_template:
+            self.migrated = True
         return create_instance_operation
 
     def delete_instance(self) -> dict:
@@ -288,6 +292,7 @@ class Instance(object):
         return delete_instance_operation
 
 
+
 class InstanceStatus(Enum):
     """
     An Enum class for instance's status
@@ -296,6 +301,7 @@ class InstanceStatus(Enum):
     RUNNING = "RUNNING"
     STOPPING = "STOPPING"
     TERMINATED = "TERMINATED"
+
 
     def __eq__(self, other):
         """ Override __eq__ function
