@@ -1,10 +1,27 @@
-from vm_network_migration.modules.instance_group import InstanceGroup
-from vm_network_migration.modules.instance import Instance
-from vm_network_migration.errors import *
-from googleapiclient.errors import HttpError
-from vm_network_migration.modules.operations import Operations
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""
+UnmanagedInstanceGroup: describes an unmanaged instance group
+"""
 import warnings
 from copy import deepcopy
+
+from googleapiclient.errors import HttpError
+from vm_network_migration.errors import *
+from vm_network_migration.modules.instance import Instance
+from vm_network_migration.modules.instance_group import InstanceGroup
+from vm_network_migration.modules.operations import Operations
 
 
 class UnmanagedInstanceGroup(InstanceGroup):
@@ -24,7 +41,8 @@ class UnmanagedInstanceGroup(InstanceGroup):
         self.region = self.get_region()
         self.instances = self.retrieve_instances()
         self.original_instance_group_configs = self.get_instance_group_configs()
-        self.new_instance_group_configs = deepcopy(self.original_instance_group_configs)
+        self.new_instance_group_configs = deepcopy(
+            self.original_instance_group_configs)
         self.status = self.get_status()
         self.network = None
         self.operation = Operations(self.compute, self.project, self.zone, None)
@@ -42,7 +60,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
             project=self.project,
             zone=self.zone).execute()['region'].split('regions/')[1]
 
-    def get_instance_group_configs(self):
+    def get_instance_group_configs(self) -> dict:
         """ Get instance group's configurations
 
         Returns: instance group's configurations
@@ -52,7 +70,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
                                                  zone=self.zone,
                                                  instanceGroup=self.instance_group_name).execute()
 
-    def retrieve_instances(self):
+    def retrieve_instances(self) -> list:
         """Retrieve all the instances in this instance group,
         and save the instances into a list of Instance objects
 
@@ -79,7 +97,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 previous_request=request, previous_response=response)
         return instances
 
-    def delete_instance_group(self):
+    def delete_instance_group(self) -> dict:
         """ Delete the instance group in the compute engine
 
         Returns:  a deserialized object of the response
@@ -90,10 +108,11 @@ class UnmanagedInstanceGroup(InstanceGroup):
             project=self.project,
             zone=self.zone,
             instanceGroup=self.instance_group_name).execute()
-        self.operation.wait_for_zone_operation(delete_instance_group_operation['name'])
+        self.operation.wait_for_zone_operation(
+            delete_instance_group_operation['name'])
         return delete_instance_group_operation
 
-    def create_instance_group(self, configs):
+    def create_instance_group(self, configs) -> dict:
         """ Create the instance group
 
         Returns: a deserialized object of the response
@@ -103,22 +122,22 @@ class UnmanagedInstanceGroup(InstanceGroup):
             project=self.project,
             zone=self.zone,
             body=configs).execute()
-        self.operation.wait_for_zone_operation(create_instance_group_operation['name'])
+        self.operation.wait_for_zone_operation(
+            create_instance_group_operation['name'])
         if configs == self.original_instance_group_configs:
             self.migrated = False
         elif configs == self.new_instance_group_configs:
             self.migrated = True
         return create_instance_group_operation
 
-
-
-    def add_an_instance(self, instance_selfLink):
+    def add_an_instance(self, instance_selfLink) -> dict:
         """ Add an instance into the instance group
 
         Args:
             instance_selflink: the instance's selfLink
 
-        Returns:
+        Returns: a deserialized object of the response
+        Raises: HttpError
 
         """
         try:
@@ -128,8 +147,9 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 instanceGroup=self.instance_group_name,
                 body={
                     "instances": [{
-                                      "instance": instance_selfLink}]}).execute()
-            self.operation.wait_for_zone_operation(add_instance_operation['name'])
+                        "instance": instance_selfLink}]}).execute()
+            self.operation.wait_for_zone_operation(
+                add_instance_operation['name'])
             return add_instance_operation
         except HttpError as e:
             error_reason = e._get_reason()
