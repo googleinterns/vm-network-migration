@@ -26,7 +26,7 @@ from utils import *
 from vm_network_migration.errors import *
 from vm_network_migration.modules.subnet_network import (
     SubnetNetwork,
-    SubnetNetworkFactory,
+    SubnetNetworkHelper,
 )
 
 
@@ -150,7 +150,7 @@ class TestGenerateNetwork(unittest.TestCase):
     def test_generate_network(self):
         instance_network_migration = mock.MagicMock()
         SubnetNetwork.check_network_auto_mode = mock.MagicMock()
-        subnet_factory = SubnetNetworkFactory(
+        subnet_factory = SubnetNetworkHelper(
             instance_network_migration.compute,
             instance_network_migration.project, instance_network_migration.zone,
             instance_network_migration.region)

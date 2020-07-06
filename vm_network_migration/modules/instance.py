@@ -49,6 +49,7 @@ class Instance(object):
         self.operations = Operations(compute, project, zone, region)
         self.status = self.get_instance_status()
         self.selfLink = self.get_selfLink(self.original_instance_template)
+        # the instance has been migrated to a new network or not
         self.migrated = False
 
     def retrieve_instance_template(self) -> dict:
@@ -290,7 +291,6 @@ class Instance(object):
         self.operations.wait_for_zone_operation(
             delete_instance_operation['name'])
         return delete_instance_operation
-
 
 
 class InstanceStatus(Enum):

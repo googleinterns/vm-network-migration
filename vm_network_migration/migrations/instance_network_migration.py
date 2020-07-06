@@ -49,7 +49,7 @@ from vm_network_migration.modules.instance import (
     Instance,
     InstanceStatus,
 )
-from vm_network_migration.modules.subnet_network import SubnetNetworkFactory
+from vm_network_migration.modules.subnet_network import SubnetNetworkHelper
 
 
 class InstanceNetworkMigration:
@@ -127,7 +127,7 @@ class InstanceNetworkMigration:
             print('Modifying IP address.')
             self.instance.address.preserve_ip_addresses_handler(
                 preserve_external_ip)
-            subnetwork_factory = SubnetNetworkFactory(self.compute, self.project, self.zone, self.region)
+            subnetwork_factory = SubnetNetworkHelper(self.compute, self.project, self.zone, self.region)
             self.instance.network = subnetwork_factory.generate_network(network_name,
                                                               subnetwork_name)
             self.instance.update_instance_template()

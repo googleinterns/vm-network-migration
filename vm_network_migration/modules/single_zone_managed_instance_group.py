@@ -1,3 +1,18 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+""" SingleZoneManagedInstanceGroup: describes a single-zone managed instance group
+"""
 from copy import deepcopy
 
 from vm_network_migration.modules.managed_instance_group import ManagedInstanceGroup
@@ -7,6 +22,14 @@ from vm_network_migration.modules.operations import Operations
 class SingleZoneManagedInstanceGroup(ManagedInstanceGroup):
 
     def __init__(self, compute, project, instance_group_name, zone):
+        """ Initialization
+
+        Args:
+            compute: compute engine
+            project: project ID
+            instance_group_name: name of the instance group
+            region: region of the instance group
+        """
         super(SingleZoneManagedInstanceGroup, self).__init__(compute, project,
                                                              instance_group_name)
         self.zone_or_region = zone
