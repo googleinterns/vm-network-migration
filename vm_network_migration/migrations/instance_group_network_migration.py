@@ -12,35 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This script is used to migrate a GCP instance from its legacy network to a
+""" This script is used to migrate a GCP instance group from its legacy network to a
 subnetwork mode network.
 
 Ihe Google API python client module is imported to manage the GCP Compute Engine
  resources.
-
-Before running:
-    1. If not already done, enable the Compute Engine API
-       and check the quota for your project at
-       https://console.developers.google.com/apis/api/compute
-    2. This sample uses Application Default Credentials for authentication.
-       If not already done, install the gcloud CLI from
-       https://cloud.google.com/sdk and run
-       `gcloud beta auth application-default login`.
-       For more information, see
-       https://developers.google.com/identity/protocols/application-default-credentials
-    3. Install the Python client library for Google APIs by running
-       `pip install --upgrade google-api-python-client`
-
-Run the script by terminal, for example:
-     python3 vm_network_migration.py --project_id=test-project
-     --zone=us-central1-a --original_instance_name=instance-legacy
-     --network=tests-network
-     --subnetwork=tests-network --preserve_internal_ip=False
-     --preserve_external_ip = False --preserve_alias_ip_ranges=False
-
 """
 
 from copy import deepcopy
+from warnings import warn
 
 import google.auth
 from googleapiclient import discovery
@@ -66,7 +46,15 @@ class InstanceGroupNetworkMigration:
         self.region = region
         self.instance_group = None
 
-    def build_instance_group(self, instance_group_name):
+    def build_instance_group(self, instance_group_name) -> object:
+        """ Create an InstanceGroup object.
+
+        Args:
+            instance_group_name: the name of the instance group
+
+        Returns: an InstanceGroup object
+
+        """
         instance_group_factory = InstanceGroupHelper(self.compute,
                                                      self.project,
                                                      instance_group_name,
@@ -101,24 +89,33 @@ class InstanceGroupNetworkMigration:
         if self.instance_group == None:
             self.instance_group = self.build_instance_group(instance_group_name)
         if isinstance(self.instance_group, UnmanagedInstanceGroup):
-            self.migrate_unmanaged_instance_group(network_name, subnetwork_name,
-                                                  preserve_external_ip)
+            try:
+                self.migrate_unmanaged_instance_group(network_name,
+                                                      subnetwork_name,
+                                                      preserve_external_ip)
+            except Exception as e:
+                warn(e, Warning)
+                print(
+                    'The migration is failed. Rolling back to the original instance group.')
+                self.rollback_unmanaged_instance_group()
 
         else:
-            self.migrate_managed_instance_group(network_name,
-                                                subnetwork_name)
-
-    def migrate_region_managed_instance_group(self, network_name,
-                                              subnetwork_name):
-        pass
+            try:
+                self.migrate_managed_instance_group(network_name,
+                                                    subnetwork_name)
+            except Exception as e:
+                warn(e, Warning)
+                print(
+                    'The migration is failed. Rolling back to the original instance group.')
+                self.rollback_managed_instance_group()
 
     def migrate_unmanaged_instance_group(self, network_name, subnetwork_name,
                                          preserve_external_ip):
         if self.region == None:
             self.region = self.get_region()
-        subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                 self.zone, self.region)
-        self.instance_group.network = subnetwork_factory.generate_network(
+        subnetwork_helper = SubnetNetworkHelper(self.compute, self.project,
+                                                self.zone, self.region)
+        self.instance_group.network = subnetwork_helper.generate_network(
             network_name,
             subnetwork_name)
         instance_network_migration = InstanceNetworkMigration(self.project,
@@ -145,21 +142,24 @@ class InstanceGroupNetworkMigration:
                                        subnetwork_name):
         if self.region == None:
             self.region = self.get_region()
-        subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                 self.zone, self.region)
-        subnet_network = subnetwork_factory.generate_network(
-            network_name,
-            subnetwork_name)
+        subnetwork_helper = SubnetNetworkHelper(self.compute,
+                                                self.project,
+                                                self.zone,
+                                                self.region)
+        subnet_network = subnetwork_helper.generate_network(network_name,
+                                                            subnetwork_name)
         print('Retrieving the instance template.')
         instance_template_name = self.instance_group.retrieve_instance_template_name(
             self.instance_group.original_instance_group_configs)
-        original_instance_template = InstanceTemplate(self.compute,
-                                                      self.project,
-                                                      instance_template_name)
-        new_instance_template = InstanceTemplate(self.compute, self.project,
-                                                 instance_template_name,
-                                                 deepcopy(
-                                                     original_instance_template.instance_template_body))
+        original_instance_template = InstanceTemplate(
+            self.compute,
+            self.project,
+            instance_template_name)
+        new_instance_template = InstanceTemplate(
+            self.compute,
+            self.project,
+            instance_template_name,
+            deepcopy(original_instance_template.instance_template_body))
         print('Generating a new instance template.')
         new_instance_template.modify_instance_template_with_new_network(
             subnet_network.network_link, subnet_network.subnetwork_link)
@@ -179,20 +179,14 @@ class InstanceGroupNetworkMigration:
         self.instance_group.create_instance_group(
             self.instance_group.new_instance_group_configs)
 
-    def rollback_original_instance_group(self):
-        """ Roll back to the original VM. Reattach the disks to the
-        original instance and restart it.
-
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
-        """
-
     def rollback_unmanaged_instance_group(self):
         """ Rollback an unmanaged instance group
 
         Returns:
 
         """
+        # The new instance group is migrated, but the instances are not
+        # reattached successfully. The new instance group needs to be deleted.
         if self.instance_group.migrated:
             self.instance_group.delete_instance_group()
         # Some of its instances are running on the new network.
@@ -207,6 +201,29 @@ class InstanceGroupNetworkMigration:
             self.instance_group.create_instance_group(
                 self.instance_group.original_instance_group_configs)
         self.instance_group.add_all_instances()
+
+    def rollback_managed_instance_group(self):
+        """ Rollback an managed instance group
+
+        """
+        instance_group_status = self.instance_group.get_status()
+        # Either original instance group or new instance group doesn't exist
+        if instance_group_status == InstanceGroupStatus.NOTEXISTS:
+            self.instance_group.create_instance_group(
+                self.instance_group.original_instance_group_configs
+            )
+        else:
+            # The new instance group has been created
+            if self.instance_group.migrated:
+                self.instance_group.delete_instance_group()
+                self.instance_group.create_instance_group(
+                    self.instance_group.new_instance_group_configs
+                )
+            else:
+                # The original autoscaler has been deleted
+                if self.instance_group.autoscaler != None and \
+                        not self.instance_group.autoscaler_exists():
+                    self.instance_group.insert_autoscaler()
 
     def get_region(self) -> dict:
         """ Get region information

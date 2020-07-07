@@ -1,5 +1,5 @@
 from vm_network_migration.modules.instance_group import InstanceGroup
-
+from googleapiclient.http import  HttpError
 
 class ManagedInstanceGroup(InstanceGroup):
 
@@ -15,6 +15,7 @@ class ManagedInstanceGroup(InstanceGroup):
         self.is_multi_zone = False
         self.autoscaler = None
         self.autoscaler_configs = None
+
 
     def get_instance_group_configs(self):
         print(self.is_multi_zone)
@@ -44,12 +45,12 @@ class ManagedInstanceGroup(InstanceGroup):
             self.migrated = False
         elif configs == self.new_instance_group_configs:
             self.migrated = True
-        if self.autoscaler != None:
+        if self.autoscaler != None and not self.autoscaler_exists():
             self.insert_autoscaler()
         return create_instance_group_operation
 
     def delete_instance_group(self):
-        if self.autoscaler != None:
+        if self.autoscaler != None and self.autoscaler_exists():
             self.delete_autoscaler()
         args = {
             'project': self.project,
@@ -104,6 +105,19 @@ class ManagedInstanceGroup(InstanceGroup):
             autoscaler_configs = self.autoscaler_api.get(**args).execute()
             return autoscaler_configs
         return None
+
+    def autoscaler_exists(self) -> bool:
+        """ Check if the autoscaler exists
+
+        Returns: boolean
+
+        """
+        try:
+            autoscaler_configs = self.get_autoscaler_configs()
+        except HttpError:
+            return False
+        else:
+            return autoscaler_configs != None
 
     def delete_autoscaler(self):
         args = {
