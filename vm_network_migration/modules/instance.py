@@ -47,7 +47,8 @@ class Instance(object):
         self.network = None
         self.address = None
         self.operations = Operations(compute, project, zone, region)
-        self.status = self.get_instance_status()
+        self.original_status = self.get_instance_status()
+        self.status = deepcopy(self.original_status)
         self.selfLink = self.get_selfLink(self.original_instance_template)
         # the instance has been migrated to a new network or not
         self.migrated = False

@@ -148,6 +148,10 @@ class InstanceNetworkMigration:
             print('DEBUGGING:', self.instance.new_instance_template)
             self.instance.create_instance(self.instance.new_instance_template)
             self.instance.migrated = True
+            if self.instance.original_status == InstanceStatus.TERMINATED:
+                print('Since the original instance was terminated, '
+                      'the new instance is terminating.')
+                self.instance.stop_instance()
             print('The migration is successful.')
 
         except Exception as e:

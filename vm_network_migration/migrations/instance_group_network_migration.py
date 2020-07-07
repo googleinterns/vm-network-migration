@@ -113,11 +113,6 @@ class InstanceGroupNetworkMigration:
                                          preserve_external_ip):
         if self.region == None:
             self.region = self.get_region()
-        subnetwork_helper = SubnetNetworkHelper(self.compute, self.project,
-                                                self.zone, self.region)
-        self.instance_group.network = subnetwork_helper.generate_network(
-            network_name,
-            subnetwork_name)
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         print(
@@ -129,7 +124,8 @@ class InstanceGroupNetworkMigration:
                                                          subnetwork_name,
                                                          preserve_external_ip)
         print("Modifying the instance group's configs with the new network.")
-        self.instance_group.update_new_instance_group_configs()
+        self.instance_group.delete_network_info_in_instance_group_configs(
+            self.instance_group.new_instance_group_configs)
         print("Deleting the original instance group.")
         self.instance_group.delete_instance_group()
         print("Creating a new instance group in the new network.")
