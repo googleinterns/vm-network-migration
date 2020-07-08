@@ -48,11 +48,11 @@ class InstanceGroup(object):
             error_reason = e._get_reason()
             print(error_reason)
             # if instance is not found, it has a NOTEXISTS status
-            if "not found" in error_reason:
+            if 'not found' in error_reason:
                 return InstanceGroupStatus.NOTEXISTS
             else:
                 raise e
-        return InstanceGroupStatus("EXISTS")
+        return InstanceGroupStatus('EXISTS')
 
     def create_instance_group(self, configs):
         """Abstract method: create an instance group using configs
@@ -78,7 +78,7 @@ class InstanceGroupStatus(Enum):
     An Enum class for instance group's status
     """
     NOTEXISTS = None
-    EXISTS = "EXISTS"
+    EXISTS = 'EXISTS'
 
     def __eq__(self, other):
         """ Override __eq__ function

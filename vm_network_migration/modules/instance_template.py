@@ -33,7 +33,7 @@ class InstanceTemplate:
         self.compute = compute
         self.project = project
         self.instance_template_name = instance_template_name
-        self.operation = Operations(self.compute, self.project, "", "")
+        self.operation = Operations(self.compute, self.project, None, None)
         self.instance_template_body = instance_template_body
         if self.instance_template_body == None:
             self.instance_template_body = self.get_instance_template_body()

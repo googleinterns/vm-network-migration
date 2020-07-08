@@ -145,8 +145,8 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 zone=self.zone,
                 instanceGroup=self.instance_group_name,
                 body={
-                    "instances": [{
-                        "instance": instance_selfLink}]}).execute()
+                    'instances': [{
+                        'instance': instance_selfLink}]}).execute()
             self.operation.wait_for_zone_operation(
                 add_instance_operation['name'])
             return add_instance_operation

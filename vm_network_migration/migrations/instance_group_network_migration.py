@@ -128,22 +128,22 @@ class InstanceGroupNetworkMigration:
         instance_network_migration = InstanceNetworkMigration(self.project,
                                                               self.zone)
         print(
-            "Migrating all the instances in the instance group to the new network.")
+            'Migrating all the instances in the instance group to the new network.')
         for instance in self.instance_group.instances:
             instance_network_migration.instance = instance
             instance_network_migration.network_migration(instance.name,
                                                          network_name,
                                                          subnetwork_name,
                                                          preserve_external_ip)
-        print("Modifying the instance group's configs with the new network.")
+        print('Modifying the instance group\'s configs with the new network.')
         self.instance_group.delete_network_info_in_instance_group_configs(
             self.instance_group.new_instance_group_configs)
-        print("Deleting the original instance group.")
+        print('Deleting the original instance group.')
         self.instance_group.delete_instance_group()
-        print("Creating a new instance group in the new network.")
+        print('Creating a new instance group in the new network.')
         self.instance_group.create_instance_group(
             self.instance_group.new_instance_group_configs)
-        print("Adding the instances back to the new instance group")
+        print('Adding the instances back to the new instance group.')
         self.instance_group.add_all_instances()
 
     def migrate_managed_instance_group(self, network_name,

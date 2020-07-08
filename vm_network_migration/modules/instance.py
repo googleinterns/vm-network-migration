@@ -256,7 +256,7 @@ class Instance(object):
             error_reason = e._get_reason()
             print(error_reason)
             # if instance is not found, it has a NOTEXISTS status
-            if "not found" in error_reason:
+            if 'not found' in error_reason:
                 return InstanceStatus.NOTEXISTS
             else:
                 raise e
@@ -317,9 +317,9 @@ class InstanceStatus(Enum):
     An Enum class for instance's status
     """
     NOTEXISTS = None
-    RUNNING = "RUNNING"
-    STOPPING = "STOPPING"
-    TERMINATED = "TERMINATED"
+    RUNNING = 'RUNNING'
+    STOPPING = 'STOPPING'
+    TERMINATED = 'TERMINATED'
 
     def __eq__(self, other):
         """ Override __eq__ function

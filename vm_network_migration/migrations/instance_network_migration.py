@@ -176,13 +176,13 @@ class InstanceNetworkMigration:
         try:
             self.rollback_original_instance()
         except Exception as e:
-            warnings.warn("Rollback failed.", Warning)
+            warnings.warn('Rollback failed.', Warning)
             print(e)
             print(
-                "The original VM may have been deleted. "
-                "The instance configs of the original VM is: ")
+                'The original VM may have been deleted. '
+                'The instance configs of the original VM is: ')
             print(self.instance.original_instance_configs)
-            raise RollbackError("Rollback to the original VM is failed.")
+            raise RollbackError('Rollback to the original VM is failed.')
 
         print('Rollback finished. The original VM is running.')
         return True
