@@ -28,15 +28,15 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 vm_network_migration.py --project_id=test-project
+     python3 instance_migration.py --project_id=test-project
      --zone=us-central1-a --original_instance_name=instance-legacy
      --network=tests-network
-     --subnetwork=tests-network --preserve_internal_ip=False
-     --preserve_external_ip = False --preserve_alias_ip_ranges=False
+     --subnetwork=tests-network
+     --preserve_external_ip = False
 
 """
 import argparse
-from vm_network_migration.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -47,9 +47,6 @@ if __name__ == '__main__':
     parser.add_argument('--zone', help='The zone name of the original VM.')
     parser.add_argument('--original_instance_name',
                         help='The name of the original VM')
-    parser.add_argument('--new_instance_name',
-                        help='The name of the new VM. It should be'
-                             ' different from the original VM')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
         '--subnetwork',

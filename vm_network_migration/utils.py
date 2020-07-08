@@ -23,4 +23,4 @@ def generate_timestamp_string() -> str:
     Returns: current timestamp string
 
     """
-    return str(time.strftime("%s", time.gmtime()))
+    return str(time.strftime('%s', time.gmtime()))

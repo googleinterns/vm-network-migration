@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ SubnetNetwork class: describes an instance's subnetwork.
-
+    SubnetNetworkHelper class: helps to create a SubnetNetwork object
 """
 from vm_network_migration.errors import *
 
@@ -92,3 +92,35 @@ class SubnetNetwork():
                 'The target network is not a subnetwork mode network')
         auto_mode_status = network_info['autoCreateSubnetworks']
         return auto_mode_status
+
+class SubnetNetworkHelper:
+    def __init__(self, compute, project, zone, region):
+        """ Initialization
+
+        Args:
+            compute: compute engine
+            project: project ID
+            zone: zone of the network
+            region: region of the network
+        """
+        self.compute = compute
+        self.project = project
+        self.zone = zone
+        self.region = region
+
+    def generate_network(self, network, subnetwork):
+        """ Generate a network object
+
+        Args:
+            network: network name
+            subnetwork: subnetwork name
+
+        Returns: a SubnetNetwork object
+
+        """
+        network = SubnetNetwork(self.compute, self.project, self.zone,
+                                self.region, network, subnetwork)
+        network.check_subnetwork_validation()
+        network.generate_new_network_info()
+
+        return network

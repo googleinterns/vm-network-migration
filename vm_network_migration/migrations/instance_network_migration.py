@@ -15,42 +15,18 @@
 """ This script is used to migrate a GCP instance from its legacy network to a
 subnetwork mode network.
 
-Ihe Google API python client module is imported to manage the GCP Compute Engine
- resources.
-
-Before running:
-    1. If not already done, enable the Compute Engine API
-       and check the quota for your project at
-       https://console.developers.google.com/apis/api/compute
-    2. This sample uses Application Default Credentials for authentication.
-       If not already done, install the gcloud CLI from
-       https://cloud.google.com/sdk and run
-       `gcloud beta auth application-default login`.
-       For more information, see
-       https://developers.google.com/identity/protocols/application-default-credentials
-    3. Install the Python client library for Google APIs by running
-       `pip install --upgrade google-api-python-client`
-
-Run the script by terminal, for example:
-     python3 vm_network_migration.py --project_id=test-project
-     --zone=us-central1-a --original_instance_name=instance-legacy
-     --network=tests-network
-     --subnetwork=tests-network --preserve_internal_ip=False
-     --preserve_external_ip = False --preserve_alias_ip_ranges=False
-
 """
-import copy
 import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.address import Address
+from vm_network_migration.modules.address import AddressHelper
 from vm_network_migration.errors import *
-from vm_network_migration.instance import (
+from vm_network_migration.modules.instance import (
     Instance,
     InstanceStatus,
 )
-from vm_network_migration.subnet_network import SubnetNetwork
+from vm_network_migration.modules.subnet_network import SubnetNetworkHelper
 
 
 class InstanceNetworkMigration:
@@ -65,8 +41,7 @@ class InstanceNetworkMigration:
         self.project = project
         self.zone = zone
         self.region = self.get_region()
-        self.original_instance = None
-        self.new_instance = None
+        self.instance = None
 
     def set_compute_engine(self):
         """ Credential setup
@@ -90,36 +65,6 @@ class InstanceNetworkMigration:
             project=self.project,
             zone=self.zone).execute()['region'].split('regions/')[1]
 
-    def generate_address(self, instance_template):
-        """ Generate an address object
-
-        Args:
-            instance_template: the instance template which contains the IP address information
-
-        Returns: an Address object
-
-        """
-        address = Address(self.compute, self.project, self.region)
-        address.retrieve_ip_from_network_interface(
-            instance_template['networkInterfaces'][0])
-        return address
-
-    def generate_network(self, network, subnetwork):
-        """ Generate a network object
-
-        Args:
-            network: network name
-            subnetwork: subnetwork name
-
-        Returns: a SubnetNetwork object
-
-        """
-        network = SubnetNetwork(self.compute, self.project, self.zone,
-                                self.region, network, subnetwork)
-        network.check_subnetwork_validation()
-        network.generate_new_network_info()
-
-        return network
 
     def network_migration(self, original_instance_name,
                           network_name,
@@ -146,42 +91,44 @@ class InstanceNetworkMigration:
             if continue_execution == 'n':
                 preserve_external_ip = False
         try:
-            print('Retrieving the original instance template.')
-            self.original_instance = Instance(self.compute, self.project,
-                                              original_instance_name,
-                                              self.region,
-                                              self.zone, None)
-
-            self.new_instance = Instance(self.compute, self.project,
-                                         original_instance_name,
-                                         self.region, self.zone, copy.deepcopy(
-                    self.original_instance.instance_template))
-            self.new_instance.address = self.generate_address(
-                self.new_instance.instance_template)
+            print('Retrieving the original instance configs.')
+            if self.instance == None:
+                self.instance = Instance(self.compute, self.project,
+                                                  original_instance_name,
+                                                  self.region,
+                                                  self.zone, None)
+            address_factory = AddressHelper(self.compute, self.project, self.region)
+            self.instance.address = address_factory.generate_address(
+                self.instance.original_instance_configs)
 
             print('Modifying IP address.')
-            self.new_instance.address.preserve_ip_addresses_handler(
+            self.instance.address.preserve_ip_addresses_handler(
                 preserve_external_ip)
-            self.new_instance.network = self.generate_network(network_name,
+            subnetwork_factory = SubnetNetworkHelper(self.compute, self.project, self.zone, self.region)
+            self.instance.network = subnetwork_factory.generate_network(network_name,
                                                               subnetwork_name)
-            self.new_instance.update_instance_template()
+            self.instance.update_instance_configs()
 
             print('Stopping the VM.')
             print('stop_instance_operation is running.')
-            self.original_instance.stop_instance()
+            self.instance.stop_instance()
 
             print('Detaching the disks.')
-            self.original_instance.detach_disks()
+            self.instance.detach_disks()
 
             print('Deleting the old VM.')
             print('delete_instance_operation is running.')
-            self.original_instance.delete_instance()
+            self.instance.delete_instance()
 
             print('Creating a new VM.')
             print('create_instance_operation is running.')
-            print('DEBUGGING:', self.new_instance.instance_template)
-            self.new_instance.create_instance()
-
+            print('DEBUGGING:', self.instance.new_instance_configs)
+            self.instance.create_instance(self.instance.new_instance_configs)
+            self.instance.migrated = True
+            if self.instance.original_status == InstanceStatus.TERMINATED:
+                print('Since the original instance was terminated, '
+                      'the new instance is terminating.')
+                self.instance.stop_instance()
             print('The migration is successful.')
 
         except Exception as e:
@@ -200,42 +147,42 @@ class InstanceNetworkMigration:
         warnings.warn(
             'VM network migration is failed. Rolling back to the original VM.',
             Warning)
-        if self.original_instance == None or self.original_instance.instance_template == None:
+        if self.instance == None or self.instance.original_instance_configs == None:
             print(
                 'Cannot get instance\'s resource. Please check the parameters and try again.')
             return
-        instance_status = self.original_instance.get_instance_status()
+        instance_status = self.instance.get_instance_status()
 
         if instance_status == InstanceStatus.RUNNING:
             return
         elif instance_status == InstanceStatus.NOTEXISTS:
             print('Recreating the original VM.')
-            self.original_instance.create_instance()
+            self.instance.create_instance(self.instance.original_instance_configs)
         else:
             print('Attaching disks back to the original VM.')
             print('attach_disk_operation is running')
-            self.original_instance.attach_disks()
+            self.instance.attach_disks()
             print('Restarting the original VM')
             print('start_instance_operation is running')
-            self.original_instance.start_instance()
+            self.instance.start_instance()
 
     def rollback_failure_protection(self) -> bool:
         """Try to rollback to the original VM. If the rollback procedure also fails,
-        then print out the original VM's instance template in the console
+        then print out the original VM's instance configs in the console
 
             Returns: True/False for successful/failed rollback
-
+            Raises: RollbackError
         """
         try:
             self.rollback_original_instance()
         except Exception as e:
-            warnings.warn("Rollback failed.", Warning)
+            warnings.warn('Rollback failed.', Warning)
             print(e)
             print(
-                "The original VM may have been deleted. "
-                "The instance template of the original VM is: ")
-            print(self.original_instance.instance_template)
-            return False
+                'The original VM may have been deleted. '
+                'The instance configs of the original VM is: ')
+            print(self.instance.original_instance_configs)
+            raise RollbackError('Rollback to the original VM is failed.')
 
         print('Rollback finished. The original VM is running.')
         return True

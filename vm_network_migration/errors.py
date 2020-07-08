@@ -48,3 +48,13 @@ class InvalidTypeError(TypeError):
 class MissingSubnetworkError(IOError):
     """The subnetwork is not defined"""
     pass
+
+
+class RollbackError(Exception):
+    """The rollback procedure is failed"""
+    pass
+
+
+class AddInstanceToInstanceGroupError(Exception):
+    """Adding an instance back to the instance group is failed"""
+    pass
