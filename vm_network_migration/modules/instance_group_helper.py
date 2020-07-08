@@ -13,8 +13,8 @@
 # limitations under the License.
 """ InstanceGroupHelper class helps to create an InstanceGroup object.
 """
-from vm_network_migration.modules.region_managed_instance_group import RegionManagedInstanceGroup
-from vm_network_migration.modules.single_zone_managed_instance_group import SingleZoneManagedInstanceGroup
+from vm_network_migration.modules.regional_managed_instance_group import RegionalManagedInstanceGroup
+from vm_network_migration.modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
 
 
@@ -56,7 +56,7 @@ class InstanceGroupHelper:
                                               self.zone)
             else:
                 print('Migrating a single-zone managed instance group.')
-                return SingleZoneManagedInstanceGroup(self.compute,
+                return ZonalManagedInstanceGroup(self.compute,
                                                       self.project,
                                                       self.instance_group_name,
                                                       self.zone)
@@ -66,7 +66,7 @@ class InstanceGroupHelper:
             raise e
         else:
             print('Migrating a regional managed instance group.')
-            return RegionManagedInstanceGroup(self.compute, self.project,
+            return RegionalManagedInstanceGroup(self.compute, self.project,
                                               self.instance_group_name,
                                               self.region)
 
