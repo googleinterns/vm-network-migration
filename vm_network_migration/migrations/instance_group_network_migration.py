@@ -112,6 +112,17 @@ class InstanceGroupNetworkMigration:
 
     def migrate_unmanaged_instance_group(self, network_name, subnetwork_name,
                                          preserve_external_ip):
+        """ Migrate the network of an unmanaged instance group.
+        The instances belonging to this instance group will
+        be migrated one by one.
+
+        Args:
+            network_name: target network
+            subnetwork_name: target subnetwork
+            preserve_external_ip: whether preserving the external IP
+            of the instances in the group
+
+        """
         if self.region == None:
             self.region = self.get_region()
         instance_network_migration = InstanceNetworkMigration(self.project,
@@ -137,6 +148,17 @@ class InstanceGroupNetworkMigration:
 
     def migrate_managed_instance_group(self, network_name,
                                        subnetwork_name):
+        """ Migrate the network of a managed instance group.
+        The instance group will be recreated with a new
+        instance template which has the subnet information.
+
+        Args:
+            network_name: target network
+            subnetwork_name: target subnetwork
+
+        Returns:
+
+        """
         if self.region == None:
             self.region = self.get_region()
         subnetwork_helper = SubnetNetworkHelper(self.compute,

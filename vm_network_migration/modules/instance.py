@@ -181,7 +181,8 @@ class Instance(object):
             self.attach_disk(diskInfo['deviceName'])
 
     def modify_instance_template_with_new_network(self, new_network_link,
-                                                  new_subnetwork_link, instance_template) -> dict:
+                                                  new_subnetwork_link,
+                                                  instance_template) -> dict:
         """ Modify the instance template with the new network links
 
             Args:
@@ -197,7 +198,8 @@ class Instance(object):
             'subnetwork'] = new_subnetwork_link
         return instance_template
 
-    def modify_instance_template_with_external_ip(self, external_ip, instance_template) -> dict:
+    def modify_instance_template_with_external_ip(self, external_ip,
+                                                  instance_template) -> dict:
         """ Modify the instance template with the given external IP address
 
         Args:
@@ -209,8 +211,11 @@ class Instance(object):
         if external_ip == None:
             if 'accessConfigs' in instance_template['networkInterfaces'][
                 0]:
-                if 'natIP' in instance_template['networkInterfaces'][0]['accessConfigs'][0]:
-                    del instance_template['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+                if 'natIP' in instance_template['networkInterfaces'][0][
+                    'accessConfigs'][0]:
+                    del \
+                    instance_template['networkInterfaces'][0]['accessConfigs'][
+                        0]['natIP']
 
         else:
             if 'accessConfigs' not in \
@@ -232,9 +237,11 @@ class Instance(object):
         """
         if self.address == None or self.network == None:
             raise AttributeNotExistError('Missing address or network object.')
-        self.new_instance_template = self.modify_instance_template_with_external_ip(self.address.external_ip, self.new_instance_template)
+        self.new_instance_template = self.modify_instance_template_with_external_ip(
+            self.address.external_ip, self.new_instance_template)
         self.new_instance_template = self.modify_instance_template_with_new_network(
-            self.network.network_link, self.network.subnetwork_link, self.new_instance_template)
+            self.network.network_link, self.network.subnetwork_link,
+            self.new_instance_template)
 
     def get_instance_status(self):
         """ Get current instance's status.
@@ -293,12 +300,16 @@ class Instance(object):
             delete_instance_operation['name'])
         return delete_instance_operation
 
-
     def create_instance_with_ephemeral_external_ip(self, configs):
+        """ Create instance using configs, but without specified external IP.
+
+        Args:
+            configs: configs of the instance
+
+        """
         cur_configs = deepcopy(configs)
         self.modify_instance_template_with_external_ip(None, cur_configs)
         self.create_instance(cur_configs)
-
 
 
 class InstanceStatus(Enum):
@@ -309,7 +320,6 @@ class InstanceStatus(Enum):
     RUNNING = "RUNNING"
     STOPPING = "STOPPING"
     TERMINATED = "TERMINATED"
-
 
     def __eq__(self, other):
         """ Override __eq__ function
