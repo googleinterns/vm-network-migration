@@ -294,6 +294,13 @@ class Instance(object):
         return delete_instance_operation
 
 
+    def create_instance_with_ephemeral_external_ip(self, configs):
+        cur_configs = deepcopy(configs)
+        self.modify_instance_template_with_external_ip(None, cur_configs)
+        self.create_instance(cur_configs)
+
+
+
 class InstanceStatus(Enum):
     """
     An Enum class for instance's status

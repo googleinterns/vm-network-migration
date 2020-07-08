@@ -24,6 +24,7 @@ from warnings import warn
 
 import google.auth
 from googleapiclient import discovery
+from googleapiclient.http import HttpError
 from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
 from vm_network_migration.modules.instance_group import InstanceGroupStatus
 from vm_network_migration.modules.instance_group_helper import InstanceGroupHelper
@@ -191,7 +192,17 @@ class InstanceGroupNetworkMigration:
         for instance in self.instance_group.instances:
             if instance.migrated:
                 instance.delete_instance()
-                instance.create_instance(instance.original_instance_template)
+                try:
+                    instance.create_instance(
+                        instance.original_instance_template)
+                except HttpError as e:
+                    error_reason = e._get_reason()
+                    if 'not found in region' in error_reason:
+                        # the external IP can not be preserved.
+                        instance.create_instance_with_ephemeral_external_ip(
+                            instance.original_instance_template)
+                    else:
+                        raise e
         instance_group_status = self.instance_group.get_status()
         if instance_group_status == InstanceGroupStatus.NOTEXISTS:
             self.instance_group.create_instance_group(
