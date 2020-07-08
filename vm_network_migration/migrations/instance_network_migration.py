@@ -91,7 +91,7 @@ class InstanceNetworkMigration:
             if continue_execution == 'n':
                 preserve_external_ip = False
         try:
-            print('Retrieving the original instance template.')
+            print('Retrieving the original instance configs.')
             if self.instance == None:
                 self.instance = Instance(self.compute, self.project,
                                                   original_instance_name,
@@ -99,7 +99,7 @@ class InstanceNetworkMigration:
                                                   self.zone, None)
             address_factory = AddressHelper(self.compute, self.project, self.region)
             self.instance.address = address_factory.generate_address(
-                self.instance.original_instance_template)
+                self.instance.original_instance_configs)
 
             print('Modifying IP address.')
             self.instance.address.preserve_ip_addresses_handler(
@@ -107,7 +107,7 @@ class InstanceNetworkMigration:
             subnetwork_factory = SubnetNetworkHelper(self.compute, self.project, self.zone, self.region)
             self.instance.network = subnetwork_factory.generate_network(network_name,
                                                               subnetwork_name)
-            self.instance.update_instance_template()
+            self.instance.update_instance_configs()
 
             print('Stopping the VM.')
             print('stop_instance_operation is running.')
@@ -122,8 +122,8 @@ class InstanceNetworkMigration:
 
             print('Creating a new VM.')
             print('create_instance_operation is running.')
-            print('DEBUGGING:', self.instance.new_instance_template)
-            self.instance.create_instance(self.instance.new_instance_template)
+            print('DEBUGGING:', self.instance.new_instance_configs)
+            self.instance.create_instance(self.instance.new_instance_configs)
             self.instance.migrated = True
             if self.instance.original_status == InstanceStatus.TERMINATED:
                 print('Since the original instance was terminated, '
@@ -147,7 +147,7 @@ class InstanceNetworkMigration:
         warnings.warn(
             'VM network migration is failed. Rolling back to the original VM.',
             Warning)
-        if self.instance == None or self.instance.original_instance_template == None:
+        if self.instance == None or self.instance.original_instance_configs == None:
             print(
                 'Cannot get instance\'s resource. Please check the parameters and try again.')
             return
@@ -157,7 +157,7 @@ class InstanceNetworkMigration:
             return
         elif instance_status == InstanceStatus.NOTEXISTS:
             print('Recreating the original VM.')
-            self.instance.create_instance(self.instance.original_instance_template)
+            self.instance.create_instance(self.instance.original_instance_configs)
         else:
             print('Attaching disks back to the original VM.')
             print('attach_disk_operation is running')
@@ -168,7 +168,7 @@ class InstanceNetworkMigration:
 
     def rollback_failure_protection(self) -> bool:
         """Try to rollback to the original VM. If the rollback procedure also fails,
-        then print out the original VM's instance template in the console
+        then print out the original VM's instance configs in the console
 
             Returns: True/False for successful/failed rollback
             Raises: RollbackError
@@ -180,8 +180,8 @@ class InstanceNetworkMigration:
             print(e)
             print(
                 "The original VM may have been deleted. "
-                "The instance template of the original VM is: ")
-            print(self.instance.original_instance_template)
+                "The instance configs of the original VM is: ")
+            print(self.instance.original_instance_configs)
             raise RollbackError("Rollback to the original VM is failed.")
 
         print('Rollback finished. The original VM is running.')

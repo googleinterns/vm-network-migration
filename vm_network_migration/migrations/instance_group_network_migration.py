@@ -161,12 +161,7 @@ class InstanceGroupNetworkMigration:
         """
         if self.region == None:
             self.region = self.get_region()
-        subnetwork_helper = SubnetNetworkHelper(self.compute,
-                                                self.project,
-                                                self.zone,
-                                                self.region)
-        subnet_network = subnetwork_helper.generate_network(network_name,
-                                                            subnetwork_name)
+
         print('Retrieving the instance template.')
         instance_template_name = self.instance_group.retrieve_instance_template_name(
             self.instance_group.original_instance_group_configs)
@@ -179,6 +174,13 @@ class InstanceGroupNetworkMigration:
             self.project,
             instance_template_name,
             deepcopy(original_instance_template.instance_template_body))
+        print('Checking target network information.')
+        subnetwork_helper = SubnetNetworkHelper(self.compute,
+                                                self.project,
+                                                self.zone,
+                                                self.region)
+        subnet_network = subnetwork_helper.generate_network(network_name,
+                                                            subnetwork_name)
         print('Generating a new instance template.')
         new_instance_template.modify_instance_template_with_new_network(
             subnet_network.network_link, subnet_network.subnetwork_link)
@@ -216,13 +218,13 @@ class InstanceGroupNetworkMigration:
                 instance.delete_instance()
                 try:
                     instance.create_instance(
-                        instance.original_instance_template)
+                        instance.original_instance_configs)
                 except HttpError as e:
                     error_reason = e._get_reason()
                     if 'not found in region' in error_reason:
                         # the external IP can not be preserved.
                         instance.create_instance_with_ephemeral_external_ip(
-                            instance.original_instance_template)
+                            instance.original_instance_configs)
                     else:
                         raise e
         instance_group_status = self.instance_group.get_status()
