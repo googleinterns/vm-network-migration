@@ -65,7 +65,7 @@ class InstanceGroupHelper:
         except Exception as e:
             raise e
         else:
-            print('Migrating a multi-zone managed instance group.')
+            print('Migrating a regional managed instance group.')
             return RegionManagedInstanceGroup(self.compute, self.project,
                                               self.instance_group_name,
                                               self.region)

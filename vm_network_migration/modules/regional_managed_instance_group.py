@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" RegionManagedInstanceGroup: describes a multi-zone managed instance group
+""" RegionalManagedInstanceGroup: describes a multi-zone managed instance group
 """
 from copy import deepcopy
 
@@ -19,7 +19,7 @@ from vm_network_migration.modules.managed_instance_group import ManagedInstanceG
 from vm_network_migration.modules.operations import Operations
 
 
-class RegionManagedInstanceGroup(ManagedInstanceGroup):
+class RegionalManagedInstanceGroup(ManagedInstanceGroup):
     def __init__(self, compute, project, instance_group_name, region):
         """ Initialization
 
@@ -29,8 +29,8 @@ class RegionManagedInstanceGroup(ManagedInstanceGroup):
             instance_group_name: name of the instance group
             region: region of the instance group
         """
-        super(RegionManagedInstanceGroup, self).__init__(compute, project,
-                                                         instance_group_name)
+        super(RegionalManagedInstanceGroup, self).__init__(compute, project,
+                                                           instance_group_name)
         self.zone_or_region = region
         self.operation = Operations(self.compute, self.project, None, region)
         self.instance_group_manager_api = self.compute.regionInstanceGroupManagers()

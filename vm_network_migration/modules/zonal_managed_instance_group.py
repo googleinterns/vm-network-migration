@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" SingleZoneManagedInstanceGroup: describes a single-zone managed instance group
+""" ZonalManagedInstanceGroup: describes a single-zone managed instance group
 """
 from copy import deepcopy
 
@@ -19,7 +19,7 @@ from vm_network_migration.modules.managed_instance_group import ManagedInstanceG
 from vm_network_migration.modules.operations import Operations
 
 
-class SingleZoneManagedInstanceGroup(ManagedInstanceGroup):
+class ZonalManagedInstanceGroup(ManagedInstanceGroup):
 
     def __init__(self, compute, project, instance_group_name, zone):
         """ Initialization
@@ -30,8 +30,8 @@ class SingleZoneManagedInstanceGroup(ManagedInstanceGroup):
             instance_group_name: name of the instance group
             region: region of the instance group
         """
-        super(SingleZoneManagedInstanceGroup, self).__init__(compute, project,
-                                                             instance_group_name)
+        super(ZonalManagedInstanceGroup, self).__init__(compute, project,
+                                                        instance_group_name)
         self.zone_or_region = zone
         self.operation = Operations(self.compute, self.project, zone, None)
         self.instance_group_manager_api = self.compute.instanceGroupManagers()

@@ -135,7 +135,7 @@ class InstanceGroupNetworkMigration:
                                                          network_name,
                                                          subnetwork_name,
                                                          preserve_external_ip)
-        print('Modifying the instance group\'s configs with the new network.')
+        print('Modifying the instance group configs to use the new network.')
         self.instance_group.delete_network_info_in_instance_group_configs(
             self.instance_group.new_instance_group_configs)
         print('Deleting the original instance group.')
@@ -189,7 +189,7 @@ class InstanceGroupNetworkMigration:
         new_instance_template.insert()
         new_instance_template_link = new_instance_template.get_selfLink()
         print(
-            'Modifying the instance group\'s configs with the new instance template')
+            'Modifying the instance group configs to use the new instance template')
         self.instance_group.modify_instance_group_configs_with_instance_template(
             self.instance_group.new_instance_group_configs,
             new_instance_template_link)

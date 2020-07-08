@@ -129,7 +129,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
             self.migrated = True
         return create_instance_group_operation
 
-    def add_an_instance(self, instance_selfLink) -> dict:
+    def add_an_instance(self, instance_selfLink):
         """ Add an instance into the instance group
 
         Args:
@@ -152,9 +152,8 @@ class UnmanagedInstanceGroup(InstanceGroup):
             return add_instance_operation
         except HttpError as e:
             error_reason = e._get_reason()
-            if 'already' in error_reason:
+            if 'already a member of' in error_reason:
                 warnings.warn(error_reason, Warning)
-                return
             else:
                 raise e
 
@@ -168,7 +167,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 self.add_an_instance(instance.selfLink)
             except HttpError:
                 raise AddInstanceToInstanceGroupError(
-                    'Failed to add all instances back to the instance group.')
+                    'Failed to add all instances to the instance group.')
 
     def delete_network_info_in_instance_group_configs(self,
                                                       instance_group_configs):
