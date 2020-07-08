@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Helper class is used to decide which subclass
-    of InstanceGroup should be initialized.
+""" InstanceGroupHelper class helps to create an InstanceGroup object.
 """
 from vm_network_migration.modules.region_managed_instance_group import RegionManagedInstanceGroup
 from vm_network_migration.modules.single_zone_managed_instance_group import SingleZoneManagedInstanceGroup
