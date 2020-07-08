@@ -29,8 +29,8 @@ Before running:
 
 Run the script by terminal, for example:
      python3 instance_group_migration.py --project_id=test-project
-     --zone=us-central1-a --instance_group_name=test-group
-     --subnetwork=tests-network --preserve_external_ip=False
+     --zone=us-central1-a --instance_group_name=test-group --network=test-network
+     --subnetwork=test-network --preserve_external_ip=False
 
 """
 import argparse
