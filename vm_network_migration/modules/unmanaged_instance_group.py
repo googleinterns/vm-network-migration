@@ -172,5 +172,13 @@ class UnmanagedInstanceGroup(InstanceGroup):
 
     def modify_network_info_in_instance_group_configs(self,
                                                       instance_group_configs):
+        """ Modify the instance group configs with self.network
+
+        Args:
+            instance_group_configs: configs of the instance group
+
+        Returns:
+
+        """
         instance_group_configs['network'] = self.network.network_link
         instance_group_configs['subnetwork'] = self.network.subnetwork_link
