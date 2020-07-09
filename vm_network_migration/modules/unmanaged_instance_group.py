@@ -40,6 +40,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
         self.zone = zone
         self.region = self.get_region()
         self.instances = self.retrieve_instances()
+        self.network = None
         self.original_instance_group_configs = self.get_instance_group_configs()
         self.new_instance_group_configs = deepcopy(
             self.original_instance_group_configs)
@@ -169,18 +170,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 raise AddInstanceToInstanceGroupError(
                     'Failed to add all instances to the instance group.')
 
-    def delete_network_info_in_instance_group_configs(self,
+    def modify_network_info_in_instance_group_configs(self,
                                                       instance_group_configs):
-        """ Modify the instance template with the new network links
-
-            Args:
-                new_network_link: the selflink of the network
-                new_subnetwork_link: the selflink of the subnetwork
-
-            Returns:
-                modified instance template
-        """
-        if 'network' in instance_group_configs:
-            del instance_group_configs['network']
-        if 'subnetwork' in instance_group_configs:
-            del instance_group_configs['subnetwork']
+        instance_group_configs['network'] = self.network.network_link
+        instance_group_configs['subnetwork'] = self.network.subnetwork_link
