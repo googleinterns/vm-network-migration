@@ -80,16 +80,7 @@ class InstanceNetworkMigration:
         Returns: None
 
         """
-        if preserve_external_ip:
-            warnings.warn(
-                'You choose to preserve the external IP. If the original instance '
-                'has an ephemeral IP, it will be reserved as a static external IP after the '
-                'execution.',
-                Warning)
-            continue_execution = input(
-                'Do you still want to preserve the external IP? y/n: ')
-            if continue_execution == 'n':
-                preserve_external_ip = False
+
         try:
             print('Retrieving the original instance configs.')
             if self.instance == None:

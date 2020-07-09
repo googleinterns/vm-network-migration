@@ -90,6 +90,7 @@ class InstanceGroupNetworkMigration:
         if self.instance_group == None:
             self.instance_group = self.build_instance_group(instance_group_name)
         if isinstance(self.instance_group, UnmanagedInstanceGroup):
+            print('Migrating an unmanaged instance group.')
             try:
                 self.migrate_unmanaged_instance_group(network_name,
                                                       subnetwork_name,
@@ -97,10 +98,27 @@ class InstanceGroupNetworkMigration:
             except Exception as e:
                 warn(e, Warning)
                 print(
-                    'The migration is failed. Rolling back to the original instance group.')
+                    'The migration is failed. '
+                    'Rolling back to the original instance group.')
                 self.rollback_unmanaged_instance_group()
 
         else:
+            print('Migrating a managed instance group.')
+            if preserve_external_ip:
+                warn('For a managed instance group, the external IP addresses '
+                     'of the instances can not be reserved.', Warning)
+                continue_execution = input(
+                    'Do you still want to migrate the instance group? y/n: ')
+                if continue_execution == 'n':
+                    return
+
+            if self.instance_group.autoscaler != None:
+                warn('The autoscaler serving the instance group will be deleted and recreated during the migration', Warning)
+                continue_execution = input(
+                    'Do you want to continue the migration? y/n: ')
+                if continue_execution == 'n':
+                    return
+
             try:
                 self.migrate_managed_instance_group(network_name,
                                                     subnetwork_name)
@@ -125,6 +143,7 @@ class InstanceGroupNetworkMigration:
         """
         if self.region == None:
             self.region = self.get_region()
+        print('Checking the target network information.')
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
                                                  self.zone, self.region)
         self.instance_group.network = subnetwork_factory.generate_network(
@@ -181,7 +200,7 @@ class InstanceGroupNetworkMigration:
             self.project,
             instance_template_name,
             deepcopy(original_instance_template.instance_template_body))
-        print('Checking target network information.')
+        print('Checking the target network information.')
         subnetwork_helper = SubnetNetworkHelper(self.compute,
                                                 self.project,
                                                 self.zone,
@@ -222,8 +241,10 @@ class InstanceGroupNetworkMigration:
         # and should be added back to the instance group.
         for instance in self.instance_group.instances:
             if instance.migrated:
+                print('Deleting the migrated instance.')
                 instance.delete_instance()
                 try:
+                    print('Recreating the original instance in the legacy network.')
                     instance.create_instance(
                         instance.original_instance_configs)
                 except HttpError as e:
@@ -235,9 +256,11 @@ class InstanceGroupNetworkMigration:
                     else:
                         raise e
         instance_group_status = self.instance_group.get_status()
+        # The original instance group has been deleted, it needs to be recreated.
         if instance_group_status == InstanceGroupStatus.NOTEXISTS:
             self.instance_group.create_instance_group(
                 self.instance_group.original_instance_group_configs)
+        print('Adding all instances back to the original instance group.')
         self.instance_group.add_all_instances()
 
     def rollback_managed_instance_group(self):
@@ -247,13 +270,16 @@ class InstanceGroupNetworkMigration:
         instance_group_status = self.instance_group.get_status()
         # Either original instance group or new instance group doesn't exist
         if instance_group_status == InstanceGroupStatus.NOTEXISTS:
+            print('Recreating the instance group.')
             self.instance_group.create_instance_group(
                 self.instance_group.original_instance_group_configs
             )
         else:
             # The new instance group has been created
             if self.instance_group.migrated:
+                print('Deleting the instance group.')
                 self.instance_group.delete_instance_group()
+                print('Recreating the instance group with the original configuration')
                 self.instance_group.create_instance_group(
                     self.instance_group.new_instance_group_configs
                 )
@@ -261,6 +287,7 @@ class InstanceGroupNetworkMigration:
                 # The original autoscaler has been deleted
                 if self.instance_group.autoscaler != None and \
                         not self.instance_group.autoscaler_exists():
+                    print('Recreating the autoscaler.')
                     self.instance_group.insert_autoscaler()
 
     def get_region(self) -> dict:
