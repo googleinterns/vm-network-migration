@@ -20,13 +20,13 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.modules.address import AddressHelper
+from vm_network_migration.module_helpers.address_helper import AddressHelper
 from vm_network_migration.errors import *
 from vm_network_migration.modules.instance import (
     Instance,
     InstanceStatus,
 )
-from vm_network_migration.modules.subnet_network import SubnetNetworkHelper
+from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 
 
 class InstanceNetworkMigration:

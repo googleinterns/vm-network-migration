@@ -14,8 +14,8 @@
 """ InstanceGroupHelper class helps to create an InstanceGroup object.
 """
 from vm_network_migration.modules.regional_managed_instance_group import RegionalManagedInstanceGroup
-from vm_network_migration.modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
 
 
 class InstanceGroupHelper:
@@ -57,9 +57,9 @@ class InstanceGroupHelper:
             else:
                 print('Migrating a single-zone managed instance group.')
                 return ZonalManagedInstanceGroup(self.compute,
-                                                      self.project,
-                                                      self.instance_group_name,
-                                                      self.zone)
+                                                 self.project,
+                                                 self.instance_group_name,
+                                                 self.zone)
         try:
             self.get_instance_group_in_region()
         except Exception as e:
@@ -67,8 +67,8 @@ class InstanceGroupHelper:
         else:
             print('Migrating a regional managed instance group.')
             return RegionalManagedInstanceGroup(self.compute, self.project,
-                                              self.instance_group_name,
-                                              self.region)
+                                                self.instance_group_name,
+                                                self.region)
 
     def get_instance_group_in_zone(self) -> dict:
         """ Get a single zone instance group's configurations

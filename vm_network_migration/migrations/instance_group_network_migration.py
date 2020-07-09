@@ -27,9 +27,9 @@ from googleapiclient import discovery
 from googleapiclient.http import HttpError
 from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
 from vm_network_migration.modules.instance_group import InstanceGroupStatus
-from vm_network_migration.modules.instance_group_helper import InstanceGroupHelper
+from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
 from vm_network_migration.modules.instance_template import InstanceTemplate
-from vm_network_migration.modules.subnet_network import SubnetNetworkHelper
+from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
 
 
