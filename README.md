@@ -7,7 +7,7 @@ subnetwork with downtime. The project uses Google APIs Python client library (Co
 Compute Engine resources. 
 
 ## Requirements and Limitations
-###Single VM network migration:
+### Single VM network migration:
 1. A new VM will be created in the target subnetwork, and the original VM will be deleted. 
 2. The customer can choose to preserve the external IP.
 3. If the original VM uses a Ephemeral external IP, and the customer chooses to preserve it, it will become a static external IP after the migration.
@@ -18,7 +18,7 @@ Compute Engine resources.
 8. The original VM is assumed to be standalone. Other cases, for example, if the original instance is served as a backend of other services are not considered in the current scope.
 9. There is a possibility that the main flow runs into an error and the rollback procedure also fails. In this case, the customer may lose both the original VM and the new VM. The original VM’s configuration will be printed out as a reference.  
 
-###Instance group network migration:
+### Instance group network migration:
 1. For a managed instance group, after the migration, the VM instances of this group will be recreated with new disks and new IP addresses. A new instance template will be inserted without deleting the original instance template.
 2. For an unmanaged instance group, the customer can choose to preserve the instances’ external addresses.
 3. If the instance group is the backend of other services, the connection may be lost after the migration.
