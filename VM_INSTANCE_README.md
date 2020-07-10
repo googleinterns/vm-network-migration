@@ -9,12 +9,12 @@
 7. There is a possibility that the main flow runs into an error and the rollback procedure also fails. In this case, the customer may lose both the original VM and the new VM. The original VM’s configuration will be printed out as a reference.  
 
 ## Examples:
-###1. Migrate an instance without preserving the external IP address:
+### 1. Migrate an instance without preserving the external IP address:
      python3 instance_network_migration.py  --project=my-project \
         --zone=us-central1-a  --original_instance=my-original-instance  \
         --network=my-network  --subnetwork=my-network-subnet1 \
         --preserve_external_ip=False 
-###2. Migrate an instance with preserving the external IP address:
+### 2. Migrate an instance with preserving the external IP address:
 Note: No matter whether its external IP address is a static one or a ephemeral one, 
 it will be reserved as a static IP after the migration. The preserving action is not reversible. 
 
