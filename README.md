@@ -7,16 +7,15 @@ subnetwork with downtime. The project uses Google APIs Python client library (Co
 Compute Engine resources. 
 
 ## Requirements and Limitations
-The project will use Google APIs Python client library (Compute Engine APIs) to manage the Compute Engine resources. The customer should be able to execute this tool by entering a single command line. The customer can migrate a single VM or an instance group.
 ###Single VM network migration:
 1. A new VM will be created in the target subnetwork, and the original VM will be deleted. 
 2. The customer can choose to preserve the external IP.
-3. If the original VM uses a Ephemeral external IP, and the customer chooses to preserve it, it will become a static internal/external IP after the migration.
+3. If the original VM uses a Ephemeral external IP, and the customer chooses to preserve it, it will become a static external IP after the migration.
 4. Support migrating a VM from a legacy network to a subnetwork, or from one VPC network to another. Within a network, a VM can also be migrated from one subnet to another. Migration from any network to a legacy network is not allowed.
 5. The original VM should only have one NIC.
 6. The original VM and the new VM will have the same configuration except for the network interface. Therefore, they are in the same project, same zone, and same region.
 7. The original VM must not be part of any instance group before changing the network it is associated with, since VMs in an instance group have to be in the same network. 
-8. The original VM is assumed to be standalone. Other cases, for example, if the original instance is served as a backend of other services, such as load balancer, are not considered in the current scope.
+8. The original VM is assumed to be standalone. Other cases, for example, if the original instance is served as a backend of other services are not considered in the current scope.
 9. There is a possibility that the main flow runs into an error and the rollback procedure also fails. In this case, the customer may lose both the original VM and the new VM. The original VM’s configuration will be printed out as a reference.  
 
 ###Instance group network migration:
@@ -40,7 +39,7 @@ The project will use Google APIs Python client library (Compute Engine APIs) to 
     cd vm_network_migration
     pip3 install .
 ## Run
-#### Single VM network migration
+#### Single VM network migration. [See more examples](./VM_INSTANCE_README.md)
      python3 instance_network_migration.py  --project=my-project \
      --zone=us-central1-a  --original_instance=my-original-instance  \
      --network=my-network  --subnetwork=my-network-subnet1 \
