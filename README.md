@@ -2,16 +2,13 @@
 **This is not an officially supported Google product.**
 ## Description
 
-This project aims to migrate a VM instance from its legacy network to a
-subnetwork with downtime. After the migration, a new VM instance in the new
-subnetwork will be created and the old VM instance will be deleted. The project
-will use Google APIs Python client library (Compute Engine APIs) to manage the 
+This Python library is used to migrate a VM instance or an instance group from its legacy network to a
+subnetwork with downtime. The project uses Google APIs Python client library (Compute Engine APIs) to manage the 
 Compute Engine resources. 
-
 
 ## Requirements and Limitations
 The project will use Google APIs Python client library (Compute Engine APIs) to manage the Compute Engine resources. The customer should be able to execute this tool by entering a single command line. The customer can migrate a single VM or an instance group.
-####Single VM network migration:
+###Single VM network migration:
 1. A new VM will be created in the target subnetwork, and the original VM will be deleted. 
 2. The customer can choose to preserve the external IP.
 3. If the original VM uses a Ephemeral external IP, and the customer chooses to preserve it, it will become a static internal/external IP after the migration.
@@ -22,7 +19,7 @@ The project will use Google APIs Python client library (Compute Engine APIs) to 
 8. The original VM is assumed to be standalone. Other cases, for example, if the original instance is served as a backend of other services, such as load balancer, are not considered in the current scope.
 9. There is a possibility that the main flow runs into an error and the rollback procedure also fails. In this case, the customer may lose both the original VM and the new VM. The original VM’s configuration will be printed out as a reference.  
 
-####Instance group network migration:
+###Instance group network migration:
 1. For a managed instance group, after the migration, the VM instances of this group will be recreated with new disks and new IP addresses. A new instance template will be inserted without deleting the original instance template.
 2. For an unmanaged instance group, the customer can choose to preserve the instances’ external addresses.
 3. If the instance group is the backend of other services, the connection may be lost after the migration.
@@ -44,9 +41,15 @@ The project will use Google APIs Python client library (Compute Engine APIs) to 
     pip3 install .
 ## Run
 #### Single VM network migration
-     python3 instance_network_migration.py  --project=my-project --zone=us-central1-a  --original_instance=my-original-instance  --network=my-network  --subnetwork=my-network-subnet1 --preserve_external_ip=False 
+     python3 instance_network_migration.py  --project=my-project \
+     --zone=us-central1-a  --original_instance=my-original-instance  \
+     --network=my-network  --subnetwork=my-network-subnet1 \
+     --preserve_external_ip=False 
 #### Instance group network migration
-     python3  instance_group_network_migration.py  --project=my-project --instance_group=my-original-instance-group  --region=us-central --zone=None --network=my-network  --subnetwork=my-network-subnet1 --preserve_external_ip=False
+     python3  instance_group_network_migration.py  --project=my-project \
+     --instance_group=my-original-instance-group  --region=us-central \
+     --zone=None --network=my-network  --subnetwork=my-network-subnet1 \
+     --preserve_external_ip=False
      (Note: either --region or --zone must be specified.)
      
 ## Source Code Headers
