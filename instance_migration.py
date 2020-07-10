@@ -35,6 +35,8 @@ Run the script by terminal, for example:
      --preserve_external_ip = False
 
 """
+import warnings
+
 import argparse
 from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
 
@@ -59,6 +61,17 @@ if __name__ == '__main__':
         help='Preserve the external IP address')
 
     args = parser.parse_args()
+
+    if args.preserve_external_ip:
+        warnings.warn(
+            'You choose to preserve the external IP. If the original instance '
+            'has an ephemeral IP, it will be reserved as a static external IP after the '
+            'execution.',
+            Warning)
+        continue_execution = input(
+            'Do you still want to preserve the external IP? y/n: ')
+        if continue_execution == 'n':
+            args.preserve_external_ip = False
 
     instance_migration = InstanceNetworkMigration(args.project_id, args.zone)
     instance_migration.network_migration(args.original_instance_name,

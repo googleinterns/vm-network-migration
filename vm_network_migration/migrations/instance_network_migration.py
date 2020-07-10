@@ -20,13 +20,13 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.modules.address import AddressHelper
+from vm_network_migration.module_helpers.address_helper import AddressHelper
 from vm_network_migration.errors import *
 from vm_network_migration.modules.instance import (
     Instance,
     InstanceStatus,
 )
-from vm_network_migration.modules.subnet_network import SubnetNetworkHelper
+from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 
 
 class InstanceNetworkMigration:
@@ -80,16 +80,7 @@ class InstanceNetworkMigration:
         Returns: None
 
         """
-        if preserve_external_ip:
-            warnings.warn(
-                'You choose to preserve the external IP. If the original instance '
-                'has an ephemeral IP, it will be reserved as a static external IP after the '
-                'execution.',
-                Warning)
-            continue_execution = input(
-                'Do you still want to preserve the external IP? y/n: ')
-            if continue_execution == 'n':
-                preserve_external_ip = False
+
         try:
             print('Retrieving the original instance configs.')
             if self.instance == None:
