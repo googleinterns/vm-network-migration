@@ -25,7 +25,7 @@ from warnings import warn
 import google.auth
 from googleapiclient import discovery
 from googleapiclient.http import HttpError
-from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
 from vm_network_migration.modules.instance_group import InstanceGroupStatus
 from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
 from vm_network_migration.modules.instance_template import InstanceTemplate

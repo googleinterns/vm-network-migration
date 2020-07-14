@@ -1,10 +1,39 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+""" InternalLoadBalancer Class: describes a load balancer using an
+'Internal' load balancing schema.
+
+"""
 from vm_network_migration.modules.load_balancer import LoadBalancer
 from vm_network_migration.modules.operations import Operations
-from vm_network_migration.migrations.instance_group_network_migration import InstanceGroupNetworkMigration
+
 
 class InternalLoadBalancer(LoadBalancer):
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork, preserve_instance_external_ip, region):
+        """ Initialization
+
+        Args:
+            compute: google compute engine
+            project: project ID
+            backend_service_name: name of the backend service
+            network: target network
+            subnetwork: target subnet
+            preserve_instance_external_ip: whether preserve the external IP
+            region: region of the load balancer
+        """
         super(InternalLoadBalancer, self).__init__(compute, project,
                                                    backend_service_name,
                                                    network, subnetwork,
@@ -18,13 +47,22 @@ class InternalLoadBalancer(LoadBalancer):
         self.backend_migration_handlers = []
 
     def get_backend_service_configs(self):
-        return self.compute.regionBackendServices().get(project=self.project,
-                                                        region=self.region,
-                                                        backendService=self.backend_service_name).execute()
+        """ Get the configs of the backend service
+
+        Returns: a deserialized python object of the response
+
+        """
+        return self.compute.regionBackendServices().get(
+            project=self.project,
+            region=self.region,
+            backendService=self.backend_service_name).execute()
 
     def get_forwarding_rule_configs(self):
-        if self.backend_service_configs == None:
-            self.backend_service_configs = self.get_backend_service_configs()
+        """ Get the configs of the forwarding rule which serves this backend service
+
+        Returns: a deserialized python object of the response
+
+        """
         backend_service_selfLink = self.backend_service_configs['selfLink']
 
         request = self.compute.forwardingRules().list(project=self.project,
@@ -41,14 +79,21 @@ class InternalLoadBalancer(LoadBalancer):
                 previous_response=response)
         return None
 
-    def get_forwarding_rule_name(self):
-        if self.forwarding_rule_configs == None:
-            self.forwarding_rule_configs = self.get_forwarding_rule_configs()
+    def get_forwarding_rule_name(self) -> str:
+        """ Get the name of the forwarding rule
+
+        Returns: name
+
+        """
         if self.forwarding_rule_configs != None:
             return self.forwarding_rule_configs['name']
 
-    def delete_forwarding_rule(self):
+    def delete_forwarding_rule(self) -> dict:
+        """ Delete the forwarding rule
 
+             Returns: a deserialized python object of the response
+
+        """
         delete_forwarding_rule_operation = self.compute.forwardingRules().delete(
             project=self.project,
             region=self.region,
@@ -58,6 +103,11 @@ class InternalLoadBalancer(LoadBalancer):
         return delete_forwarding_rule_operation
 
     def insert_forwarding_rule(self):
+        """ Insert the forwarding rule
+
+             Returns: a deserialized python object of the response
+
+        """
         insert_forwarding_rule_operation = self.compute.forwardingRules().insert(
             project=self.project,
             region=self.region,
@@ -67,7 +117,13 @@ class InternalLoadBalancer(LoadBalancer):
         return insert_forwarding_rule_operation
 
     def delete_backend_service(self):
-        delete_backend_service_operation = self.compute.regionBackendServices().delete(
+        """ Delete the backend service
+
+             Returns: a deserialized python object of the response
+
+        """
+        delete_backend_service_operation = self.compute.regionBackendServices(
+        ).delete(
             project=self.project,
             region=self.region,
             backendService=self.backend_service_name).execute()
@@ -76,24 +132,16 @@ class InternalLoadBalancer(LoadBalancer):
         return delete_backend_service_operation
 
     def insert_backend_service(self):
-        insert_backend_service_operation = self.compute.regionBackendServices().delete(
+        """ Insert the backend service
+
+             Returns: a deserialized python object of the response
+
+        """
+        insert_backend_service_operation = self.compute.regionBackendServices(
+        ).delete(
             project=self.project,
             region=self.region,
             backendService=self.backend_service_name).execute()
         self.operations.wait_for_region_operation(
             insert_backend_service_operation['name'])
         return insert_backend_service_operation
-
-    def migrate_backends(self):
-        if 'backends' not in self.backend_service_configs:
-            return None
-        backends = self.backend_service_configs['backends']
-        for backend in backends:
-            backend_migration_handler = InstanceGroupNetworkMigration(
-                self.project,
-                instance_group_selfLink=backend['group'])
-            backend_migration_handler.network_migration(
-                self.network,
-                self.subnetwork,
-                self.preserve_instance_external_ip)
-            self.backend_migration_handlers.append(backend_migration_handler)
