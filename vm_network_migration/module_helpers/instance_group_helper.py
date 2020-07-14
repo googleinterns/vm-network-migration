@@ -13,13 +13,16 @@
 # limitations under the License.
 """ InstanceGroupHelper class helps to create an InstanceGroup object.
 """
+import re
+
 from vm_network_migration.modules.regional_managed_instance_group import RegionalManagedInstanceGroup
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
-import re
+
 
 class InstanceGroupHelper:
-    def __init__(self, compute, project, instance_group_name, region, zone, instance_group_selfLink = None):
+    def __init__(self, compute, project, instance_group_name=None,
+                 region=None, zone=None, instance_group_selfLink=None):
         """ Initialize an instance group helper object
 
         Args:
@@ -41,11 +44,11 @@ class InstanceGroupHelper:
             zone_match = re.search(r'\/zones\/(.*)\/', instance_group_selfLink)
             if zone_match != None:
                 self.zone = zone_match[1]
-            region_match = re.search(r'\/regions\/(.*)\/', instance_group_selfLink)
+            region_match = re.search(r'\/regions\/(.*)\/',
+                                     instance_group_selfLink)
             if region_match != None:
                 self.region = region_match[1]
             self.name = instance_group_selfLink.split('/')[-1]
-
 
     def build_instance_group(self) -> object:
         """ Initialize a subclass object of the InstanceGroup.
