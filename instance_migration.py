@@ -38,7 +38,7 @@ Run the script by terminal, for example:
 import warnings
 
 import argparse
-from vm_network_migration.migrations.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
