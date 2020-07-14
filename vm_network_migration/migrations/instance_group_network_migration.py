@@ -31,23 +31,35 @@ from vm_network_migration.module_helpers.instance_group_helper import InstanceGr
 from vm_network_migration.modules.instance_template import InstanceTemplate
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
-
+import re
 
 class InstanceGroupNetworkMigration:
-    def __init__(self, project, zone, region):
+    def __init__(self, project, zone=None, region=None, instance_group_name=None, instance_group_selfLink = None):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
             project: project ID
-            zone: zone of the instance
+            zone: zone of the instance group
+            region:
         """
         self.compute = self.set_compute_engine()
         self.project = project
         self.zone = zone
         self.region = region
         self.instance_group = None
+        self.instance_group_name = instance_group_name
+        if instance_group_selfLink != None:
+            zone_match = re.search(r'\/zones\/(.*)\/', instance_group_selfLink)
+            if zone_match != None:
+                self.zone = zone_match[1]
+            region_match = re.search(r'\/regions\/(.*)\/',
+                                     instance_group_selfLink)
+            if region_match != None:
+                self.region = region_match[1]
+            self.instance_group_name = instance_group_selfLink.split('/')[-1]
 
-    def build_instance_group(self, instance_group_name) -> object:
+
+    def build_instance_group(self) -> object:
         """ Create an InstanceGroup object.
 
         Args:
@@ -56,13 +68,14 @@ class InstanceGroupNetworkMigration:
         Returns: an InstanceGroup object
 
         """
-        instance_group_factory = InstanceGroupHelper(self.compute,
+        instance_group_helper = InstanceGroupHelper(self.compute,
                                                      self.project,
-                                                     instance_group_name,
+                                                     self.instance_group_name,
                                                      self.region,
                                                      self.zone)
-        instance_group = instance_group_factory.build_instance_group()
+        instance_group = instance_group_helper.build_instance_group()
         return instance_group
+
 
     def set_compute_engine(self):
         """ Credential setup
@@ -73,7 +86,7 @@ class InstanceGroupNetworkMigration:
         credentials, default_project = google.auth.default()
         return discovery.build('compute', 'v1', credentials=credentials)
 
-    def network_migration(self, instance_group_name,
+    def network_migration(self,
                           network_name,
                           subnetwork_name, preserve_external_ip):
         """ The main method of the instance network migration process
@@ -88,7 +101,7 @@ class InstanceGroupNetworkMigration:
 
         """
         if self.instance_group == None:
-            self.instance_group = self.build_instance_group(instance_group_name)
+            self.instance_group = self.build_instance_group()
         if isinstance(self.instance_group, UnmanagedInstanceGroup):
             print('Migrating an unmanaged instance group.')
             try:
