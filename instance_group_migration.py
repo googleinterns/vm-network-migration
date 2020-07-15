@@ -34,7 +34,7 @@ Run the script by terminal, for example:
 
 """
 import argparse
-from vm_network_migration.migrations.instance_group_network_migration import InstanceGroupNetworkMigration
+from vm_network_migration.handlers.instance_group_network_migration import InstanceGroupNetworkMigration
 import warnings
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -75,8 +75,7 @@ if __name__ == '__main__':
 
     instance_group_migration = InstanceGroupNetworkMigration(args.project_id,
                                                              args.zone,
-                                                             args.region)
-    instance_group_migration.network_migration(args.instance_group_name,
-                                               args.network,
+                                                             args.region,args.instance_group_name)
+    instance_group_migration.network_migration(args.network,
                                                args.subnetwork,
                                                args.preserve_external_ip)

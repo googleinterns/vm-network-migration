@@ -13,13 +13,15 @@
 # limitations under the License.
 """ InstanceGroupHelper class helps to create an InstanceGroup object.
 """
+
 from vm_network_migration.modules.regional_managed_instance_group import RegionalManagedInstanceGroup
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
 
 
 class InstanceGroupHelper:
-    def __init__(self, compute, project, instance_group_name, region, zone):
+    def __init__(self, compute, project, instance_group_name,
+                 region, zone):
         """ Initialize an instance group helper object
 
         Args:
@@ -35,6 +37,7 @@ class InstanceGroupHelper:
         self.region = region
         self.zone = zone
         self.status = None
+
 
     def build_instance_group(self) -> object:
         """ Initialize a subclass object of the InstanceGroup.
