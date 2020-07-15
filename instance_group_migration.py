@@ -33,9 +33,11 @@ Run the script by terminal, for example:
      --subnetwork=test-network --preserve_external_ip=False
 
 """
+import warnings
+
 import argparse
 from vm_network_migration.handlers.instance_group_network_migration import InstanceGroupNetworkMigration
-import warnings
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -74,8 +76,10 @@ if __name__ == '__main__':
             args.preserve_external_ip = False
 
     instance_group_migration = InstanceGroupNetworkMigration(args.project_id,
+                                                             args.network,
+                                                             args.subnetwork,
+                                                             args.preserve_external_ip,
                                                              args.zone,
-                                                             args.region,args.instance_group_name)
-    instance_group_migration.network_migration(args.network,
-                                               args.subnetwork,
-                                               args.preserve_external_ip)
+                                                             args.region,
+                                                             args.instance_group_name)
+    instance_group_migration.network_migration()
