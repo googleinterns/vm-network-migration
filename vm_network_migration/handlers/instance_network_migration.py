@@ -30,7 +30,9 @@ from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetw
 
 
 class InstanceNetworkMigration:
-    def __init__(self, project, zone):
+    def __init__(self, project, zone,  original_instance_name,
+                          network_name,
+                          subnetwork_name, preserve_external_ip):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
@@ -41,6 +43,10 @@ class InstanceNetworkMigration:
         self.project = project
         self.zone = zone
         self.region = self.get_region()
+        self.original_instance_name = original_instance_name
+        self.network_name = network_name
+        self.subnetwork_name = subnetwork_name
+        self.preserve_external_ip = preserve_external_ip
         self.instance = None
 
     def set_compute_engine(self):
@@ -66,9 +72,7 @@ class InstanceNetworkMigration:
             zone=self.zone).execute()['region'].split('regions/')[1]
 
 
-    def network_migration(self, original_instance_name,
-                          network_name,
-                          subnetwork_name, preserve_external_ip):
+    def network_migration(self):
         """ The main method of the instance network migration process
 
         Args:
@@ -85,7 +89,7 @@ class InstanceNetworkMigration:
             print('Retrieving the original instance configs.')
             if self.instance == None:
                 self.instance = Instance(self.compute, self.project,
-                                                  original_instance_name,
+                                                  self.original_instance_name,
                                                   self.region,
                                                   self.zone, None)
             address_factory = AddressHelper(self.compute, self.project, self.region)
@@ -94,10 +98,10 @@ class InstanceNetworkMigration:
 
             print('Modifying IP address.')
             self.instance.address.preserve_ip_addresses_handler(
-                preserve_external_ip)
+                self.preserve_external_ip)
             subnetwork_factory = SubnetNetworkHelper(self.compute, self.project, self.zone, self.region)
-            self.instance.network = subnetwork_factory.generate_network(network_name,
-                                                              subnetwork_name)
+            self.instance.network = subnetwork_factory.generate_network(self.network_name,
+                                                              self.subnetwork_name)
             self.instance.update_instance_configs()
 
             print('Stopping the VM.')
