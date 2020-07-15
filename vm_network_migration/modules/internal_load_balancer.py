@@ -44,7 +44,6 @@ class InternalLoadBalancer(LoadBalancer):
         self.forwarding_rule_name = self.get_forwarding_rule_name()
         self.operations = Operations(self.compute, self.project, None,
                                      self.region)
-        self.backend_migration_handlers = []
 
     def get_backend_service_configs(self):
         """ Get the configs of the backend service
