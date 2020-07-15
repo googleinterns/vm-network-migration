@@ -13,7 +13,6 @@
 # limitations under the License.
 """ InstanceGroupHelper class helps to create an InstanceGroup object.
 """
-import re
 
 from vm_network_migration.modules.regional_managed_instance_group import RegionalManagedInstanceGroup
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
@@ -31,7 +30,6 @@ class InstanceGroupHelper:
             instance_group_name: name of the instance group
             region: region of the instance group
             zone: zone of the instance group
-            instance_group_selfLink: selfLink of the instance group
         """
         self.compute = compute
         self.project = project
