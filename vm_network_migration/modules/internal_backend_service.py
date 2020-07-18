@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" InternalLoadBalancer Class: describes a load balancer using an
-'Internal' load balancing schema.
+""" InternalBackendService class: internal backend service, which is used by
+TCP/UDP internal load balancer. It is always regional.
 
 """
 from vm_network_migration.modules.backend_service import BackendService
