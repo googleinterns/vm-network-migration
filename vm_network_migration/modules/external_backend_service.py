@@ -1,20 +1,21 @@
 from copy import deepcopy
 
-from vm_network_migration.modules.load_balancer import LoadBalancer
+from vm_network_migration.modules.backend_service import BackendService
 
 
-class ExternalLoadBalancer(LoadBalancer):
+class ExternalBackendService(BackendService):
     # Can be global or regional
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork, preserve_instance_external_ip):
-        super(ExternalLoadBalancer, self).__init__(compute, project,
+        super(ExternalBackendService, self).__init__(compute, project,
                                                    backend_service_name,
                                                    network, subnetwork,
                                                    preserve_instance_external_ip)
-        self.load_balancer_api = None
+        self.backend_service_api = None
         self.backend_service_configs = None
         self.operations = None
         self.region = None
+        self.preserve_instance_external_ip = preserve_instance_external_ip
 
     def get_backend_service_configs(self):
         args = {
@@ -22,7 +23,7 @@ class ExternalLoadBalancer(LoadBalancer):
             'backendService': self.backend_service_name
         }
         self.add_region_into_args(args)
-        return self.load_balancer_api.get(**args).execute()
+        return self.backend_service_api.get(**args).execute()
 
     def add_region_into_args(self, args):
         if self.region != None:
@@ -40,7 +41,7 @@ class ExternalLoadBalancer(LoadBalancer):
             'body': updated_backend_service
         }
         self.add_region_into_args(args)
-        detach_a_backend_operation = self.load_balancer_api.update(
+        detach_a_backend_operation = self.backend_service_api.update(
             **args).execute()
 
         self.operations.wait_for_global_operation(
@@ -62,7 +63,7 @@ class ExternalLoadBalancer(LoadBalancer):
             'body': self.backend_service_configs
         }
         self.add_region_into_args(args)
-        revert_backends_operation = self.load_balancer_api.update(
+        revert_backends_operation = self.backend_service_api.update(
             **args).execute()
         self.operations.wait_for_global_operation(
             revert_backends_operation['name'])
