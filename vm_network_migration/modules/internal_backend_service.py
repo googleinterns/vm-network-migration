@@ -16,11 +16,11 @@
 'Internal' load balancing schema.
 
 """
-from vm_network_migration.modules.load_balancer import LoadBalancer
+from vm_network_migration.modules.backend_service import BackendService
 from vm_network_migration.modules.operations import Operations
 
 
-class InternalLoadBalancer(LoadBalancer):
+class InternalBackendService(BackendService):
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork, preserve_instance_external_ip, region):
         """ Initialization
@@ -34,7 +34,7 @@ class InternalLoadBalancer(LoadBalancer):
             preserve_instance_external_ip: whether preserve the external IP
             region: region of the load balancer
         """
-        super(InternalLoadBalancer, self).__init__(compute, project,
+        super(InternalBackendService, self).__init__(compute, project,
                                                    backend_service_name,
                                                    network, subnetwork,
                                                    preserve_instance_external_ip)
