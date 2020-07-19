@@ -30,7 +30,7 @@ class BackendServiceHelper:
         self.subnetwork = subnetwork
         self.preserve_instance_external_ip = preserve_instance_external_ip
 
-    def build_load_balancer(self):
+    def build_backend_service(self):
         if self.region != None:
             try:
                 self.backend_config = self.get_global_backend_service_config()
