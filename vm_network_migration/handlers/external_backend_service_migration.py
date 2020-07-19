@@ -67,6 +67,7 @@ class ExternalBackendServiceNetworkMigration:
 
     def migrate_backends(self):
         """ Migrate the backends of the backend service one by one
+        without deleting or recreating the backend service
 
         Args:
             backend_service_configs: the configs of the backend service
@@ -90,9 +91,7 @@ class ExternalBackendServiceNetworkMigration:
             self.backend_migration_handlers.append(backend_migration_handler)
 
     def network_migration(self):
-        """ Migrate the network of the load balancer.
-        If there is a forwarding rule serving the backend service,
-        the forwarding rule needs to be deleted and recreated.
+        """ Migrate the network of an external backend service.
         """
         try:
             self.migrate_backends()
@@ -103,4 +102,5 @@ class ExternalBackendServiceNetworkMigration:
             self.rollback()
 
     def rollback(self):
+        #TODO
         pass

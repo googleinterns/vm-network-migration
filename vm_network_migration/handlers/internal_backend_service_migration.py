@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This script is used to migrate an internal load balancer's backend service
+""" This script is used to migrate an internal backend service
 from its legacy network to a subnetwork mode network.
 
 """
+import warnings
+
 import google.auth
 from googleapiclient import discovery
 from vm_network_migration.handlers.instance_group_network_migration import \
     InstanceGroupNetworkMigration
 from vm_network_migration.modules.internal_backend_service import \
     InternalBackendService
-import warnings
+
 
 class InternalBackendServiceNetworkMigration:
     def __init__(self, project, backend_service_name, network, subnetwork,
@@ -50,12 +52,12 @@ class InternalBackendServiceNetworkMigration:
         self.backend_service = backend_service
         if backend_service == None:
             self.backend_service = InternalBackendService(self.compute,
-                                   self.project,
-                                   self.backend_service_name,
-                                   self.network,
-                                   self.subnetwork,
-                                   self.preserve_instance_external_ip,
-                                   self.region)
+                                                          self.project,
+                                                          self.backend_service_name,
+                                                          self.network,
+                                                          self.subnetwork,
+                                                          self.preserve_instance_external_ip,
+                                                          self.region)
 
     def set_compute_engine(self):
         """ Credential setup
@@ -87,7 +89,7 @@ class InternalBackendServiceNetworkMigration:
             self.backend_migration_handlers.append(backend_migration_handler)
 
     def network_migration(self):
-        """ Migrate the network of the load balancer.
+        """ Migrate the network of an internal backend service.
         If there is a forwarding rule serving the backend service,
         the forwarding rule needs to be deleted and recreated.
         """
@@ -107,4 +109,5 @@ class InternalBackendServiceNetworkMigration:
             self.rollback()
 
     def rollback(self):
+        # TODO
         pass
