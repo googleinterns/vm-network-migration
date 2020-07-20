@@ -73,8 +73,9 @@ if __name__ == '__main__':
         if continue_execution == 'n':
             args.preserve_external_ip = False
 
-    instance_migration = InstanceNetworkMigration(args.project_id, args.zone)
-    instance_migration.network_migration(args.original_instance_name,
-                                         args.network,
-                                         args.subnetwork,
-                                         args.preserve_external_ip)
+    instance_migration = InstanceNetworkMigration(args.project_id, args.zone,
+                                                  args.original_instance_name,
+                                                  args.network,
+                                                  args.subnetwork,
+                                                  args.preserve_external_ip)
+    instance_migration.network_migration()

@@ -19,6 +19,7 @@ Ihe Google API python client module is imported to manage the GCP Compute Engine
  resources.
 """
 
+import re
 from copy import deepcopy
 from warnings import warn
 
@@ -26,15 +27,18 @@ import google.auth
 from googleapiclient import discovery
 from googleapiclient.http import HttpError
 from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
-from vm_network_migration.modules.instance_group import InstanceGroupStatus
 from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
-from vm_network_migration.modules.instance_template import InstanceTemplate
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
+from vm_network_migration.modules.instance_group import InstanceGroupStatus
+from vm_network_migration.modules.instance_template import InstanceTemplate
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
-import re
+
 
 class InstanceGroupNetworkMigration:
-    def __init__(self, project, zone=None, region=None, instance_group_name=None, instance_group_selfLink = None):
+    def __init__(self, project,
+                 network_name,
+                 subnetwork_name, preserve_external_ip, zone, region,
+                 instance_group_name):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
@@ -44,20 +48,13 @@ class InstanceGroupNetworkMigration:
         """
         self.compute = self.set_compute_engine()
         self.project = project
+        self.network_name = network_name
+        self.subnetwork_name = subnetwork_name
+        self.preserve_external_ip = preserve_external_ip
         self.zone = zone
         self.region = region
         self.instance_group = None
         self.instance_group_name = instance_group_name
-        if instance_group_selfLink != None:
-            zone_match = re.search(r'\/zones\/(.*)\/', instance_group_selfLink)
-            if zone_match != None:
-                self.zone = zone_match[1]
-            region_match = re.search(r'\/regions\/(.*)\/',
-                                     instance_group_selfLink)
-            if region_match != None:
-                self.region = region_match[1]
-            self.instance_group_name = instance_group_selfLink.split('/')[-1]
-
 
     def build_instance_group(self) -> object:
         """ Create an InstanceGroup object.
@@ -69,13 +66,12 @@ class InstanceGroupNetworkMigration:
 
         """
         instance_group_helper = InstanceGroupHelper(self.compute,
-                                                     self.project,
-                                                     self.instance_group_name,
-                                                     self.region,
-                                                     self.zone)
+                                                    self.project,
+                                                    self.instance_group_name,
+                                                    self.region,
+                                                    self.zone)
         instance_group = instance_group_helper.build_instance_group()
         return instance_group
-
 
     def set_compute_engine(self):
         """ Credential setup
@@ -86,9 +82,7 @@ class InstanceGroupNetworkMigration:
         credentials, default_project = google.auth.default()
         return discovery.build('compute', 'v1', credentials=credentials)
 
-    def network_migration(self,
-                          network_name,
-                          subnetwork_name, preserve_external_ip):
+    def network_migration(self):
         """ The main method of the instance network migration process
 
         Args:
@@ -105,9 +99,7 @@ class InstanceGroupNetworkMigration:
         if isinstance(self.instance_group, UnmanagedInstanceGroup):
             print('Migrating an unmanaged instance group.')
             try:
-                self.migrate_unmanaged_instance_group(network_name,
-                                                      subnetwork_name,
-                                                      preserve_external_ip)
+                self.migrate_unmanaged_instance_group()
             except Exception as e:
                 warn(e, Warning)
                 print(
@@ -117,7 +109,7 @@ class InstanceGroupNetworkMigration:
 
         else:
             print('Migrating a managed instance group.')
-            if preserve_external_ip:
+            if self.preserve_external_ip:
                 warn('For a managed instance group, the external IP addresses '
                      'of the instances can not be reserved.', Warning)
                 continue_execution = input(
@@ -126,23 +118,23 @@ class InstanceGroupNetworkMigration:
                     return
 
             if self.instance_group.autoscaler != None:
-                warn('The autoscaler serving the instance group will be deleted and recreated during the migration', Warning)
+                warn(
+                    'The autoscaler serving the instance group will be deleted and recreated during the migration',
+                    Warning)
                 continue_execution = input(
                     'Do you want to continue the migration? y/n: ')
                 if continue_execution == 'n':
                     return
 
             try:
-                self.migrate_managed_instance_group(network_name,
-                                                    subnetwork_name)
+                self.migrate_managed_instance_group()
             except Exception as e:
                 warn(e, Warning)
                 print(
                     'The migration is failed. Rolling back to the original instance group.')
                 self.rollback_managed_instance_group()
 
-    def migrate_unmanaged_instance_group(self, network_name, subnetwork_name,
-                                         preserve_external_ip):
+    def migrate_unmanaged_instance_group(self):
         """ Migrate the network of an unmanaged instance group.
         The instances belonging to this instance group will
         be migrated one by one.
@@ -160,20 +152,20 @@ class InstanceGroupNetworkMigration:
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
                                                  self.zone, self.region)
         self.instance_group.network = subnetwork_factory.generate_network(
-            network_name,
-            subnetwork_name)
-
-        instance_network_migration = InstanceNetworkMigration(self.project,
-                                                              self.zone)
+            self.network_name,
+            self.subnetwork_name)
 
         print(
             'Migrating all the instances in the instance group to the new network.')
         for instance in self.instance_group.instances:
+            instance_network_migration = InstanceNetworkMigration(self.project,
+                                                                  self.zone,
+                                                                  instance.name,
+                                                                  self.network_name,
+                                                                  self.subnetwork_name,
+                                                                  self.preserve_external_ip)
             instance_network_migration.instance = instance
-            instance_network_migration.network_migration(instance.name,
-                                                         network_name,
-                                                         subnetwork_name,
-                                                         preserve_external_ip)
+            instance_network_migration.network_migration()
         print('Modifying the instance group configs to use the new network.')
         self.instance_group.modify_network_info_in_instance_group_configs(
             self.instance_group.new_instance_group_configs)
@@ -185,8 +177,7 @@ class InstanceGroupNetworkMigration:
         print('Adding the instances back to the new instance group.')
         self.instance_group.add_all_instances()
 
-    def migrate_managed_instance_group(self, network_name,
-                                       subnetwork_name):
+    def migrate_managed_instance_group(self):
         """ Migrate the network of a managed instance group.
         The instance group will be recreated with a new
         instance template which has the subnet information.
@@ -218,8 +209,8 @@ class InstanceGroupNetworkMigration:
                                                 self.project,
                                                 self.zone,
                                                 self.region)
-        subnet_network = subnetwork_helper.generate_network(network_name,
-                                                            subnetwork_name)
+        subnet_network = subnetwork_helper.generate_network(self.network_name,
+                                                            self.subnetwork_name)
         print('Generating a new instance template.')
         new_instance_template.modify_instance_template_with_new_network(
             subnet_network.network_link, subnet_network.subnetwork_link)
@@ -257,7 +248,8 @@ class InstanceGroupNetworkMigration:
                 print('Deleting the migrated instance.')
                 instance.delete_instance()
                 try:
-                    print('Recreating the original instance in the legacy network.')
+                    print(
+                        'Recreating the original instance in the legacy network.')
                     instance.create_instance(
                         instance.original_instance_configs)
                 except HttpError as e:
@@ -292,7 +284,8 @@ class InstanceGroupNetworkMigration:
             if self.instance_group.migrated:
                 print('Deleting the instance group.')
                 self.instance_group.delete_instance_group()
-                print('Recreating the instance group with the original configuration')
+                print(
+                    'Recreating the instance group with the original configuration')
                 self.instance_group.create_instance_group(
                     self.instance_group.new_instance_group_configs
                 )

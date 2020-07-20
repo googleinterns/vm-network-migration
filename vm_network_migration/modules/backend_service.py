@@ -14,7 +14,7 @@
 
 """ LoadBalancer Class: describes a load balancer
 """
-class LoadBalancer(object):
+class BackendService(object):
     def __init__(self, compute, project, backend_service_name, network, subnetwork, preserve_instance_external_ip):
         """ Initialization
 
@@ -26,7 +26,11 @@ class LoadBalancer(object):
         self.compute = compute
         self.project = project
         self.backend_service_name = backend_service_name
+        self.backend_service_configs = None
         self.operations = None
         self.network = network
         self.subnetwork = subnetwork
         self.preserve_instance_external_ip = preserve_instance_external_ip
+
+    def get_backend_service_configs(self):
+        pass

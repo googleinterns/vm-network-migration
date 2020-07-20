@@ -17,6 +17,7 @@ All exceptions defined by the library
 should be defined in this file.
 """
 
+
 class UnchangedInstanceNameError(IOError):
     """The new instance name is the same as the original one's"""
     pass
@@ -31,9 +32,11 @@ class ZoneOperationsError(Exception):
     """Zone operation's error"""
     pass
 
+
 class RegionOperationsError(Exception):
     """Region operation's error"""
     pass
+
 
 class AttributeNotExistError(KeyError):
     """An attribute doesn't exist in the googleapi's response"""
@@ -58,3 +61,5 @@ class RollbackError(Exception):
 class AddInstanceToInstanceGroupError(Exception):
     """Adding an instance back to the instance group is failed"""
     pass
+
+
