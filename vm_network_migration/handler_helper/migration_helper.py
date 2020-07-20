@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """ This class is used to build a migration handler
-through a resource's selfLink.
+according to the given resource's selfLink.
 
 """
 import re
@@ -101,16 +102,41 @@ class MigrationHelper:
         return self.instance_group
 
     def extract_backend_service(self) -> str:
-        # TODO
-        pass
+        """ Extract backend service name from the selfLink
+
+        Returns: name of the backend service
+
+        """
+        backend_service_match = re.search(r'\/backendServices\/(.*)\/',
+                                         self.selfLink)
+        if backend_service_match != None:
+            self.backend_service = backend_service_match[1]
+        return self.backend_service
 
     def extract_target_pool(self) -> str:
-        # TODO
-        pass
+        """ Extract target pool name from the selfLink
+
+        Returns: name of the target pool
+
+        """
+
+        target_pool_match = re.search(r'\/targetPools\/(.*)\/',
+                                          self.selfLink)
+        if target_pool_match != None:
+            self.target_pool = target_pool_match[1]
+        return self.target_pool
 
     def extract_forwarding_rule(self) -> str:
-        # TODO
-        pass
+        """ Extract the forwarding rule name from the selfLink
+
+        Returns: name of the forwarding rule
+
+        """
+        forwarding_rule_match = re.search(r'\/forwardingRules\/(.*)\/',
+                                      self.selfLink)
+        if forwarding_rule_match != None:
+            self.forwarding_rule = forwarding_rule_match[1]
+        return self.forwarding_rule
 
     def build_migration_handler(self) -> object:
         """ Build a migration handler
@@ -169,8 +195,24 @@ class MigrationHelper:
             return instance_migration_handler
 
     def build_backend_service_migration_handler(self):
-        # TODO
-        pass
+        """ Build a backend service migration handler
+
+        Returns: BackendServiceMigration
+
+        """
+        from vm_network_migration.handlers.backend_service_migration import BackendServiceMigration
+
+        if self.backend_service != None:
+            backend_service_migration_handler = BackendServiceMigration(
+                self.project,
+                self.zone,
+                self.instance,
+                self.network,
+                self.subnetwork,
+                self.preserve_instance_external_ip
+            )
+            return backend_service_migration_handler
+
 
     def build_forwarding_rule_migration_handler(self):
         # TODO
