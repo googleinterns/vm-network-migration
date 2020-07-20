@@ -18,7 +18,9 @@ according to the given resource's selfLink.
 """
 import re
 
-class MigrationHelper:
+import google.auth
+from googleapiclient import discovery
+class SelfLinkExecutor:
     def __init__(self, selfLink, network, subnetwork,
                  preserve_instance_external_ip):
         """ Initialization
@@ -42,6 +44,7 @@ class MigrationHelper:
         self.network = network
         self.subnetwork = subnetwork
         self.preserve_instance_external_ip = preserve_instance_external_ip
+
 
     def extract_project(self) -> str:
         """ Extract project id
@@ -193,6 +196,39 @@ class MigrationHelper:
                 self.preserve_instance_external_ip
             )
             return instance_migration_handler
+
+    def build_an_instance(self, compute):
+        """ Build an Instance object from the selfLink
+
+        Args:
+            compute: google compute engine
+
+        Returns: an Instance object
+
+        """
+        from vm_network_migration.modules.instance import Instance
+        if self.instance != None:
+            instance = Instance(compute, self.project, self.instance, self.region, self.zone)
+            return instance
+
+    def build_an_instance_group(self, compute):
+        """ Build an InstanceGroup object from the selfLink
+
+        Args:
+            compute: google compute engine
+
+        Returns: an InstanceGroup object
+
+        """
+        from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
+        if self.instance_group != None:
+            instance_group_helper = InstanceGroupHelper(compute,
+                                                        self.project,
+                                                        self.instance_group,
+                                                        self.region,
+                                                        self.zone)
+            instance_group = instance_group_helper.build_instance_group()
+            return instance_group
 
     def build_backend_service_migration_handler(self):
         """ Build a backend service migration handler

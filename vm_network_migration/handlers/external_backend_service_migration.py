@@ -20,7 +20,7 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.handler_helper.migration_helper import MigrationHelper
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.external_backend_service import \
     ExternalBackendService
 
@@ -79,7 +79,7 @@ class ExternalBackendServiceNetworkMigration:
             return None
         backends = self.backend_service.backend_service_configs['backends']
         for backend in backends:
-            migration_helper = MigrationHelper(backend['group'], self.network,
+            migration_helper = SelfLinkExecutor(backend['group'], self.network,
                                                self.subnetwork,
                                                self.preserve_instance_external_ip)
             backend_migration_handler = migration_helper.build_instance_group_migration_handler()
