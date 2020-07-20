@@ -24,20 +24,20 @@ Compute Engine resources.
 3. If the instance group is the backend of other services, the connection may be lost after the migration.
 4. The rollback procedure may also fail. In this case, the customer may lose both the original instance group and the new instance group. The original instance group’s configuration will be printed out as a reference.
 
-## Backend service network migration:
+### Backend service network migration:
 1. Both external and internal backend services are supported.
 2. The backends in the backend service will be migrated from a legacy network to a VPC network. Migration from a VPC network to any network is not supported. 
 3. For a backend service which is serving an internal-managed load balancer (internal HTTPs load balancer), the backends will be migrated to the target VPC network. The network of the load balancer itself will remain unchanged, since an internal-managed load balancer must have already been on a VPC network.
 4. For an external or an internal-managed backend service with multiple backends, the migration can have no downtime. Because the tool will migrate backends one by one, the load balancer can distribute the traffic to other backends while migrating one of the backends. (Backends with mixing networks can exist at the same time and can serve the load balancer together.) If the backend service only has one backend, then the downtime will be several minutes.
 5. For an internal backend service, its associated forwarding rule will be deleted and recreated after the migration. It requires downtime.
 
-## Target pool network migration:
+### Target pool network migration:
 
 1. The instances in the target pool will be migrated from its legacy network to a VPC network. Migration from a VPC network to any network is not supported.
 2. If the instance is within an instance group, then the tool will run the instance group migration to migrate the whole instance group from its legacy network to a VPC network.
 3. If an instance is serving multiple target pools or backends, it is not recommended to migrate, since the unknown errors may happen to other target pools or backends after the migration.
 
-## Forwarding rule network migration:
+### Forwarding rule network migration:
 1. It is not supposed to migrate a forwarding rule. The tool will migrate all the backend services or the target pool pointed by the forwarding rule from a legacy network to a VPC network.
 
 ## Before Running
@@ -56,7 +56,7 @@ Compute Engine resources.
     cd vm_network_migration
     pip3 install .
 ## Run
-#### Single VM network migration. [See more examples](./VM_INSTANCE_README.md)
+#### Single VM network migration. [See more examples.](./VM_INSTANCE_README.md)
      python3 instance_network_migration.py  --project=my-project \
      --zone=us-central1-a  --original_instance=my-original-instance  \
      --network=my-network  --subnetwork=my-network-subnet1 \
