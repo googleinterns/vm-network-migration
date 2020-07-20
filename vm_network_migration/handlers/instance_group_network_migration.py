@@ -37,8 +37,8 @@ from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInsta
 class InstanceGroupNetworkMigration:
     def __init__(self, project,
                  network_name,
-                 subnetwork_name, preserve_external_ip, zone=None, region=None,
-                 instance_group_name=None):
+                 subnetwork_name, preserve_external_ip, zone, region,
+                 instance_group_name):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
