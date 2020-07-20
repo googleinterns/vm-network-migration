@@ -17,10 +17,6 @@ through a resource's selfLink.
 """
 import re
 
-from vm_network_migration.handlers.instance_group_network_migration import InstanceGroupNetworkMigration
-from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
-
-
 class MigrationHelper:
     def __init__(self, selfLink, network, subnetwork,
                  preserve_instance_external_ip):
@@ -132,6 +128,8 @@ class MigrationHelper:
             return self.build_target_pool_migration_handler()
         elif self.forwarding_rule != None:
             return self.build_forwarding_rule_migration_handler()
+        else:
+            return None
 
     def build_instance_group_migration_handler(self):
         """ Build an instance group migration handler
@@ -139,6 +137,7 @@ class MigrationHelper:
         Returns: InstanceGroupNetworkMigration
 
         """
+        from vm_network_migration.handlers.instance_group_network_migration import InstanceGroupNetworkMigration
         if self.instance_group != None:
             instance_group_migration_handler = InstanceGroupNetworkMigration(
                 self.project,
@@ -156,6 +155,8 @@ class MigrationHelper:
         Returns: InstanceNetworkMigration
 
         """
+        from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
+
         if self.instance != None:
             instance_migration_handler = InstanceNetworkMigration(
                 self.project,

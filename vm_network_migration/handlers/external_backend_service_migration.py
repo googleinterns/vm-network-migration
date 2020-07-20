@@ -16,13 +16,14 @@
 from its legacy network to a subnetwork mode network.
 
 """
+import warnings
+
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.handlers.instance_group_network_migration import \
-    InstanceGroupNetworkMigration
+from vm_network_migration.handler_helper.migration_helper import MigrationHelper
 from vm_network_migration.modules.external_backend_service import \
     ExternalBackendService
-import warnings
+
 
 class ExternalBackendServiceNetworkMigration:
     def __init__(self, project, backend_service_name, network, subnetwork,
@@ -50,11 +51,11 @@ class ExternalBackendServiceNetworkMigration:
         self.backend_service = backend_service
         if backend_service == None:
             self.backend_service = ExternalBackendService(self.compute,
-                                   self.project,
-                                   self.backend_service_name,
-                                   self.network,
-                                   self.subnetwork,
-                                   self.preserve_instance_external_ip)
+                                                          self.project,
+                                                          self.backend_service_name,
+                                                          self.network,
+                                                          self.subnetwork,
+                                                          self.preserve_instance_external_ip)
 
     def set_compute_engine(self):
         """ Credential setup
@@ -73,18 +74,18 @@ class ExternalBackendServiceNetworkMigration:
             backend_service_configs: the configs of the backend service
 
         """
+
         if 'backends' not in self.backend_service.backend_service_configs:
             return None
         backends = self.backend_service.backend_service_configs['backends']
         for backend in backends:
-            if '\/networkEndpointGroups\/' in backend:
+            migration_helper = MigrationHelper(backend['group'], self.network,
+                                               self.subnetwork,
+                                               self.preserve_instance_external_ip)
+            backend_migration_handler = migration_helper.build_instance_group_migration_handler()
+            # The backend type is not an instance group, then just ignore
+            if backend_migration_handler == None:
                 continue
-            backend_migration_handler = InstanceGroupNetworkMigration(
-                self.project,
-                backend['group'],
-                self.network,
-                self.subnetwork,
-                self.preserve_instance_external_ip)
             self.backend_service.detach_a_backend(backend)
             backend_migration_handler.network_migration()
             self.backend_service.reattach_all_backends()
@@ -102,5 +103,5 @@ class ExternalBackendServiceNetworkMigration:
             self.rollback()
 
     def rollback(self):
-        #TODO
+        # TODO
         pass
