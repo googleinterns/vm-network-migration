@@ -38,7 +38,7 @@ class InstanceGroupNetworkMigration:
     def __init__(self, project,
                  network_name,
                  subnetwork_name, preserve_external_ip, zone=None, region=None,
-                 instance_group_name=None, instance_group_selfLink=None):
+                 instance_group_name=None):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
@@ -55,15 +55,6 @@ class InstanceGroupNetworkMigration:
         self.region = region
         self.instance_group = None
         self.instance_group_name = instance_group_name
-        if instance_group_selfLink != None:
-            zone_match = re.search(r'\/zones\/(.*)\/', instance_group_selfLink)
-            if zone_match != None:
-                self.zone = zone_match[1]
-            region_match = re.search(r'\/regions\/(.*)\/',
-                                     instance_group_selfLink)
-            if region_match != None:
-                self.region = region_match[1]
-            self.instance_group_name = instance_group_selfLink.split('/')[-1]
 
     def build_instance_group(self) -> object:
         """ Create an InstanceGroup object.
