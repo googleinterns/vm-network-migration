@@ -311,6 +311,7 @@ class Instance(object):
         """
         cur_configs = deepcopy(configs)
         self.modify_instance_configs_with_external_ip(None, cur_configs)
+        print('DEBUGGING:', cur_configs)
         self.create_instance(cur_configs)
 
     def get_referrer_selfLinks(self):
