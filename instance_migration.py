@@ -62,6 +62,11 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    if args.preserve_external_ip == 'True':
+        args.preserve_external_ip = True
+    else:
+        args.preserve_external_ip = False
+
     if args.preserve_external_ip:
         warnings.warn(
             'You choose to preserve the external IP. If the original instance '
