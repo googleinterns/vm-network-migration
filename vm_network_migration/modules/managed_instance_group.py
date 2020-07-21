@@ -40,6 +40,7 @@ class ManagedInstanceGroup(InstanceGroup):
         self.is_multi_zone = False
         self.autoscaler = None
         self.autoscaler_configs = None
+        self.selfLink = None
 
     def get_instance_group_configs(self) -> dict:
         """ Get the configs of the instance group

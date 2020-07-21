@@ -46,6 +46,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
             self.original_instance_group_configs)
         self.status = self.get_status()
         self.operation = Operations(self.compute, self.project, self.zone, None)
+        self.selfLink = self.get_selfLink(self.original_instance_group_configs)
 
     def get_region(self) -> dict:
         """ Get region information
