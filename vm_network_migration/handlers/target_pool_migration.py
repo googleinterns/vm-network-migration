@@ -70,7 +70,7 @@ class TargetPoolMigration:
             # In the current version, all the instances in the unmanaged instance
             # groups will be migrated to the new network. But in the next version,
             # the tool may give the user's options about how to process
-            # these instance groups
+            # these unmanaged instance groups and instance in these groups
             executor = SelfLinkExecutor(selfLink,
                                         self.network,
                                         self.subnetwork,
