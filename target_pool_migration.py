@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The script takes the arguments and call the vm_network_migration module.
+""" The script takes the arguments and run the target pool migration handler.
 
 Before running:
     1. If not already done, enable the Compute Engine API
@@ -43,10 +43,10 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--project_id',
-                        help='The project ID of the original VM.')
+                        help='The project ID of the target pool.')
 
     parser.add_argument('--region', default=None,
-                        help='The region of the original VM.')
+                        help='The region of the target pool.')
     parser.add_argument('--target_pool_name',
                         help='The name of the target pool')
     parser.add_argument('--network', help='The name of the new network')
