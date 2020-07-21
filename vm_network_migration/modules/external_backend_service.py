@@ -21,6 +21,7 @@ from copy import deepcopy
 from vm_network_migration.modules.backend_service import BackendService
 from vm_network_migration.modules.operations import Operations
 
+
 class ExternalBackendService(BackendService):
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork, preserve_instance_external_ip):
@@ -61,6 +62,7 @@ class ExternalBackendService(BackendService):
 
         """
         updated_backend_service = deepcopy(self.backend_service_configs)
+        updated_backend_service['fingerprint'] = self.get_current_fingerprint()
         updated_backend_service['backends'] = [v for v in
                                                updated_backend_service[
                                                    'backends'] if
@@ -86,6 +88,8 @@ class ExternalBackendService(BackendService):
         Returns: a deserialized python object of the response
 
         """
+        self.backend_service_configs[
+            'fingerprint'] = self.get_current_fingerprint()
         args = {
             'project': self.project,
             'backendService': self.backend_service_name,
@@ -97,3 +101,12 @@ class ExternalBackendService(BackendService):
             revert_backends_operation['name'])
 
         return revert_backends_operation
+
+    def get_current_fingerprint(self) -> str:
+        """ Get current fingerprint from the config
+
+        Returns: fingerprint string
+
+        """
+        current_config = self.get_backend_service_configs()
+        return current_config['fingerprint']
