@@ -15,6 +15,7 @@
 
 """
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
+from vm_network_migration.modules.operations import Operations
 from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
 
 
@@ -40,14 +41,17 @@ class TargetPool:
         self.network = network
         self.subnetwork = subnetwork
         self.target_pool_config = self.get_target_pool_configs()
-        self.operations = None
+        self.selfLink = self.get_selfLink()
+        self.operations = Operations(self.compute, self.project, None,
+                                     self.region)
         self.preserve_instance_external_ip = preserve_instance_external_ip
         # The instances which don't belong to any instance groups
-        self.attached_single_instances = []
+        self.attached_single_instances_selfLinks = []
         # The instances which belong to one or more unmanaged instance groups
-        self.attached_instances_in_unmanaged_instance_group = []
-        self.attached_managed_instance_groups = []
-        self.attached_unmanaged_instance_groups = []
+        self.attached_instances_in_unmanaged_instance_group_selfLinks = []
+        self.attached_managed_instance_groups_selfLinks = []
+        self.attached_unmanaged_instance_groups_selfLinks = []
+        self.get_attached_backends()
 
     def get_target_pool_configs(self):
         """ Get the configs of the target pool
@@ -59,6 +63,32 @@ class TargetPool:
             project=self.project,
             region=self.region,
             targetPool=self.target_pool_name).execute()
+
+    def get_selfLink(self):
+        """ Get the selfLink of the target pool
+
+        Returns: URL string
+
+        """
+        if 'selfLink' in self.target_pool_config:
+            return self.target_pool_config['selfLink']
+
+    def add_instance(self, instance_selfLink):
+        """ Add instance into the backends
+
+        Returns: a deserialized python object of the response
+
+        """
+        add_instance_operation = self.compute.targetPools().addInstance(
+            project=self.project,
+            region=self.region,
+            targetPool=self.target_pool_name,
+            body={
+                "instances": [instance_selfLink]
+            }).execute()
+        self.operations.wait_for_region_operation(
+            add_instance_operation['name'])
+        return add_instance_operation
 
     def get_attached_backends(self):
         """ According to the target pool configs, the attached instances
@@ -80,7 +110,8 @@ class TargetPool:
             instance_group_selfLinks = instance.get_referrer_selfLinks()
             # No instance group is associated with this instance
             if len(instance_group_selfLinks) == 0:
-                self.attached_single_instances.append(instance)
+                self.attached_single_instances_selfLinks.append(
+                    instance.selfLink)
             else:
                 for selfLink in instance_group_selfLinks:
                     if selfLink in instance_group_and_instances:
@@ -97,8 +128,10 @@ class TargetPool:
             instance_group = instance_group_selfLink_executor.build_an_instance_group(
                 self.compute)
             if isinstance(instance_group, UnmanagedInstanceGroup):
-                self.attached_unmanaged_instance_groups.append(instance_group)
-                self.attached_instances_in_unmanaged_instance_group.extend(
+                self.attached_unmanaged_instance_groups_selfLinks.append(
+                    instance_group.selfLink)
+                self.attached_instances_in_unmanaged_instance_group_selfLinks.extend(
                     instance_selfLink_list)
             else:
-                self.attached_managed_instance_groups.append(instance_group)
+                self.attached_managed_instance_groups_selfLinks.append(
+                    instance_group.selfLink)
