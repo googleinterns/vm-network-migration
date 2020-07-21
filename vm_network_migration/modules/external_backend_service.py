@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""ExternalBackendService class: internal backend service, which is used by
+"""ExternalBackendService class: external backend service, which is used by
 TCP/UDP external load balancer or an HTTP external load balancer.
 It is always a global compute engine resource.
 
@@ -19,7 +19,7 @@ It is always a global compute engine resource.
 from copy import deepcopy
 
 from vm_network_migration.modules.backend_service import BackendService
-
+from vm_network_migration.modules.operations import Operations
 
 class ExternalBackendService(BackendService):
     def __init__(self, compute, project, backend_service_name, network,
@@ -41,7 +41,7 @@ class ExternalBackendService(BackendService):
                                                      preserve_instance_external_ip)
         self.backend_service_api = None
         self.backend_service_configs = self.get_backend_service_configs()
-        self.operations = None
+        self.operations = Operations(self.compute, self.project)
         self.preserve_instance_external_ip = preserve_instance_external_ip
 
     def get_backend_service_configs(self):
