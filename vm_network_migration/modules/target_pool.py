@@ -84,7 +84,7 @@ class TargetPool:
             region=self.region,
             targetPool=self.target_pool_name,
             body={
-                "instances": [instance_selfLink]
+                'instances': [{'instance': instance_selfLink}]
             }).execute()
         self.operations.wait_for_region_operation(
             add_instance_operation['name'])
@@ -105,6 +105,7 @@ class TargetPool:
                                                           self.network,
                                                           self.subnetwork,
                                                           self.preserve_instance_external_ip)
+            print(instance_selfLink)
             instance = instance_selfLink_executor.build_an_instance(
                 self.compute)
             instance_group_selfLinks = instance.get_referrer_selfLinks()

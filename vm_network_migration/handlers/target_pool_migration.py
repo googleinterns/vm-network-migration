@@ -88,6 +88,8 @@ class TargetPoolMigration:
         try:
             print('Migrating single instance backends')
             for instance_migration_handler in self.instance_migration_handlers:
+                print('Migrating: ',
+                      instance_migration_handler.original_instance_name)
                 instance_migration_handler.network_migration()
                 print('Reattaching the instance backend')
                 self.target_pool.add_instance(
@@ -95,8 +97,10 @@ class TargetPoolMigration:
 
             print('Migrating instance group backends')
             for instance_group_migration_handler in self.instance_group_migration_handlers:
+                print('Migrating:',
+                      instance_group_migration_handler.instance_group_name)
                 instance_group_migration_handler.network_migration()
-                print('Reattaching the instance group')
+                print('Reattaching the instance group to the target pool')
                 instance_group_migration_handler.instance_group.set_target_pool(
                     self.target_pool.selfLink)
 

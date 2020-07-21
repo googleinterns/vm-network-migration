@@ -326,6 +326,8 @@ class Instance(object):
             instance=self.name)
         while request is not None:
             response = request.execute()
+            if 'items' not in response:
+                break
 
             for reference in response['items']:
                 if 'MEMBER_OF' in reference['referenceType']:
