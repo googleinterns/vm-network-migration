@@ -71,6 +71,14 @@ class InstanceNetworkMigration:
             project=self.project,
             zone=self.zone).execute()['region'].split('regions/')[1]
 
+    def get_instance_selfLink(self):
+        """  Get the selfLink of the instance
+
+        Returns: URL string
+
+        """
+        if self.instance != None:
+            return self.instance.selfLink
 
     def network_migration(self):
         """ The main method of the instance network migration process

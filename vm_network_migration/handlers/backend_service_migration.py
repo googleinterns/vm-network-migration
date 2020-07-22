@@ -101,6 +101,7 @@ class BackendServiceMigration:
                     self.subnetwork,
                     self.preserve_instance_external_ip, self.region,
                     self.backend_service)
+                self.backend_service_migration_handler.network_migration()
             except Exception as e:
                 warnings.warn(e, Warning)
                 print(

@@ -40,6 +40,7 @@ class ManagedInstanceGroup(InstanceGroup):
         self.is_multi_zone = False
         self.autoscaler = None
         self.autoscaler_configs = None
+        self.selfLink = None
 
     def get_instance_group_configs(self) -> dict:
         """ Get the configs of the instance group
@@ -239,3 +240,31 @@ class ManagedInstanceGroup(InstanceGroup):
             self.operation.wait_for_zone_operation(
                 insert_autoscaler_operation['name'])
         return insert_autoscaler_operation
+
+    def set_target_pool(self, target_pool_selfLink):
+        """ Set the target pool of the managed instance group
+
+        Args:
+            target_pool_selfLink: selfLink of the target pool
+
+        Returns: a deserialized Python object of the response
+
+        """
+        args = {
+            'project': self.project,
+            'instanceGroupManager': self.instance_group_name,
+            'body':{
+              "targetPools": [
+                target_pool_selfLink
+              ]
+            }
+        }
+        self.add_zone_or_region_into_args(args)
+        set_target_pool_operation = self.compute.instanceGroupManagers().setTargetPools(**args).execute()
+        if self.is_multi_zone:
+            self.operation.wait_for_region_operation(
+                set_target_pool_operation['name'])
+        else:
+            self.operation.wait_for_zone_operation(
+                set_target_pool_operation['name'])
+        return set_target_pool_operation

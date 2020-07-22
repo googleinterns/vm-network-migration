@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The script takes the arguments and call the vm_network_migration module.
+""" The script takes the arguments and run the target pool migration handler.
 
 Before running:
     1. If not already done, enable the Compute Engine API
@@ -28,27 +28,27 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 instance_migration.py --project_id=test-project
-     --zone=us-central1-a --original_instance_name=instance-legacy
-     --network=tests-network
-     --subnetwork=tests-network
-     --preserve_external_ip = False
+     python3 instance_group_migration.py --project_id=test-project
+     --zone=us-central1-a --instance_group_name=test-group --network=test-network
+     --subnetwork=test-network --preserve_external_ip=False
 
 """
 import warnings
 
 import argparse
-from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.handlers.target_pool_migration import TargetPoolMigration
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--project_id',
-                        help='The project ID of the original VM.')
-    parser.add_argument('--zone', help='The zone name of the original VM.')
-    parser.add_argument('--original_instance_name',
-                        help='The name of the original VM')
+                        help='The project ID of the target pool.')
+
+    parser.add_argument('--region', default=None,
+                        help='The region of the target pool.')
+    parser.add_argument('--target_pool_name',
+                        help='The name of the target pool')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
         '--subnetwork',
@@ -56,18 +56,19 @@ if __name__ == '__main__':
         help='The name of the subnetwork. For auto mode networks,'
              ' this field is optional')
     parser.add_argument(
-        '--preserve_external_ip',
+        '--preserve_instance_external_ip',
         default=False,
-        help='Preserve the external IP address')
+        help='Preserve the external IP addresses of the instances serving this target pool')
 
     args = parser.parse_args()
 
-    if args.preserve_external_ip == 'True':
-        args.preserve_external_ip = True
+    if args.preserve_instance_external_ip == 'True':
+        args.preserve_instance_external_ip = True
     else:
-        args.preserve_external_ip = False
+        args.preserve_instance_external_ip = False
 
-    if args.preserve_external_ip:
+    if args.preserve_instance_external_ip:
+
         warnings.warn(
             'You choose to preserve the external IP. If the original instance '
             'has an ephemeral IP, it will be reserved as a static external IP after the '
@@ -76,11 +77,8 @@ if __name__ == '__main__':
         continue_execution = input(
             'Do you still want to preserve the external IP? y/n: ')
         if continue_execution == 'n':
-            args.preserve_external_ip = False
+            args.preserve_instance_external_ip = False
 
-    instance_migration = InstanceNetworkMigration(args.project_id, args.zone,
-                                                  args.original_instance_name,
-                                                  args.network,
-                                                  args.subnetwork,
-                                                  args.preserve_external_ip)
-    instance_migration.network_migration()
+    target_pool_migration = TargetPoolMigration(args.project_id, args.target_pool_name, args.network, args.subnetwork,
+                 args.preserve_instance_external_ip, args.region)
+    target_pool_migration.network_migration()

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" LoadBalancer Class: describes a load balancer
+""" BackendService class: describe a backend service.
 """
 class BackendService(object):
     def __init__(self, compute, project, backend_service_name, network, subnetwork, preserve_instance_external_ip):

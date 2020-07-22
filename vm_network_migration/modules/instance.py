@@ -14,8 +14,9 @@
 """ Instance class: describe an instance
     InstanceStatus class: describe an instance's current status
 """
-from enum import Enum
 from copy import deepcopy
+from enum import Enum
+
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.modules.operations import Operations
@@ -214,8 +215,9 @@ class Instance(object):
                 if 'natIP' in instance_configs['networkInterfaces'][0][
                     'accessConfigs'][0]:
                     del \
-                    instance_configs['networkInterfaces'][0]['accessConfigs'][
-                        0]['natIP']
+                        instance_configs['networkInterfaces'][0][
+                            'accessConfigs'][
+                            0]['natIP']
 
         else:
             if 'accessConfigs' not in \
@@ -309,7 +311,32 @@ class Instance(object):
         """
         cur_configs = deepcopy(configs)
         self.modify_instance_configs_with_external_ip(None, cur_configs)
+        print('DEBUGGING:', cur_configs)
         self.create_instance(cur_configs)
+
+    def get_referrer_selfLinks(self):
+        """ Get all this instance's referrer's selfLink
+
+        Returns:a list of instance group selfLinks
+
+        """
+        referrer_selfLinks = []
+        request = self.compute.instances().listReferrers(
+            project=self.project,
+            zone=self.zone,
+            instance=self.name)
+        while request is not None:
+            response = request.execute()
+            if 'items' not in response:
+                break
+
+            for reference in response['items']:
+                if 'MEMBER_OF' in reference['referenceType']:
+                    referrer_selfLinks.append(reference['referrer'])
+
+            request = self.compute.instances().listReferrers_next(
+                previous_request=request, previous_response=response)
+        return referrer_selfLinks
 
 
 class InstanceStatus(Enum):

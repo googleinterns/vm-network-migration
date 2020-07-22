@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""ExternalBackendService class: internal backend service, which is used by
+"""ExternalBackendService class: external backend service, which is used by
 TCP/UDP external load balancer or an HTTP external load balancer.
 It is always a global compute engine resource.
 
@@ -19,6 +19,7 @@ It is always a global compute engine resource.
 from copy import deepcopy
 
 from vm_network_migration.modules.backend_service import BackendService
+from vm_network_migration.modules.operations import Operations
 
 
 class ExternalBackendService(BackendService):
@@ -41,7 +42,7 @@ class ExternalBackendService(BackendService):
                                                      preserve_instance_external_ip)
         self.backend_service_api = None
         self.backend_service_configs = self.get_backend_service_configs()
-        self.operations = None
+        self.operations = Operations(self.compute, self.project)
         self.preserve_instance_external_ip = preserve_instance_external_ip
 
     def get_backend_service_configs(self):
@@ -61,6 +62,7 @@ class ExternalBackendService(BackendService):
 
         """
         updated_backend_service = deepcopy(self.backend_service_configs)
+        updated_backend_service['fingerprint'] = self.get_current_fingerprint()
         updated_backend_service['backends'] = [v for v in
                                                updated_backend_service[
                                                    'backends'] if
@@ -86,6 +88,8 @@ class ExternalBackendService(BackendService):
         Returns: a deserialized python object of the response
 
         """
+        self.backend_service_configs[
+            'fingerprint'] = self.get_current_fingerprint()
         args = {
             'project': self.project,
             'backendService': self.backend_service_name,
@@ -97,3 +101,12 @@ class ExternalBackendService(BackendService):
             revert_backends_operation['name'])
 
         return revert_backends_operation
+
+    def get_current_fingerprint(self) -> str:
+        """ Get current fingerprint from the config
+
+        Returns: fingerprint string
+
+        """
+        current_config = self.get_backend_service_configs()
+        return current_config['fingerprint']

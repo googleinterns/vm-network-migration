@@ -245,7 +245,9 @@ class InstanceGroupNetworkMigration:
         # and should be added back to the instance group.
         for instance in self.instance_group.instances:
             if instance.migrated:
-                print('Deleting the migrated instance.')
+                print('Deleting the migrated instance in the instance group.')
+                instance.stop_instance()
+                instance.detach_disks()
                 instance.delete_instance()
                 try:
                     print(
@@ -254,6 +256,7 @@ class InstanceGroupNetworkMigration:
                         instance.original_instance_configs)
                 except HttpError as e:
                     error_reason = e._get_reason()
+                    print(error_reason)
                     if 'not found in region' in error_reason:
                         # the external IP can not be preserved.
                         instance.create_instance_with_ephemeral_external_ip(

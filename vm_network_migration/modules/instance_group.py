@@ -15,6 +15,7 @@
     InstanceGroupStatus class: describe an instance group's current status
 """
 from enum import Enum
+
 from googleapiclient.http import HttpError
 
 
@@ -35,6 +36,7 @@ class InstanceGroup(object):
         self.status = None
         self.operation = None
         self.migrated = False
+        self.selfLink = None
 
     def get_status(self):
         """ Get the current status of the instance group
@@ -53,6 +55,18 @@ class InstanceGroup(object):
             else:
                 raise e
         return InstanceGroupStatus('EXISTS')
+
+    def get_selfLink(self, config):
+        """ Get the selfLink from config
+
+        Args:
+            config: config of an instance group
+
+        Returns: url string
+
+        """
+        if 'selfLink' in config:
+            return config['selfLink']
 
     def create_instance_group(self, configs):
         """Abstract method: create an instance group using configs

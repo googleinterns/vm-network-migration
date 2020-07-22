@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The script takes the arguments and call the vm_network_migration module.
+""" The script takes the arguments and run the instance group migration handler.
 
 Before running:
     1. If not already done, enable the Compute Engine API
@@ -43,11 +43,11 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--project_id',
-                        help='The project ID of the original VM.')
+                        help='The project ID of the instance group.')
     parser.add_argument('--zone', default=None,
-                        help='The zone of the original VM.')
+                        help='The zone of the instance group.')
     parser.add_argument('--region', default=None,
-                        help='The region of the original VM.')
+                        help='The region of the instance group.')
     parser.add_argument('--instance_group_name',
                         help='The name of the original instance group')
     parser.add_argument('--network', help='The name of the new network')
@@ -62,6 +62,11 @@ if __name__ == '__main__':
         help='Preserve the external IP address')
 
     args = parser.parse_args()
+
+    if args.preserve_external_ip == 'True':
+        args.preserve_external_ip = True
+    else:
+        args.preserve_external_ip = False
 
     if args.preserve_external_ip:
 
