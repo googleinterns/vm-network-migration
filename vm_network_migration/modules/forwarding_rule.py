@@ -1,5 +1,6 @@
 class ForwardingRule(object):
-    def __init__(self, compute, project, forwarding_rule_name, network, subnetwork, preserve_instance_external_ip):
+    def __init__(self, compute, project, forwarding_rule_name, network,
+                 subnetwork):
         """ Initialization
 
         Args:
@@ -18,7 +19,6 @@ class ForwardingRule(object):
         self.operations = None
         self.network = network
         self.subnetwork = subnetwork
-        self.preserve_instance_external_ip = preserve_instance_external_ip
 
     def get_forwarding_rule_configs(self):
         pass
