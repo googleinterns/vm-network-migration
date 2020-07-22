@@ -20,8 +20,7 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.handlers.instance_group_network_migration import \
-    InstanceGroupNetworkMigration
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.internal_backend_service import \
     InternalBackendService
 
@@ -79,12 +78,10 @@ class InternalBackendServiceNetworkMigration:
             return None
         backends = self.backend_service.backend_service_configs['backends']
         for backend in backends:
-            backend_migration_handler = InstanceGroupNetworkMigration(
-                self.project,
-                backend['group'],
-                self.network,
-                self.subnetwork,
-                self.preserve_instance_external_ip)
+            selfLink_executor = SelfLinkExecutor(backend['group'], self.network,
+                                                 self.subnetwork,
+                                                 self.preserve_instance_external_ip)
+            backend_migration_handler = selfLink_executor.build_instance_group_migration_handler()
             backend_migration_handler.network_migration()
             self.backend_migration_handlers.append(backend_migration_handler)
 
@@ -95,12 +92,17 @@ class InternalBackendServiceNetworkMigration:
         """
         try:
             if self.backend_service.forwarding_rule_name != None:
+                print('Deleting the forwarding rule.')
                 self.backend_service.delete_forwarding_rule()
+            print('Deleting the backend service.')
             self.backend_service.delete_backend_service()
+            print('Migrating the backends one by one.')
             self.migrate_backends()
-            self.backend_service.insert_backend_service()
+            print('Creating the backend service in the target subnet')
+            self.backend_service.insert_backend_service(self.backend_service.new_backend_service_configs)
             if self.backend_service.forwarding_rule_name != None:
-                self.backend_service.insert_forwarding_rule()
+                print('Recreating the forwarding rule.')
+                self.backend_service.insert_forwarding_rule(self.backend_service.new_forwarding_rule_configs)
 
         except Exception as e:
             warnings.warn(e, Warning)
