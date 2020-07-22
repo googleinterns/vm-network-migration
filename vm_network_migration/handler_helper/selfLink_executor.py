@@ -251,5 +251,19 @@ class SelfLinkExecutor:
         pass
 
     def build_target_pool_migration_handler(self):
-        # TODO
-        pass
+        """Build a target pool migration handler
+
+        Returns: TargetPoolMigration
+
+        """
+        from vm_network_migration.handlers.target_pool_migration import TargetPoolMigration
+        if self.backend_service != None:
+            target_pool_migration_handler = TargetPoolMigration(
+                self.project,
+                self.target_pool,
+                self.network,
+                self.subnetwork,
+                self.preserve_instance_external_ip,
+                self.region
+            )
+            return target_pool_migration_handler

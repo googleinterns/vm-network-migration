@@ -63,3 +63,6 @@ class AddInstanceToInstanceGroupError(Exception):
     pass
 
 
+class TargetTypeError(Exception):
+    """The target type is not supported"""
+    pass

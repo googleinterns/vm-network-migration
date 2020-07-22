@@ -36,7 +36,7 @@ class InternalBackendService(BackendService):
             backend_service_name: name of the backend service
             network: target network
             subnetwork: target subnet
-            preserve_instance_external_ip: whether preserve the external IP
+            preserve_instance_external_ip: whether to preserve the external IP
             region: region of the load balancer
         """
         super(InternalBackendService, self).__init__(compute, project,
