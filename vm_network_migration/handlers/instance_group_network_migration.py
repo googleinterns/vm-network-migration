@@ -121,10 +121,6 @@ class InstanceGroupNetworkMigration:
                 warn(
                     'The autoscaler serving the instance group will be deleted and recreated during the migration',
                     Warning)
-                continue_execution = input(
-                    'Do you want to continue the migration? y/n: ')
-                if continue_execution == 'n':
-                    return
 
             try:
                 self.migrate_managed_instance_group()
@@ -290,7 +286,7 @@ class InstanceGroupNetworkMigration:
                 print(
                     'Recreating the instance group with the original configuration')
                 self.instance_group.create_instance_group(
-                    self.instance_group.new_instance_group_configs
+                    self.instance_group.original_instance_group_configs
                 )
             else:
                 # The original autoscaler has been deleted
