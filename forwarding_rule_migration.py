@@ -28,9 +28,10 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 instance_group_migration.py --project_id=test-project
-     --zone=us-central1-a --instance_group_name=test-group --network=test-network
-     --subnetwork=test-network --preserve_external_ip=False
+     python3 forwarding_rule_migration.py --project_id=test-project
+     --forwarding_rule_name=forwarding-rule-legacy --network=test-network
+     --subnetwork=test-network --preserve_instance_external_ip=False
+     --region=us-central1
 
 """
 import warnings
