@@ -91,18 +91,22 @@ class InternalBackendServiceNetworkMigration:
         the forwarding rule needs to be deleted and recreated.
         """
         try:
-            if self.backend_service.forwarding_rule_name != None:
-                print('Deleting the forwarding rule.')
-                self.backend_service.delete_forwarding_rule()
-            print('Deleting the backend service.')
-            self.backend_service.delete_backend_service()
-            print('Migrating the backends one by one.')
-            self.migrate_backends()
-            print('Creating the backend service in the target subnet')
-            self.backend_service.insert_backend_service(self.backend_service.new_backend_service_configs)
-            if self.backend_service.forwarding_rule_name != None:
-                print('Recreating the forwarding rule.')
-                self.backend_service.insert_forwarding_rule(self.backend_service.new_forwarding_rule_configs)
+            count_forwarding_rules = self.backend_service.count_forwarding_rules()
+            if count_forwarding_rules == 1:
+                print(
+                    'The backend service is in use by one forwarding rules. Please try to use forwarding rule migration method.')
+            elif count_forwarding_rules > 1:
+                print(
+                    'The backend service is in use by two or more forwarding rules. It cannot be migrated. Terminating.')
+            else:
+                print('Deleting the backend service.')
+                self.backend_service.delete_backend_service()
+                print('Migrating the backends one by one.')
+                self.migrate_backends()
+                print('Creating the backend service in the target subnet')
+                self.backend_service.insert_backend_service(
+                    self.backend_service.new_backend_service_configs)
+
 
         except Exception as e:
             warnings.warn(e, Warning)
