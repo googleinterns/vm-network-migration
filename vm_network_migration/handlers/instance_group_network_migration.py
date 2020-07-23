@@ -19,14 +19,13 @@ Ihe Google API python client module is imported to manage the GCP Compute Engine
  resources.
 """
 
-import re
 from copy import deepcopy
 from warnings import warn
 
 import google.auth
 from googleapiclient import discovery
 from googleapiclient.http import HttpError
-from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.instance_group import InstanceGroupStatus
@@ -55,6 +54,7 @@ class InstanceGroupNetworkMigration:
         self.region = region
         self.instance_group = None
         self.instance_group_name = instance_group_name
+        self.instance_migration_handlers = []
 
     def build_instance_group(self) -> object:
         """ Create an InstanceGroup object.
@@ -94,41 +94,38 @@ class InstanceGroupNetworkMigration:
         Returns: None
 
         """
-        if self.instance_group == None:
-            self.instance_group = self.build_instance_group()
-        if isinstance(self.instance_group, UnmanagedInstanceGroup):
-            print('Migrating an unmanaged instance group.')
-            try:
+        try:
+            if self.instance_group == None:
+                self.instance_group = self.build_instance_group()
+            if isinstance(self.instance_group, UnmanagedInstanceGroup):
+                print('Migrating an unmanaged instance group.')
                 self.migrate_unmanaged_instance_group()
-            except Exception as e:
-                warn(e, Warning)
-                print(
-                    'The migration is failed. '
-                    'Rolling back to the original instance group.')
-                self.rollback_unmanaged_instance_group()
 
-        else:
-            print('Migrating a managed instance group.')
-            if self.preserve_external_ip:
-                warn('For a managed instance group, the external IP addresses '
-                     'of the instances can not be reserved.', Warning)
-                continue_execution = input(
-                    'Do you still want to migrate the instance group? y/n: ')
-                if continue_execution == 'n':
-                    return
+            else:
 
-            if self.instance_group.autoscaler != None:
-                warn(
-                    'The autoscaler serving the instance group will be deleted and recreated during the migration',
-                    Warning)
+                if self.preserve_external_ip:
+                    warn(
+                        'For a managed instance group, the external IP addresses '
+                        'of the instances can not be reserved.', Warning)
+                    continue_execution = input(
+                        'Do you still want to migrate the instance group? y/n: ')
+                    if continue_execution == 'n':
+                        return
 
-            try:
+                if self.instance_group.autoscaler != None:
+                    warn(
+                        'The autoscaler serving the instance group will be deleted and recreated during the migration',
+                        Warning)
+
+                print('Migrating a managed instance group.')
                 self.migrate_managed_instance_group()
-            except Exception as e:
-                warn(e, Warning)
-                print(
-                    'The migration is failed. Rolling back to the original instance group.')
-                self.rollback_managed_instance_group()
+
+        except Exception as e:
+            warn(e, Warning)
+            print(
+                'The migration is failed. Rolling back to the original instance group.')
+            self.rollback()
+            raise e
 
     def migrate_unmanaged_instance_group(self):
         """ Migrate the network of an unmanaged instance group.
@@ -146,15 +143,16 @@ class InstanceGroupNetworkMigration:
 
         print(
             'Migrating all the instances in the instance group to the new network.')
-        for instance in self.instance_group.instances:
-            instance_network_migration = InstanceNetworkMigration(self.project,
-                                                                  self.zone,
-                                                                  instance.name,
-                                                                  self.network_name,
-                                                                  self.subnetwork_name,
-                                                                  self.preserve_external_ip)
-            instance_network_migration.instance = instance
-            instance_network_migration.network_migration()
+        for instance_selfLink in self.instance_group.instance_selfLinks:
+            selfLink_executor = SelfLinkExecutor(instance_selfLink,
+                                                 self.network_name,
+                                                 self.subnetwork_name,
+                                                 self.preserve_external_ip)
+            instance_migration_handler = selfLink_executor.build_instance_migration_handler()
+            self.instance_migration_handlers.append(instance_migration_handler)
+        for instance_migration_handler in self.instance_migration_handlers:
+            instance_migration_handler.network_migration()
+
         print('Modifying the instance group configs to use the new network.')
         self.instance_group.modify_network_info_in_instance_group_configs(
             self.instance_group.new_instance_group_configs)
@@ -225,33 +223,18 @@ class InstanceGroupNetworkMigration:
         Returns:
 
         """
-        # The new instance group is migrated, but the instances are not
+        # The new instance group has been migrated, but the instances are not
         # reattached successfully. The new instance group needs to be deleted.
+        # Or just force it to rollback
         if self.instance_group.migrated:
             self.instance_group.delete_instance_group()
         # Some of its instances are running on the new network.
         # These instances should be moved back to the legacy network,
         # and should be added back to the instance group.
-        for instance in self.instance_group.instances:
-            if instance.migrated:
-                print('Deleting the migrated instance in the instance group.')
-                instance.stop_instance()
-                instance.detach_disks()
-                instance.delete_instance()
-                try:
-                    print(
-                        'Recreating the original instance in the legacy network.')
-                    instance.create_instance(
-                        instance.original_instance_configs)
-                except HttpError as e:
-                    error_reason = e._get_reason()
-                    print(error_reason)
-                    if 'not found in region' in error_reason:
-                        # the external IP can not be preserved.
-                        instance.create_instance_with_ephemeral_external_ip(
-                            instance.original_instance_configs)
-                    else:
-                        raise e
+        print('Force rolling back all the instances in the group.')
+        for instance_migration_handler in self.instance_migration_handlers:
+            instance_migration_handler.rollback(force=True)
+
         instance_group_status = self.instance_group.get_status()
         # The original instance group has been deleted, it needs to be recreated.
         if instance_group_status == InstanceGroupStatus.NOTEXISTS:
@@ -287,6 +270,14 @@ class InstanceGroupNetworkMigration:
                         not self.instance_group.autoscaler_exists():
                     print('Recreating the autoscaler.')
                     self.instance_group.insert_autoscaler()
+
+    def rollback(self):
+        if self.instance_group == None:
+            print('Unable to fetch the resource.')
+        elif isinstance(self.instance_group, UnmanagedInstanceGroup):
+            self.rollback_unmanaged_instance_group()
+        else:
+            self.rollback_managed_instance_group()
 
     def get_region(self) -> dict:
         """ Get region information

@@ -27,7 +27,7 @@ from vm_network_migration.modules.instance import (
     InstanceStatus,
 )
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
-
+from googleapiclient.http import HttpError
 
 class InstanceNetworkMigration:
     def __init__(self, project, zone,  original_instance_name,
@@ -146,10 +146,7 @@ class InstanceNetworkMigration:
 
         Args:
             force: force to rollback
-
-
         """
-
         warnings.warn(
             'VM network migration is failed. Rolling back to the original VM.',
             Warning)
@@ -173,8 +170,22 @@ class InstanceNetworkMigration:
 
         instance_status = self.instance.get_instance_status()
         if instance_status == InstanceStatus.NOTEXISTS:
-            print('Recreating the original VM.')
-            self.instance.create_instance(self.instance.original_instance_configs)
+            try:
+                print(
+                    'Recreating the original instance in the legacy network.')
+                self.instance.create_instance(
+                    self.instance.original_instance_configs)
+            except HttpError as e:
+                error_reason = e._get_reason()
+                print(error_reason)
+                if 'not found in region' in error_reason:
+                    # The original external IP can not be preserved.
+                    # A new external IP will be picked.
+                    self.instance.create_instance_with_ephemeral_external_ip(
+                        self.instance.original_instance_configs)
+                else:
+                    raise e
+
         else:
             print('Attaching disks back to the original VM.')
             print('attach_disk_operation is running')
