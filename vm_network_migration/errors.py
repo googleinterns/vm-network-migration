@@ -74,3 +74,7 @@ class UnsupportedForwardingRule(Exception):
 class UnsupportedBackendService(Exception):
     """The type of the backend service is not supported"""
     pass
+
+class MigrationFailed(Exception):
+    """The migration is failed, and the rollback was called"""
+    pass

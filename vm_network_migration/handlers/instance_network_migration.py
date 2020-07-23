@@ -127,7 +127,6 @@ class InstanceNetworkMigration:
             print('create_instance_operation is running.')
             print('DEBUGGING:', self.instance.new_instance_configs)
             self.instance.create_instance(self.instance.new_instance_configs)
-            self.instance.migrated = True
             if self.instance.original_status == InstanceStatus.TERMINATED:
                 print('Since the original instance was terminated, '
                       'the new instance is terminating.')
@@ -136,15 +135,19 @@ class InstanceNetworkMigration:
 
         except Exception as e:
             warnings.warn(str(e), Warning)
-            self.rollback_failure_protection()
-            return
+            #self.rollback_failure_protection()
+            self.rollback()
+            raise MigrationFailed('Rollback to the original instance.')
 
-    def rollback_original_instance(self):
-        """ Roll back to the original VM. Reattach the disks to the
+
+    def rollback(self, force=False):
+        """ Rollback to the original VM. Reattach the disks to the
         original instance and restart it.
 
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
+        Args:
+            force: force to rollback
+
+
         """
 
         warnings.warn(
@@ -157,8 +160,19 @@ class InstanceNetworkMigration:
         instance_status = self.instance.get_instance_status()
 
         if instance_status == InstanceStatus.RUNNING:
-            return
-        elif instance_status == InstanceStatus.NOTEXISTS:
+            if self.instance.migrated and force:
+                # The migration has been finished, but force to rollback
+                print('Stopping the instance.')
+                self.instance.stop_instance()
+                print('Detaching the disks.')
+                self.instance.detach_disks()
+                print('Deleting the instance in the target network.')
+                self.instance.delete_instance()
+            else:
+                return
+
+        instance_status = self.instance.get_instance_status()
+        if instance_status == InstanceStatus.NOTEXISTS:
             print('Recreating the original VM.')
             self.instance.create_instance(self.instance.original_instance_configs)
         else:
@@ -169,23 +183,23 @@ class InstanceNetworkMigration:
             print('start_instance_operation is running')
             self.instance.start_instance()
 
-    def rollback_failure_protection(self) -> bool:
-        """Try to rollback to the original VM. If the rollback procedure also fails,
-        then print out the original VM's instance configs in the console
-
-            Returns: True/False for successful/failed rollback
-            Raises: RollbackError
-        """
-        try:
-            self.rollback_original_instance()
-        except Exception as e:
-            warnings.warn('Rollback failed.', Warning)
-            print(e)
-            print(
-                'The original VM may have been deleted. '
-                'The instance configs of the original VM is: ')
-            print(self.instance.original_instance_configs)
-            raise RollbackError('Rollback to the original VM is failed.')
-
-        print('Rollback finished. The original VM is running.')
-        return True
+    # def rollback_failure_protection(self) -> bool:
+    #     """Try to rollback to the original VM. If the rollback procedure also fails,
+    #     then print out the original VM's instance configs in the console
+    #
+    #         Returns: True/False for successful/failed rollback
+    #         Raises: RollbackError
+    #     """
+    #     try:
+    #         self.rollback_original_instance()
+    #     except Exception as e:
+    #         warnings.warn('Rollback failed.', Warning)
+    #         print(e)
+    #         print(
+    #             'The original VM may have been deleted. '
+    #             'The instance configs of the original VM is: ')
+    #         print(self.instance.original_instance_configs)
+    #         raise RollbackError('Rollback to the original VM is failed.')
+    #
+    #     print('Rollback finished. The original VM is running.')
+    #     return True
