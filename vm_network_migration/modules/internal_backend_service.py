@@ -21,7 +21,7 @@ from copy import deepcopy
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.backend_service import BackendService
 from vm_network_migration.modules.operations import Operations
-
+from googleapiclient.http import HttpError
 
 class InternalBackendService(BackendService):
     def __init__(self, compute, project, backend_service_name, network,
@@ -112,7 +112,24 @@ class InternalBackendService(BackendService):
             body=backend_service_configs).execute()
         self.operations.wait_for_region_operation(
             insert_backend_service_operation['name'])
+        if backend_service_configs == self.new_backend_service_configs:
+            self.migrated = True
+        else:
+            self.migrated = False
         return insert_backend_service_operation
+
+    def check_backend_service_exists(self) -> bool:
+        """ Check if the backend service exists in the compute engine
+
+        Returns: True or False
+
+        """
+        try:
+            self.get_backend_service_configs()
+        except HttpError:
+            return False
+        else:
+            return True
 
     def get_connecting_forwarding_rule_list(self):
         """ Get the configs of the forwarding rule which serves this backend service

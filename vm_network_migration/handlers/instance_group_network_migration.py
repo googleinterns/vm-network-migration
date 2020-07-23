@@ -271,7 +271,7 @@ class InstanceGroupNetworkMigration:
                     print('Recreating the autoscaler.')
                     self.instance_group.insert_autoscaler()
 
-    def rollback(self):
+    def rollback(self, force=False):
         if self.instance_group == None:
             print('Unable to fetch the resource.')
         elif isinstance(self.instance_group, UnmanagedInstanceGroup):

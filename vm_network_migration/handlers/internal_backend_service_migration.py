@@ -114,6 +114,23 @@ class InternalBackendServiceNetworkMigration:
                 'The backend service migration was failed. Rolling back to the original instance group.')
             self.rollback()
 
-    def rollback(self):
-        # TODO
-        pass
+    def rollback(self, force=False):
+        if self.backend_service.check_backend_service_exists():
+            if self.backend_service.migrated:
+                print('Deleting the new backend service')
+                self.backend_service.delete_backend_service()
+            else:
+                return
+        print('Rolling back the backends to the original network ')
+        for backend_migration_handler in self.backend_migration_handlers:
+                backend_migration_handler.rollback()
+        print('Recreating the backend service in the original network')
+        self.backend_service.insert_backend_service(
+            self.backend_service.backend_service_configs)
+
+
+
+
+
+
+

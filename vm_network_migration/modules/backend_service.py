@@ -31,6 +31,7 @@ class BackendService(object):
         self.network = network
         self.subnetwork = subnetwork
         self.preserve_instance_external_ip = preserve_instance_external_ip
+        self.migrated = False
 
     def get_backend_service_configs(self):
         pass

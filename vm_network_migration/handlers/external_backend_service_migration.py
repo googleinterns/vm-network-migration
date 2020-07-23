@@ -96,6 +96,7 @@ class ExternalBackendServiceNetworkMigration:
         """
         try:
             self.migrate_backends()
+            self.backend_service.migrated = True
         except Exception as e:
             warnings.warn(e, Warning)
             print(
@@ -103,7 +104,8 @@ class ExternalBackendServiceNetworkMigration:
             self.rollback()
             raise e
 
-    def rollback(self):
+    def rollback(self, force=False):
         # Rollback the instance group backends one by one
         for backend_migration_handler in self.backend_migration_handlers:
             backend_migration_handler.rollback()
+        self.backend_service.migrated = False
