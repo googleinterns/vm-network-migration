@@ -110,6 +110,7 @@ class SelfLinkExecutor:
         """
         backend_service_match = re.search(r'\/backendServices\/(.*)',
                                           self.selfLink)
+        print('DEBUGGING BACKEND SERVICE MATCVH:', backend_service_match)
         if backend_service_match != None:
             return backend_service_match[1]
 
@@ -234,21 +235,30 @@ class SelfLinkExecutor:
 
         """
         from vm_network_migration.handlers.backend_service_migration import BackendServiceMigration
-
         if self.backend_service != None:
             backend_service_migration_handler = BackendServiceMigration(
                 self.project,
-                self.zone,
                 self.backend_service,
                 self.network,
                 self.subnetwork,
-                self.preserve_instance_external_ip
+                self.preserve_instance_external_ip,
+                self.region
             )
             return backend_service_migration_handler
 
     def build_forwarding_rule_migration_handler(self):
-        # TODO
-        pass
+        """ Build a forwarding rule migration handler
+
+        Returns: ForwardingRuleMigration
+
+        """
+        from vm_network_migration.handlers.forwarding_rule_migration import ForwardingRuleMigration
+        if self.forwarding_rule != None:
+            forwarding_rule_migration_handler = ForwardingRuleMigration(
+                self.project, self.forwarding_rule_name,
+                self.network, self.subnetwork,
+                self.preserve_instance_external_ip, self.region)
+            return forwarding_rule_migration_handler
 
     def build_target_pool_migration_handler(self):
         """Build a target pool migration handler
@@ -257,7 +267,7 @@ class SelfLinkExecutor:
 
         """
         from vm_network_migration.handlers.target_pool_migration import TargetPoolMigration
-        if self.backend_service != None:
+        if self.target_pool != None:
             target_pool_migration_handler = TargetPoolMigration(
                 self.project,
                 self.target_pool,

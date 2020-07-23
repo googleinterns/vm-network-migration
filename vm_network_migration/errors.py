@@ -66,3 +66,11 @@ class AddInstanceToInstanceGroupError(Exception):
 class TargetTypeError(Exception):
     """The target type is not supported"""
     pass
+
+class UnsupportedForwardingRule(Exception):
+    """The type of the forwarding rule is not supported"""
+    pass
+
+class UnsupportedBackendService(Exception):
+    """The type of the backend service is not supported"""
+    pass

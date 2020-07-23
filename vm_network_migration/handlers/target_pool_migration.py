@@ -1,3 +1,19 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+""" TargetPoolMigration class: Handle the migration of a target pool.
+
+"""
 import warnings
 
 import google.auth
@@ -47,6 +63,11 @@ class TargetPoolMigration:
         return discovery.build('compute', 'v1', credentials=credentials)
 
     def build_instance_migration_handlers(self):
+        """ Use instance's selfLinks to create a list of InstanceMigrationHandler
+
+        Returns:
+
+        """
         for selfLink in self.target_pool.attached_single_instances_selfLinks:
             executor = SelfLinkExecutor(selfLink,
                                         self.network,
@@ -57,6 +78,12 @@ class TargetPoolMigration:
             self.instance_migration_handlers.append(instance_migration_handler)
 
     def build_instance_group_migration_handlers(self):
+        """ Use instance group's selfLinks to create a list of
+        InstanceGroupMigrationHandler
+
+        Returns:
+
+        """
         for selfLink in self.target_pool.attached_managed_instance_groups_selfLinks:
             executor = SelfLinkExecutor(selfLink,
                                         self.network,
