@@ -110,7 +110,6 @@ class ForwardingRuleMigration(object):
                                              self.network_name,
                                              self.subnetwork_name,
                                              self.preserve_instance_external_ip)
-        print('dbugging:', self.subnetwork_name)
         backends_migration_handler = selfLink_executor.build_backend_service_migration_handler()
         backend_service = backends_migration_handler.backend_service
 
@@ -146,7 +145,6 @@ class ForwardingRuleMigration(object):
             selfLink_executor = SelfLinkExecutor(selfLink, self.network_name,
                                                  self.subnetwork_name,
                                                  self.preserve_instance_external_ip)
-            print('DEBUGGING: selfLink of backend:', selfLink)
             backends_migration_handler = selfLink_executor.build_backend_service_migration_handler()
             # Save handlers for rollback purpose
             self.backends_migration_handlers.append(backends_migration_handler)
