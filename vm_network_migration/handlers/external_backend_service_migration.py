@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This script is used to migrate an internal load balancer's backend service
+""" This script is used to migrate an external backend service
 from its legacy network to a subnetwork mode network.
 
 """
@@ -86,10 +86,10 @@ class ExternalBackendServiceNetworkMigration:
             # The backend type is not an instance group, then just ignore
             if backend_migration_handler == None:
                 continue
+            self.backend_migration_handlers.append(backend_migration_handler)
             self.backend_service.detach_a_backend(backend)
             backend_migration_handler.network_migration()
             self.backend_service.reattach_all_backends()
-            self.backend_migration_handlers.append(backend_migration_handler)
 
     def network_migration(self):
         """ Migrate the network of an external backend service.
@@ -99,9 +99,11 @@ class ExternalBackendServiceNetworkMigration:
         except Exception as e:
             warnings.warn(e, Warning)
             print(
-                'The backend service migration was failed. Rolling back to the original instance group.')
+                'The backend service migration was failed. Rolling back all the backends to its original network.')
             self.rollback()
+            raise e
 
     def rollback(self):
-        # TODO
-        pass
+        # Rollback the instance group backends one by one
+        for backend_migration_handler in self.backend_migration_handlers:
+            backend_migration_handler.rollback()
