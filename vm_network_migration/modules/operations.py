@@ -53,7 +53,7 @@ class Operations:
                 zone=self.zone,
                 operation=operation).execute()
             if result['status'] == 'DONE':
-                print("The current operation is done.")
+                print("Done.")
                 if 'error' in result:
                     raise ZoneOperationsError(result['error'])
                 return result
@@ -79,7 +79,7 @@ class Operations:
                 region=self.region,
                 operation=operation).execute()
             if result['status'] == 'DONE':
-                print("The current operation is done.")
+                print("Done.")
                 if 'error' in result:
                     print('Region operations error', result['error'])
                     raise RegionOperationsError(result['error'])
@@ -105,7 +105,7 @@ class Operations:
                 project=self.project,
                 operation=operation).execute()
             if result['status'] == 'DONE':
-                print("The current operation is done.")
+                print("Done.")
                 if 'error' in result:
                     print('Global operations error', result['error'])
                     raise RegionOperationsError(result['error'])

@@ -134,13 +134,6 @@ class InstanceGroupNetworkMigration:
         """ Migrate the network of an unmanaged instance group.
         The instances belonging to this instance group will
         be migrated one by one.
-
-        Args:
-            network_name: target network
-            subnetwork_name: target subnetwork
-            preserve_external_ip: whether preserving the external IP
-            of the instances in the group
-
         """
         if self.region == None:
             self.region = self.get_region()
