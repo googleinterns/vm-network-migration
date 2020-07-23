@@ -127,11 +127,7 @@ class InternalBackendService(BackendService):
                                                       region=self.region)
         while request is not None:
             response = request.execute()
-            print('DEBUGGING: BACKEND SELFLINK:', backend_service_selfLink)
             for forwarding_rule in response['items']:
-                if 'backendService' in forwarding_rule:
-                    print('DEBUGGING TARGET:',
-                          forwarding_rule['backendService'])
                 if 'backendService' in forwarding_rule and forwarding_rule[
                     'backendService'] == backend_service_selfLink:
                     forwarding_rule_list.append(forwarding_rule)
