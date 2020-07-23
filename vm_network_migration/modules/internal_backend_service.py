@@ -203,3 +203,39 @@ class InternalBackendService(BackendService):
         self.operations.wait_for_region_operation(
             insert_backend_service_operation['name'])
         return insert_backend_service_operation
+
+    def get_connecting_forwarding_rule_list(self):
+        """ Get the configs of the forwarding rule which serves this backend service
+
+        Returns: a deserialized python object of the response
+
+        """
+        forwarding_rule_list = []
+        backend_service_selfLink = self.backend_service_configs['selfLink']
+
+        request = self.compute.forwardingRules().list(project=self.project,
+                                                      region=self.region)
+        while request is not None:
+            response = request.execute()
+            print('DEBUGGING: BACKEND SELFLINK:', backend_service_selfLink)
+            for forwarding_rule in response['items']:
+                if 'backendService' in forwarding_rule:
+                    print('DEBUGGING TARGET:',
+                          forwarding_rule['backendService'])
+                if 'backendService' in forwarding_rule and forwarding_rule[
+                    'backendService'] == backend_service_selfLink:
+                    forwarding_rule_list.append(forwarding_rule)
+
+            request = self.compute.forwardingRules().list_next(
+                previous_request=request,
+                previous_response=response)
+        return forwarding_rule_list
+
+    def has_only_one_forwarding_rules(self) -> bool:
+        """ Count the number of forwarding rules connecting this backend service
+        to check whether it is only serving a single forwarding rule
+
+        Returns: True or False
+
+        """
+        return len(self.get_connecting_forwarding_rule_list()) == 1

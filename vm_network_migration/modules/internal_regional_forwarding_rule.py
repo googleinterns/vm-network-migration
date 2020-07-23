@@ -26,15 +26,6 @@ class InternalRegionalForwardingRule(RegionalForwardingRule):
             self.subnetwork)
         return network_object
 
-    def get_target_pool_selfLink(self):
-        """ Get the target pool serving the forwarding rule
-
-        Returns: selfLink
-
-        """
-        if 'target' in self.forwarding_rule_configs:
-            return self.forwarding_rule_configs['target']
-
     def get_backend_service_selfLink(self):
         """ Get the backend service serving the forwarding rule
 
@@ -46,10 +37,10 @@ class InternalRegionalForwardingRule(RegionalForwardingRule):
 
     def get_new_forwarding_rule_with_new_network_info(self,
                                                       forwarding_rule_configs):
-
         new_forwarding_rule_configs = deepcopy(forwarding_rule_configs)
         new_forwarding_rule_configs[
             'network'] = self.network_object.network_link
         new_forwarding_rule_configs[
             'subnetwork'] = self.network_object.subnetwork_link
         return new_forwarding_rule_configs
+

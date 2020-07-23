@@ -239,7 +239,7 @@ class SelfLinkExecutor:
             backend_service_migration_handler = BackendServiceMigration(
                 self.project,
                 self.zone,
-                self.instance,
+                self.backend_service,
                 self.network,
                 self.subnetwork,
                 self.preserve_instance_external_ip

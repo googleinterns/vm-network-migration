@@ -9,8 +9,7 @@ class ForwardingRule(object):
             forwarding_rule_name: name of the forwarding rule
             network: target network
             subnetwork: target subnet
-            preserve_instance_external_ip: whether to preserve the IPs of
-            the instances serving the backend service
+
         """
         self.compute = compute
         self.project = project
