@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ SubnetNetwork class: describes an instance's subnetwork.
-
+    SubnetNetworkHelper class: helps to create a SubnetNetwork object
 """
 from vm_network_migration.errors import *
 
@@ -92,3 +92,4 @@ class SubnetNetwork():
                 'The target network is not a subnetwork mode network')
         auto_mode_status = network_info['autoCreateSubnetworks']
         return auto_mode_status
+

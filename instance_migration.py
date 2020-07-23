@@ -28,15 +28,17 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 vm_network_migration.py --project_id=test-project
+     python3 instance_migration.py --project_id=test-project
      --zone=us-central1-a --original_instance_name=instance-legacy
      --network=tests-network
-     --subnetwork=tests-network --preserve_internal_ip=False
-     --preserve_external_ip = False --preserve_alias_ip_ranges=False
+     --subnetwork=tests-network
+     --preserve_external_ip = False
 
 """
+import warnings
+
 import argparse
-from vm_network_migration.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -47,9 +49,6 @@ if __name__ == '__main__':
     parser.add_argument('--zone', help='The zone name of the original VM.')
     parser.add_argument('--original_instance_name',
                         help='The name of the original VM')
-    parser.add_argument('--new_instance_name',
-                        help='The name of the new VM. It should be'
-                             ' different from the original VM')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
         '--subnetwork',
@@ -63,8 +62,25 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    instance_migration = InstanceNetworkMigration(args.project_id, args.zone)
-    instance_migration.network_migration(args.original_instance_name,
-                                         args.network,
-                                         args.subnetwork,
-                                         args.preserve_external_ip)
+    if args.preserve_external_ip == 'True':
+        args.preserve_external_ip = True
+    else:
+        args.preserve_external_ip = False
+
+    if args.preserve_external_ip:
+        warnings.warn(
+            'You choose to preserve the external IP. If the original instance '
+            'has an ephemeral IP, it will be reserved as a static external IP after the '
+            'execution.',
+            Warning)
+        continue_execution = input(
+            'Do you still want to preserve the external IP? y/n: ')
+        if continue_execution == 'n':
+            args.preserve_external_ip = False
+
+    instance_migration = InstanceNetworkMigration(args.project_id, args.zone,
+                                                  args.original_instance_name,
+                                                  args.network,
+                                                  args.subnetwork,
+                                                  args.preserve_external_ip)
+    instance_migration.network_migration()

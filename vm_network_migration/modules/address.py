@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Address class describes a instance's IP address and handle the related methods
-
+""" Address class: describes a instance's IP address and handle the related methods
 """
 import warnings
 
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
-from vm_network_migration.operations import Operations
+from vm_network_migration.modules.operations import Operations
 from vm_network_migration.utils import generate_timestamp_string
 
 

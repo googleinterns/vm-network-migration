@@ -14,16 +14,17 @@
 """ Instance class: describe an instance
     InstanceStatus class: describe an instance's current status
 """
+from copy import deepcopy
 from enum import Enum
 
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
-from vm_network_migration.operations import Operations
+from vm_network_migration.modules.operations import Operations
 
 
 class Instance(object):
     def __init__(self, compute, project, name, region, zone,
-                 instance_template=None):
+                 instance_configs=None):
         """ Initialize an instance object
 
         Args:
@@ -32,21 +33,28 @@ class Instance(object):
             name: name of the instance
             region: region of the instance
             zone: zone of the instance
-            instance_template: the instance template of the instance
+            instance_configs: the instance template of the instance
+            stauts:instance's status
         """
         self.compute = compute
         self.name = name
         self.region = region
         self.project = project
         self.zone = zone
-        self.instance_template = instance_template
-        if self.instance_template == None:
-            self.retrieve_instance_template()
+        self.original_instance_configs = instance_configs
+        if self.original_instance_configs == None:
+            self.original_instance_configs = self.retrieve_instance_configs()
+        self.new_instance_configs = deepcopy(self.original_instance_configs)
         self.network = None
         self.address = None
         self.operations = Operations(compute, project, zone, region)
+        self.original_status = self.get_instance_status()
+        self.status = deepcopy(self.original_status)
+        self.selfLink = self.get_selfLink(self.original_instance_configs)
+        # the instance has been migrated to a new network or not
+        self.migrated = False
 
-    def retrieve_instance_template(self) -> dict:
+    def retrieve_instance_configs(self) -> dict:
         """ Get the instance template from an instance.
 
         Returns:
@@ -55,11 +63,16 @@ class Instance(object):
         Raises:
             googleapiclient.errors.HttpError: invalid request
         """
-        self.instance_template = self.compute.instances().get(
+        instance_configs = self.compute.instances().get(
             project=self.project,
             zone=self.zone,
             instance=self.name).execute()
-        return self.instance_template
+
+        return instance_configs
+
+    def get_selfLink(self, instance_configs):
+        if 'selfLink' in instance_configs:
+            return self.original_instance_configs['selfLink']
 
     def start_instance(self) -> dict:
         """ Start the instance.
@@ -94,7 +107,7 @@ class Instance(object):
         self.operations.wait_for_zone_operation(stop_instance_operation['name'])
         return stop_instance_operation
 
-    def get_disks_info_from_instance_template(self) -> list:
+    def get_disks_info_from_instance_configs(self) -> list:
         """ Get disks' info from the instance template.
 
         Returns:
@@ -103,9 +116,9 @@ class Instance(object):
         Raises:
             AttributeNotExistError: No disks on the VM
         """
-        if 'disks' not in self.instance_template:
+        if 'disks' not in self.original_instance_configs:
             raise AttributeNotExistError('No disks are attached on the VM')
-        return self.instance_template['disks']
+        return self.original_instance_configs['disks']
 
     def detach_disk(self, disk) -> dict:
         """ Detach a disk from the instance
@@ -129,12 +142,12 @@ class Instance(object):
         return detach_disk_operation
 
     def detach_disks(self):
-        """ Detach all the disks retrieved from self.instance_template
+        """ Detach all the disks retrieved from self.instance_configs
 
         Returns: None
 
         """
-        disks = self.get_disks_info_from_instance_template()
+        disks = self.get_disks_info_from_instance_configs()
         for diskInfo in disks:
             self.detach_disk(diskInfo['deviceName'])
 
@@ -160,16 +173,17 @@ class Instance(object):
         return attach_disk_operation
 
     def attach_disks(self):
-        """ Attach all the disks retrieved from self.instance_template
+        """ Attach all the disks retrieved from self.instance_configs
 
         Returns: None
         """
-        disks = self.get_disks_info_from_instance_template()
+        disks = self.get_disks_info_from_instance_configs()
         for diskInfo in disks:
             self.attach_disk(diskInfo['deviceName'])
 
-    def modify_instance_template_with_new_network(self, new_network_link,
-                                                  new_subnetwork_link) -> dict:
+    def modify_instance_configs_with_new_network(self, new_network_link,
+                                                 new_subnetwork_link,
+                                                 instance_configs) -> dict:
         """ Modify the instance template with the new network links
 
             Args:
@@ -179,13 +193,14 @@ class Instance(object):
             Returns:
                 modified instance template
         """
-        self.instance_template['networkInterfaces'][0][
+        instance_configs['networkInterfaces'][0][
             'network'] = new_network_link
-        self.instance_template['networkInterfaces'][0][
+        instance_configs['networkInterfaces'][0][
             'subnetwork'] = new_subnetwork_link
-        return self.instance_template
+        return instance_configs
 
-    def modify_instance_template_with_external_ip(self, external_ip) -> dict:
+    def modify_instance_configs_with_external_ip(self, external_ip,
+                                                 instance_configs) -> dict:
         """ Modify the instance template with the given external IP address
 
         Args:
@@ -195,24 +210,28 @@ class Instance(object):
 
         """
         if external_ip == None:
-            if 'accessConfigs' in self.instance_template['networkInterfaces'][
+            if 'accessConfigs' in instance_configs['networkInterfaces'][
                 0]:
-                if 'natIP' in self.instance_template['networkInterfaces'][0]['accessConfigs'][0]:
-                    del self.instance_template['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+                if 'natIP' in instance_configs['networkInterfaces'][0][
+                    'accessConfigs'][0]:
+                    del \
+                        instance_configs['networkInterfaces'][0][
+                            'accessConfigs'][
+                            0]['natIP']
 
         else:
             if 'accessConfigs' not in \
-                    self.instance_template['networkInterfaces'][0]:
-                self.instance_template['networkInterfaces'][0][
+                    instance_configs['networkInterfaces'][0]:
+                instance_configs['networkInterfaces'][0][
                     'accessConfigs'] = [{}]
-            self.instance_template['networkInterfaces'][0]['accessConfigs'][0][
+            instance_configs['networkInterfaces'][0]['accessConfigs'][0][
                 'natIP'] = external_ip
 
-        if 'networkIP' in self.instance_template['networkInterfaces'][0]:
-            del self.instance_template['networkInterfaces'][0]['networkIP']
-        return self.instance_template
+        if 'networkIP' in instance_configs['networkInterfaces'][0]:
+            del instance_configs['networkInterfaces'][0]['networkIP']
+        return instance_configs
 
-    def update_instance_template(self):
+    def update_instance_configs(self):
         """ Update the instance template with current attributes
 
         Returns: None
@@ -220,9 +239,11 @@ class Instance(object):
         """
         if self.address == None or self.network == None:
             raise AttributeNotExistError('Missing address or network object.')
-        self.modify_instance_template_with_external_ip(self.address.external_ip)
-        self.modify_instance_template_with_new_network(
-            self.network.network_link, self.network.subnetwork_link)
+        self.new_instance_configs = self.modify_instance_configs_with_external_ip(
+            self.address.external_ip, self.new_instance_configs)
+        self.new_instance_configs = self.modify_instance_configs_with_new_network(
+            self.network.network_link, self.network.subnetwork_link,
+            self.new_instance_configs)
 
     def get_instance_status(self):
         """ Get current instance's status.
@@ -232,19 +253,19 @@ class Instance(object):
 
         """
         try:
-            instance_template = self.retrieve_instance_template()
+            instance_configs = self.retrieve_instance_configs()
         except HttpError as e:
             error_reason = e._get_reason()
             print(error_reason)
             # if instance is not found, it has a NOTEXISTS status
-            if "not found" in error_reason:
+            if 'not found' in error_reason:
                 return InstanceStatus.NOTEXISTS
             else:
                 raise e
-        return InstanceStatus(instance_template['status'])
+        return InstanceStatus(instance_configs['status'])
 
-    def create_instance(self) -> dict:
-        """ Create the instance using self.instance_template
+    def create_instance(self, instance_configs) -> dict:
+        """ Create the instance using self.instance_configs
 
             Returns:
                 a deserialized object of the response
@@ -255,9 +276,13 @@ class Instance(object):
         create_instance_operation = self.compute.instances().insert(
             project=self.project,
             zone=self.zone,
-            body=self.instance_template).execute()
+            body=instance_configs).execute()
         self.operations.wait_for_zone_operation(
             create_instance_operation['name'])
+        if instance_configs == self.original_instance_configs:
+            self.migrated = False
+        elif instance_configs == self.new_instance_configs:
+            self.migrated = True
         return create_instance_operation
 
     def delete_instance(self) -> dict:
@@ -277,15 +302,51 @@ class Instance(object):
             delete_instance_operation['name'])
         return delete_instance_operation
 
+    def create_instance_with_ephemeral_external_ip(self, configs):
+        """ Create instance using configs, but without specified external IP.
+
+        Args:
+            configs: configs of the instance
+
+        """
+        cur_configs = deepcopy(configs)
+        self.modify_instance_configs_with_external_ip(None, cur_configs)
+        print('DEBUGGING:', cur_configs)
+        self.create_instance(cur_configs)
+
+    def get_referrer_selfLinks(self):
+        """ Get all this instance's referrer's selfLink
+
+        Returns:a list of instance group selfLinks
+
+        """
+        referrer_selfLinks = []
+        request = self.compute.instances().listReferrers(
+            project=self.project,
+            zone=self.zone,
+            instance=self.name)
+        while request is not None:
+            response = request.execute()
+            if 'items' not in response:
+                break
+
+            for reference in response['items']:
+                if 'MEMBER_OF' in reference['referenceType']:
+                    referrer_selfLinks.append(reference['referrer'])
+
+            request = self.compute.instances().listReferrers_next(
+                previous_request=request, previous_response=response)
+        return referrer_selfLinks
+
 
 class InstanceStatus(Enum):
     """
     An Enum class for instance's status
     """
     NOTEXISTS = None
-    RUNNING = "RUNNING"
-    STOPPING = "STOPPING"
-    TERMINATED = "TERMINATED"
+    RUNNING = 'RUNNING'
+    STOPPING = 'STOPPING'
+    TERMINATED = 'TERMINATED'
 
     def __eq__(self, other):
         """ Override __eq__ function
