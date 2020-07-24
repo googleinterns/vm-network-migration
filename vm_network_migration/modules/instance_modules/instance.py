@@ -19,11 +19,14 @@ from enum import Enum
 
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
-from vm_network_migration.modules.operations import Operations
+from vm_network_migration.modules.other_modules.operations import Operations
+from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
+from vm_network_migration.module_helpers.address_helper import AddressHelper
 
 
 class Instance(object):
-    def __init__(self, compute, project, name, region, zone,
+    def __init__(self, compute, project, name, region, zone, network,
+                 subnetwork, preserve_instance_ip=False,
                  instance_configs=None):
         """ Initialize an instance object
 
@@ -41,12 +44,15 @@ class Instance(object):
         self.region = region
         self.project = project
         self.zone = zone
+        self.network = network
+        self.subnetwork = subnetwork
+        self.network_object = self.get_network()
+        self.address_object = self.get_address()
         self.original_instance_configs = instance_configs
         if self.original_instance_configs == None:
             self.original_instance_configs = self.retrieve_instance_configs()
-        self.new_instance_configs = deepcopy(self.original_instance_configs)
-        self.network = None
-        self.address = None
+        self.new_instance_configs = self.get_new_instance_configs()
+
         self.operations = Operations(compute, project, zone, region)
         self.original_status = self.get_instance_status()
         self.status = deepcopy(self.original_status)
@@ -70,7 +76,40 @@ class Instance(object):
 
         return instance_configs
 
-    def get_selfLink(self, instance_configs):
+    def get_address(self):
+        """ Generate the address object
+
+        Returns: Address object
+
+        """
+        address_factory = AddressHelper(self.compute, self.project,
+                                        self.region)
+        address = address_factory.generate_address(
+            self.original_instance_configs)
+        return address
+
+    def get_network(self):
+        """ Generate the network object
+
+        Returns: Network object
+
+        """
+        subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
+                                                 self.zone, self.region)
+        network = subnetwork_factory.generate_network(
+            self.network,
+            self.subnetwork)
+        return network
+
+    def get_selfLink(self, instance_configs) -> str:
+        """ Get the instance selfLink from its configs
+
+        Args:
+            instance_configs: instance configurations
+
+        Returns: string of a URL link
+
+        """
         if 'selfLink' in instance_configs:
             return self.original_instance_configs['selfLink']
 
@@ -197,7 +236,6 @@ class Instance(object):
             'network'] = new_network_link
         instance_configs['networkInterfaces'][0][
             'subnetwork'] = new_subnetwork_link
-        return instance_configs
 
     def modify_instance_configs_with_external_ip(self, external_ip,
                                                  instance_configs) -> dict:
@@ -229,21 +267,23 @@ class Instance(object):
 
         if 'networkIP' in instance_configs['networkInterfaces'][0]:
             del instance_configs['networkInterfaces'][0]['networkIP']
-        return instance_configs
 
-    def update_instance_configs(self):
+    def get_new_instance_configs(self):
         """ Update the instance template with current attributes
 
         Returns: None
 
         """
-        if self.address == None or self.network == None:
+        new_instance_configs = deepcopy(self.original_instance_configs)
+        if self.address_object == None or self.network == None:
             raise AttributeNotExistError('Missing address or network object.')
-        self.new_instance_configs = self.modify_instance_configs_with_external_ip(
-            self.address.external_ip, self.new_instance_configs)
-        self.new_instance_configs = self.modify_instance_configs_with_new_network(
-            self.network.network_link, self.network.subnetwork_link,
-            self.new_instance_configs)
+        self.modify_instance_configs_with_external_ip(
+            self.address_object.external_ip, new_instance_configs)
+        self.modify_instance_configs_with_new_network(
+            self.network_object.network_link,
+            self.network_object.subnetwork_link,
+            new_instance_configs)
+        return new_instance_configs
 
     def get_instance_status(self):
         """ Get current instance's status.

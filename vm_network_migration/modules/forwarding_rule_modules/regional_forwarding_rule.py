@@ -17,8 +17,8 @@ some google API interface functions.
 import warnings
 
 from googleapiclient.http import HttpError
-from vm_network_migration.modules.forwarding_rule import ForwardingRule
-from vm_network_migration.modules.operations import Operations
+from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
+from vm_network_migration.modules.other_modules.operations import Operations
 
 
 class RegionalForwardingRule(ForwardingRule):

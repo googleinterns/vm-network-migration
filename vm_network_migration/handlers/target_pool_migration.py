@@ -16,11 +16,9 @@
 """
 import warnings
 
-import google.auth
-from googleapiclient import discovery
 from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.modules.target_pool import TargetPool
+from vm_network_migration.modules.target_pool_modules.target_pool import TargetPool
 
 
 class TargetPoolMigration:

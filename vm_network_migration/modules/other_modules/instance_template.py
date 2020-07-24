@@ -15,7 +15,7 @@
 """ InstanceTemplate class: describe an instance template
 
 """
-from vm_network_migration.modules.operations import Operations
+from vm_network_migration.modules.other_modules.operations import Operations
 from vm_network_migration.utils import generate_timestamp_string
 
 

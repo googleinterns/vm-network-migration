@@ -14,8 +14,8 @@
 """ BackendServiceHelper: helps to create a subclass instance of the BackendService.
 """
 from googleapiclient.http import HttpError
-from vm_network_migration.modules.external_backend_service import ExternalBackendService
-from vm_network_migration.modules.internal_backend_service import InternalBackendService
+from vm_network_migration.modules.backend_service_modules.external_backend_service import ExternalBackendService
+from vm_network_migration.modules.backend_service_modules.internal_backend_service import InternalBackendService
 from vm_network_migration.errors import *
 
 

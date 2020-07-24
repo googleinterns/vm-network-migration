@@ -17,7 +17,7 @@ targetHttpsProxy, targetTcpProxy, targetSslProxy.
 
 """
 from vm_network_migration.errors import *
-from vm_network_migration.modules.forwarding_rule import ForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
 
 
 class GlobalForwardingRule(ForwardingRule):

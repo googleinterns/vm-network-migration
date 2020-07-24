@@ -19,8 +19,8 @@ TCP/UDP internal load balancer. It is always regional.
 from copy import deepcopy
 
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
-from vm_network_migration.modules.backend_service import BackendService
-from vm_network_migration.modules.operations import Operations
+from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
+from vm_network_migration.modules.other_modules.operations import Operations
 from googleapiclient.http import HttpError
 
 class InternalBackendService(BackendService):
@@ -61,6 +61,11 @@ class InternalBackendService(BackendService):
             backendService=self.backend_service_name).execute()
 
     def build_network_object(self):
+        """ Build network object
+
+        Returns: SubnetNetwork object
+
+        """
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
                                                  None, self.region)
         network_object = subnetwork_factory.generate_network(
@@ -70,7 +75,14 @@ class InternalBackendService(BackendService):
 
     def get_new_forwarding_rule_with_new_network_info(self,
                                                       forwarding_rule_configs):
+        """ Generate a new forwarding rule with the new network info
 
+        Args:
+            forwarding_rule_configs:
+
+        Returns:
+
+        """
         new_forwarding_rule_configs = deepcopy(forwarding_rule_configs)
         new_forwarding_rule_configs[
             'network'] = self.network_object.network_link
@@ -80,6 +92,14 @@ class InternalBackendService(BackendService):
 
     def get_new_backend_config_with_new_network_info(self,
                                                      backend_service_configs):
+        """ Generate a new backend configs with the new network info
+
+        Args:
+            backend_service_configs: configs of the backend service
+
+        Returns:
+
+        """
         new_backend_configs = deepcopy(backend_service_configs)
         new_backend_configs['network'] = self.network_object.network_link
         return new_backend_configs

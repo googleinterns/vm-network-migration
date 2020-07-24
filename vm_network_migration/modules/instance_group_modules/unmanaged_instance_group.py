@@ -19,13 +19,15 @@ from copy import deepcopy
 
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
-from vm_network_migration.modules.instance import Instance
-from vm_network_migration.modules.instance_group import InstanceGroup
-from vm_network_migration.modules.operations import Operations
+from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
+from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroup
+from vm_network_migration.modules.instance_modules.instance import Instance
+from vm_network_migration.modules.other_modules.operations import Operations
 
 
 class UnmanagedInstanceGroup(InstanceGroup):
-    def __init__(self, compute, project, instance_group_name, zone):
+    def __init__(self, compute, project, instance_group_name, zone, network,
+                 subnetwork, preserve_instance_ip=False):
         """ Initialize an unmanaged instance group object
 
         Args:
@@ -36,13 +38,16 @@ class UnmanagedInstanceGroup(InstanceGroup):
             zone: zone name of the instance group
         """
         super(UnmanagedInstanceGroup, self).__init__(compute, project,
-                                                     instance_group_name)
+                                                     instance_group_name,
+                                                     network, subnetwork,
+                                                     preserve_instance_ip)
         self.zone = zone
+
         self.region = self.get_region()
         self.instances = []
         self.instance_selfLinks = []
         self.retrieve_instances()
-        self.network = None
+        self.network = self.get_network()
         self.original_instance_group_configs = self.get_instance_group_configs()
         self.new_instance_group_configs = deepcopy(
             self.original_instance_group_configs)
@@ -63,6 +68,15 @@ class UnmanagedInstanceGroup(InstanceGroup):
             project=self.project,
             zone=self.zone).execute()['region'].split('regions/')[1]
 
+    def get_network(self):
+        print('Checking the target network information.')
+        subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
+                                                 self.zone, self.region)
+        network = subnetwork_factory.generate_network(
+            self.network_name,
+            self.subnetwork_name)
+        return network
+
     def get_instance_group_configs(self) -> dict:
         """ Get instance group's configurations
 
@@ -72,8 +86,6 @@ class UnmanagedInstanceGroup(InstanceGroup):
         return self.compute.instanceGroups().get(project=self.project,
                                                  zone=self.zone,
                                                  instanceGroup=self.instance_group_name).execute()
-
-
 
     def retrieve_instances(self):
         """Retrieve all the instances in this instance group,
@@ -98,8 +110,11 @@ class UnmanagedInstanceGroup(InstanceGroup):
                     instance_with_named_ports['instance'].split('instances/')[1]
                 self.instances.append(
                     Instance(self.compute, self.project, instance_name,
-                             self.region, self.zone))
-                self.instance_selfLinks.append(instance_with_named_ports['instance'])
+                             self.region, self.zone, self.network_name,
+                             self.subnetwork_name,
+                             preserve_instance_ip=self.preserve_instance_ip))
+                self.instance_selfLinks.append(
+                    instance_with_named_ports['instance'])
             request = self.compute.instanceGroups().listInstances_next(
                 previous_request=request, previous_response=response)
 
@@ -176,8 +191,8 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 raise AddInstanceToInstanceGroupError(
                     'Failed to add all instances to the instance group.')
 
-    def modify_network_info_in_instance_group_configs(self,
-                                                      instance_group_configs):
+    def get_new_instance_group_configs_using_new_network(self,
+                                                         instance_group_configs):
         """ Modify the instance group configs with self.network
 
         Args:
@@ -186,5 +201,8 @@ class UnmanagedInstanceGroup(InstanceGroup):
         Returns:
 
         """
-        instance_group_configs['network'] = self.network.network_link
-        instance_group_configs['subnetwork'] = self.network.subnetwork_link
+        new_instance_group_configs = deepcopy(
+            self.original_instance_group_configs)
+        new_instance_group_configs['network'] = self.network.network_link
+        new_instance_group_configs['subnetwork'] = self.network.subnetwork_link
+        return new_instance_group_configs

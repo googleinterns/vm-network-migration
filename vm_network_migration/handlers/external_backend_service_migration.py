@@ -18,7 +18,7 @@ from its legacy network to a subnetwork mode network.
 """
 
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.modules.external_backend_service import \
+from vm_network_migration.modules.backend_service_modules.external_backend_service import \
     ExternalBackendService
 
 
@@ -93,6 +93,9 @@ class ExternalBackendServiceNetworkMigration:
         Returns:
 
         """
+        if self.backend_service == None:
+            print('Unable to fetch the backend service.')
+            return
         # Rollback the instance group backends one by one
         for backend_migration_handler in self.backend_migration_handlers:
             print('Detaching a backend.')
