@@ -17,7 +17,7 @@ according to the given resource's selfLink.
 
 """
 import re
-
+from vm_network_migration.errors import *
 
 class SelfLinkExecutor:
     def __init__(self, selfLink, network, subnetwork,
@@ -154,7 +154,8 @@ class SelfLinkExecutor:
         elif self.forwarding_rule != None:
             return self.build_forwarding_rule_migration_handler()
         else:
-            return None
+            raise InvalidSelfLink('Unable to parse the selfLink.')
+
 
     def build_instance_group_migration_handler(self):
         """ Build an instance group migration handler
@@ -255,7 +256,7 @@ class SelfLinkExecutor:
         from vm_network_migration.handlers.forwarding_rule_migration import ForwardingRuleMigration
         if self.forwarding_rule != None:
             forwarding_rule_migration_handler = ForwardingRuleMigration(
-                self.project, self.forwarding_rule_name,
+                self.project, self.forwarding_rule,
                 self.network, self.subnetwork,
                 self.preserve_instance_external_ip, self.region)
             return forwarding_rule_migration_handler
