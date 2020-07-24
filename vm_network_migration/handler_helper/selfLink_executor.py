@@ -54,6 +54,8 @@ class SelfLinkExecutor:
 
         """
         project_match = re.search(r'\/projects\/(.*)\/', self.selfLink)
+        if project_match == None:
+            project_match = re.search(r'^projects\/(.*)\/', self.selfLink)
         if project_match != None:
             return project_match[1].split('/')[0]
 
