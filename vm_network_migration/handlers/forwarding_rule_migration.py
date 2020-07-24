@@ -84,6 +84,7 @@ class ForwardingRuleMigration(object):
         target_pool_selfLink = self.forwarding_rule.target_pool_selfLink
         if target_pool_selfLink == None:
             print('No backends need to be migrated. Terminating the migration.')
+            return
         selfLink_executor = SelfLinkExecutor(target_pool_selfLink,
                                              self.network_name,
                                              self.subnetwork_name,
@@ -104,26 +105,28 @@ class ForwardingRuleMigration(object):
 
         """
         backend_service_selfLink = self.forwarding_rule.backend_service_selfLink
-        if backend_service_selfLink == None:
-            print('No backends need to be migrated. Terminating the migration.')
-        selfLink_executor = SelfLinkExecutor(backend_service_selfLink,
-                                             self.network_name,
-                                             self.subnetwork_name,
-                                             self.preserve_instance_external_ip)
-        backends_migration_handler = selfLink_executor.build_backend_service_migration_handler()
-        backend_service = backends_migration_handler.backend_service
+        if backend_service_selfLink != None:
 
-        if backend_service.count_forwarding_rules() > 1:
-            print(
-                'The backend service is associated with two or more forwarding rules, so it can not be migrated.')
-            print(
-                'Unable to handle the one backend service to many forwarding rule case. Terminating. ')
-            return
+            selfLink_executor = SelfLinkExecutor(backend_service_selfLink,
+                                                 self.network_name,
+                                                 self.subnetwork_name,
+                                                 self.preserve_instance_external_ip)
+            backends_migration_handler = selfLink_executor.build_backend_service_migration_handler()
+            self.backends_migration_handlers.append(backends_migration_handler)
+            backend_service = backends_migration_handler.backend_service
+
+            if backend_service.count_forwarding_rules() > 1:
+                print(
+                    'The backend service is associated with two or more forwarding rules, so it can not be migrated.')
+                print(
+                    'Unable to handle the one backend service to many forwarding rule case. Terminating. ')
+                return
         else:
             print('Deleting the forwarding rule.')
             self.forwarding_rule.delete_forwarding_rule()
-            print('Migrating the backend service.')
-            backends_migration_handler.network_migration()
+            for backend_service_migration_handler in self.backends_migration_handlers:
+                print('Migrating the backend service.')
+                backend_service_migration_handler.network_migration()
             print('Recreating the forwarding rule in the target subnet.')
             self.forwarding_rule.insert_forwarding_rule(
                 self.forwarding_rule.new_forwarding_rule_configs)
@@ -141,25 +144,56 @@ class ForwardingRuleMigration(object):
         backend_service_selfLinks = self.forwarding_rule.backend_service_selfLinks
         if backend_service_selfLinks == []:
             print('No backends need to be migrated. Terminating the migration.')
+            return
         for selfLink in backend_service_selfLinks:
             selfLink_executor = SelfLinkExecutor(selfLink, self.network_name,
                                                  self.subnetwork_name,
                                                  self.preserve_instance_external_ip)
-            backends_migration_handler = selfLink_executor.build_backend_service_migration_handler()
+            backend_service_migration_handler = selfLink_executor.build_backend_service_migration_handler()
             # Save handlers for rollback purpose
-            self.backends_migration_handlers.append(backends_migration_handler)
-
-        for backends_migration_handler in self.backends_migration_handlers:
-            backends_migration_handler.network_migration()
+            self.backends_migration_handlers.append(
+                backend_service_migration_handler)
+            backend_service_migration_handler.network_migration()
 
     def rollback_a_global_forwarding_rule(self):
-        pass
+        """ Rollback a global forwarding rule
+
+        Returns:
+
+        """
+        for backend_service_migration_handler in self.backends_migration_handlers:
+            backend_service_migration_handler.rollback()
 
     def rollback_an_internal_regional_forwarding_rule(self):
-        pass
+        """ Rollback an internal regional forwarding rule
+
+        Returns:
+
+        """
+        if not self.forwarding_rule.migrated and \
+                self.forwarding_rule.check_forwarding_rule_exists():
+            return
+        if self.forwarding_rule.migrated:
+            print('Deleting the migrated forwarding rule.')
+            self.forwarding_rule.delete_forwarding_rule()
+            for backend_service_migration_handler in self.backends_migration_handlers:
+                backend_service_migration_handler.rollback()
+            self.forwarding_rule.insert_forwarding_rule(
+                 self.forwarding_rule.forwarding_rule_configs)
+        else:
+            for backend_service_migration_handler in self.backends_migration_handlers:
+                backend_service_migration_handler.rollback()
+            self.forwarding_rule.insert_forwarding_rule(
+                self.forwarding_rule.forwarding_rule_configs)
 
     def rollback_an_external_regional_forwarding_rule(self):
-        pass
+        """ Rollback an external regional forwarding rule
+
+        Returns:
+
+        """
+        for target_pool_migration_handler in self.backends_migration_handlers:
+            target_pool_migration_handler.rollback()
 
     def network_migration(self):
         """ Select correct network migration functions based on the type of the
