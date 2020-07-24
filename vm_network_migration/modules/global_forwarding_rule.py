@@ -77,8 +77,8 @@ class GlobalForwardingRule(ForwardingRule):
         proxy_type_to_compute_api = {
             'targetHttpProxies': self.compute.targetHttpProxies(),
             'targetHttpsProxies': self.compute.targetHttpsProxies(),
-            'targetTcpProxies': self.compute.targetSslProxies(),
-            'targetSslProxies': self.compute.targetTcpProxies()
+            'targetTcpProxies': self.compute.targetTcpProxies(),
+            'targetSslProxies': self.compute.targetSslProxies()
         }
 
         if target_proxy_type in proxy_type_to_compute_api:
@@ -91,6 +91,7 @@ class GlobalForwardingRule(ForwardingRule):
             GlobalForwardingRule.proxy_type_to_proxy_keyword[
                 target_proxy_type]: target_proxy_name
         }
+
         return compute_engine_api.get(**args).execute()
 
     def get_backend_service_selfLinks_from_target_proxy_configs(self,

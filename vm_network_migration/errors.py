@@ -78,3 +78,7 @@ class UnsupportedBackendService(Exception):
 class MigrationFailed(Exception):
     """The migration is failed, and the rollback was called"""
     pass
+
+class InvalidSelfLink(Exception):
+    """The selfLink is unable to be parsed"""
+    pass
