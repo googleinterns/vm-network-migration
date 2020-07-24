@@ -20,6 +20,7 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
+from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.internal_backend_service import \
     InternalBackendService
@@ -90,29 +91,22 @@ class InternalBackendServiceNetworkMigration:
         If there is a forwarding rule serving the backend service,
         the forwarding rule needs to be deleted and recreated.
         """
-        try:
-            count_forwarding_rules = self.backend_service.count_forwarding_rules()
-            if count_forwarding_rules == 1:
-                print(
-                    'The backend service is in use by one forwarding rules. Please try to use forwarding rule migration method.')
-            elif count_forwarding_rules > 1:
-                print(
-                    'The backend service is in use by two or more forwarding rules. It cannot be migrated. Terminating.')
-            else:
-                print('Deleting the backend service.')
-                self.backend_service.delete_backend_service()
-                print('Migrating the backends one by one.')
-                self.migrate_backends()
-                print('Creating the backend service in the target subnet')
-                self.backend_service.insert_backend_service(
-                    self.backend_service.new_backend_service_configs)
 
-
-        except Exception as e:
-            warnings.warn(e, Warning)
+        count_forwarding_rules = self.backend_service.count_forwarding_rules()
+        if count_forwarding_rules == 1:
             print(
-                'The backend service migration was failed. Rolling back to the original instance group.')
-            self.rollback()
+                'The backend service is in use by one forwarding rules. Please try to use forwarding rule migration method.')
+        elif count_forwarding_rules > 1:
+            print(
+                'The backend service is in use by two or more forwarding rules. It cannot be migrated. Terminating.')
+        else:
+            print('Deleting the backend service.')
+            self.backend_service.delete_backend_service()
+            print('Migrating the backends one by one.')
+            self.migrate_backends()
+            print('Creating the backend service in the target subnet')
+            self.backend_service.insert_backend_service(
+                self.backend_service.new_backend_service_configs)
 
     def rollback(self, force=False):
         if self.backend_service.check_backend_service_exists():
@@ -120,17 +114,12 @@ class InternalBackendServiceNetworkMigration:
                 print('Deleting the new backend service')
                 self.backend_service.delete_backend_service()
             else:
+                # The original backend service wasn't deleted.
+                # Therefore, the migration never started.
                 return
         print('Rolling back the backends to the original network ')
         for backend_migration_handler in self.backend_migration_handlers:
-                backend_migration_handler.rollback()
-        print('Recreating the backend service in the original network')
+            backend_migration_handler.rollback()
+        print('Recreating the backend service with the original configuration')
         self.backend_service.insert_backend_service(
             self.backend_service.backend_service_configs)
-
-
-
-
-
-
-

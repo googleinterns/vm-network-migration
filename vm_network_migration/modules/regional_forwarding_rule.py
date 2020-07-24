@@ -55,6 +55,19 @@ class RegionalForwardingRule(ForwardingRule):
             region=self.region,
             forwardingRule=self.forwarding_rule_name).execute()
 
+    def check_forwarding_rule_exists(self) -> bool:
+        """ Check if the forwarding rule exists
+
+        Returns: True or False
+
+        """
+        try:
+            self.get_forwarding_rule_configs()
+        except:
+            return False
+        else:
+            return True
+
     def delete_forwarding_rule(self) -> dict:
         """ Delete the forwarding rule
 
@@ -82,23 +95,30 @@ class RegionalForwardingRule(ForwardingRule):
                 body=forwarding_rule_config).execute()
             self.operations.wait_for_region_operation(
                 insert_forwarding_rule_operation['name'])
-            return insert_forwarding_rule_operation
+
 
         except HttpError as e:
             error_reason = e._get_reason()
             if 'internal IP is outside' in error_reason:
                 warnings.warn(error_reason, Warning)
-            print(
-                'The original IP address of the forwarding rule was an ' \
-                'ephemeral one. After the migration, a new IP address is ' \
-                'assigned to the forwarding rule.')
-            # Set the IPAddress to ephemeral one
-            if 'IPAddress' in forwarding_rule_config:
-                del forwarding_rule_config['IPAddress']
-            insert_forwarding_rule_operation = self.compute.forwardingRules().insert(
-                project=self.project,
-                region=self.region,
-                body=forwarding_rule_config).execute()
-            self.operations.wait_for_region_operation(
-                insert_forwarding_rule_operation['name'])
-            return insert_forwarding_rule_operation
+                print(
+                    'The original IP address of the forwarding rule was an ' \
+                    'ephemeral one. After the migration, a new IP address is ' \
+                    'assigned to the forwarding rule.')
+                # Set the IPAddress to ephemeral
+                if 'IPAddress' in forwarding_rule_config:
+                    del forwarding_rule_config['IPAddress']
+                insert_forwarding_rule_operation = self.compute.forwardingRules().insert(
+                    project=self.project,
+                    region=self.region,
+                    body=forwarding_rule_config).execute()
+                self.operations.wait_for_region_operation(
+                    insert_forwarding_rule_operation['name'])
+
+            else:
+                raise e
+        if forwarding_rule_config == self.forwarding_rule_configs:
+            self.migrated = False
+        else:
+            self.migrated = True
+        return insert_forwarding_rule_operation

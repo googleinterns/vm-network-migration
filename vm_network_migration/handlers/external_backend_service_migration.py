@@ -16,7 +16,6 @@
 from its legacy network to a subnetwork mode network.
 
 """
-import warnings
 
 import google.auth
 from googleapiclient import discovery
@@ -80,32 +79,32 @@ class ExternalBackendServiceNetworkMigration:
         backends = self.backend_service.backend_service_configs['backends']
         for backend in backends:
             migration_helper = SelfLinkExecutor(backend['group'], self.network,
-                                               self.subnetwork,
-                                               self.preserve_instance_external_ip)
+                                                self.subnetwork,
+                                                self.preserve_instance_external_ip)
             backend_migration_handler = migration_helper.build_instance_group_migration_handler()
             # The backend type is not an instance group, then just ignore
             if backend_migration_handler == None:
                 continue
             self.backend_migration_handlers.append(backend_migration_handler)
-            self.backend_service.detach_a_backend(backend)
+            self.backend_service.detach_a_backend(backend['group'])
             backend_migration_handler.network_migration()
             self.backend_service.reattach_all_backends()
 
     def network_migration(self):
         """ Migrate the network of an external backend service.
         """
-        try:
-            self.migrate_backends()
-            self.backend_service.migrated = True
-        except Exception as e:
-            warnings.warn(e, Warning)
-            print(
-                'The backend service migration was failed. Rolling back all the backends to its original network.')
-            self.rollback()
-            raise e
+        self.migrate_backends()
+        self.backend_service.migrated = True
 
     def rollback(self, force=False):
         # Rollback the instance group backends one by one
         for backend_migration_handler in self.backend_migration_handlers:
+            print('Detaching a backend.')
+            self.backend_service.detach_a_backend(
+                backend_migration_handler.instance_group.selfLink)
+            print('Rolling back the backend.')
             backend_migration_handler.rollback()
+            print('Reattaching the backend')
+            self.backend_service.reattach_all_backends()
+
         self.backend_service.migrated = False

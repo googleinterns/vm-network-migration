@@ -19,6 +19,7 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
+from vm_network_migration.errors import *
 from vm_network_migration.handlers.external_backend_service_migration import ExternalBackendServiceNetworkMigration
 from vm_network_migration.handlers.internal_backend_service_migration import InternalBackendServiceNetworkMigration
 from vm_network_migration.module_helpers.backend_service_helper import BackendServiceHelper
@@ -81,33 +82,33 @@ class BackendServiceMigration:
         """ Migrate an external backend service's network
         """
         if isinstance(self.backend_service, ExternalBackendService):
-            try:
-                self.backend_service_migration_handler = ExternalBackendServiceNetworkMigration(
-                    self.project, self.backend_service_name, self.network,
-                    self.subnetwork,
-                    self.preserve_instance_external_ip, self.region,
-                    self.backend_service)
-                self.backend_service_migration_handler.network_migration()
-            except Exception as e:
-                warnings.warn(e, Warning)
-                print(
-                    'The backend service migration was failed. Rolling back to the original instance group.')
-                self.backend_service_migration_handler.rollback()
+            self.backend_service_migration_handler = ExternalBackendServiceNetworkMigration(
+                self.project, self.backend_service_name, self.network,
+                self.subnetwork,
+                self.preserve_instance_external_ip, self.region,
+                self.backend_service)
 
         elif isinstance(self.backend_service, InternalBackendService):
-            try:
-                self.backend_service_migration_handler = InternalBackendServiceNetworkMigration(
-                    self.project, self.backend_service_name, self.network,
-                    self.subnetwork,
-                    self.preserve_instance_external_ip, self.region,
-                    self.backend_service)
-                self.backend_service_migration_handler.network_migration()
-            except Exception as e:
-                warnings.warn(e, Warning)
-                print(
-                    'The backend service migration was failed. Rolling back to the original instance group.')
-                self.backend_service_migration_handler.rollback()
+            self.backend_service_migration_handler = InternalBackendServiceNetworkMigration(
+                self.project, self.backend_service_name, self.network,
+                self.subnetwork,
+                self.preserve_instance_external_ip, self.region,
+                self.backend_service)
         else:
-            warnings.warn(
-                'Unable to find a backend service. Migration was stopped.',
-                Warning)
+            print('Unsupported backend service. Migration stopped.')
+        try:
+            self.backend_service_migration_handler.network_migration()
+        except Exception as e:
+            warnings.warn(e, Warning)
+            print(
+                'The backend service migration was failed. Rolling back all the backends to its original network.')
+            self.rollback()
+            raise MigrationFailed('Rollback has been finished.')
+
+    def rollback(self):
+        """ Rollback
+
+        Returns:
+
+        """
+        self.backend_service_migration_handler.rollback()

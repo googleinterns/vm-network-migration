@@ -18,6 +18,15 @@ class ForwardingRule(object):
         self.operations = None
         self.network = network
         self.subnetwork = subnetwork
+        self.migrated = False
 
     def get_forwarding_rule_configs(self):
+        pass
+
+    def check_forwarding_rule_exists(self):
+        """ Check if the forwarding rule exists
+
+        Returns:
+
+        """
         pass

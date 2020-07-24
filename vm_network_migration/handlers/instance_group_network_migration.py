@@ -21,7 +21,7 @@ Ihe Google API python client module is imported to manage the GCP Compute Engine
 
 from copy import deepcopy
 from warnings import warn
-
+from vm_network_migration.errors import *
 import google.auth
 from googleapiclient import discovery
 from googleapiclient.http import HttpError
@@ -125,7 +125,7 @@ class InstanceGroupNetworkMigration:
             print(
                 'The migration is failed. Rolling back to the original instance group.')
             self.rollback()
-            raise e
+            raise MigrationFailed('Rollback has been finished.')
 
     def migrate_unmanaged_instance_group(self):
         """ Migrate the network of an unmanaged instance group.
@@ -272,12 +272,16 @@ class InstanceGroupNetworkMigration:
                     self.instance_group.insert_autoscaler()
 
     def rollback(self, force=False):
+        """ Rollback to the original instance group
+
+        """
         if self.instance_group == None:
             print('Unable to fetch the resource.')
         elif isinstance(self.instance_group, UnmanagedInstanceGroup):
             self.rollback_unmanaged_instance_group()
         else:
             self.rollback_managed_instance_group()
+        self.instance_group.migrated = False
 
     def get_region(self) -> dict:
         """ Get region information
