@@ -23,7 +23,8 @@ from vm_network_migration.module_helpers.forwarding_rule_helper import Forwardin
 from vm_network_migration.modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
 from vm_network_migration.modules.global_forwarding_rule import GlobalForwardingRule
 from vm_network_migration.modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
-
+import warnings
+from vm_network_migration.errors import *
 
 class ForwardingRuleMigration(object):
     def __init__(self, project, forwarding_rule_name,
@@ -202,24 +203,27 @@ class ForwardingRuleMigration(object):
         Returns:
 
         """
-        # try:
-        if isinstance(self.forwarding_rule, ExternalRegionalForwardingRule):
-            self.migrate_an_external_regional_forwarding_rule()
-        elif isinstance(self.forwarding_rule,
-                        InternalRegionalForwardingRule):
-            self.migrate_an_internal_regional_forwarding_rule()
-        elif isinstance(self.forwarding_rule, GlobalForwardingRule):
-            self.migrate_a_global_forwarding_rule()
-        # except Exception as e:
-        #     warnings.warn(e, Warning)
-        #     self.rollback()
+        try:
+            if isinstance(self.forwarding_rule, ExternalRegionalForwardingRule):
+                self.migrate_an_external_regional_forwarding_rule()
+            elif isinstance(self.forwarding_rule,
+                            InternalRegionalForwardingRule):
+                self.migrate_an_internal_regional_forwarding_rule()
+            elif isinstance(self.forwarding_rule, GlobalForwardingRule):
+                self.migrate_a_global_forwarding_rule()
+        except Exception as e:
+            warnings.warn(e, Warning)
+            print(
+                'The migration is failed. Rolling back to the original instance group.')
+            self.rollback()
+            raise MigrationFailed('Rollback has been finished.')
 
     def rollback(self):
         """ Error happens. Rollback to the original status.
 
         """
         print(
-            'The migration is failed. Rolling back to the original forwarding rule settings.')
+            'The migration was failed. Rolling back to the original forwarding rule settings.')
         if isinstance(self.forwarding_rule, ExternalRegionalForwardingRule):
             self.rollback_an_external_regional_forwarding_rule()
         elif isinstance(self.forwarding_rule, InternalRegionalForwardingRule):
