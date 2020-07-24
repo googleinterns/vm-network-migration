@@ -44,10 +44,10 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--project_id',
-                        help='The project ID of the target pool.')
+                        help='The project ID of the forwarding rule.')
 
     parser.add_argument('--region', default=None,
-                        help='The region of the target pool.')
+                        help='The region of the forwarding rule.')
     parser.add_argument('--forwarding_rule_name',
                         help='The name of the forwarding rule.')
     parser.add_argument('--network', help='The name of the target network.')
