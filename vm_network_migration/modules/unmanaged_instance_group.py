@@ -39,7 +39,9 @@ class UnmanagedInstanceGroup(InstanceGroup):
                                                      instance_group_name)
         self.zone = zone
         self.region = self.get_region()
-        self.instances = self.retrieve_instances()
+        self.instances = []
+        self.instance_selfLinks = []
+        self.retrieve_instances()
         self.network = None
         self.original_instance_group_configs = self.get_instance_group_configs()
         self.new_instance_group_configs = deepcopy(
@@ -71,14 +73,17 @@ class UnmanagedInstanceGroup(InstanceGroup):
                                                  zone=self.zone,
                                                  instanceGroup=self.instance_group_name).execute()
 
-    def retrieve_instances(self) -> list:
+
+
+    def retrieve_instances(self):
         """Retrieve all the instances in this instance group,
         and save the instances into a list of Instance objects
 
         Returns: a list of Instance objects
 
         """
-        instances = []
+        self.instances = []
+        self.instance_selfLinks = []
         request = self.compute.instanceGroups().listInstances(
             project=self.project, zone=self.zone,
             instanceGroup=self.instance_group_name)
@@ -86,17 +91,17 @@ class UnmanagedInstanceGroup(InstanceGroup):
             response = request.execute()
             # no instances in the instance group
             if 'items' not in response:
-                return []
+                break
             for instance_with_named_ports in response['items']:
                 print(instance_with_named_ports)
                 instance_name = \
                     instance_with_named_ports['instance'].split('instances/')[1]
-                instances.append(
+                self.instances.append(
                     Instance(self.compute, self.project, instance_name,
                              self.region, self.zone))
+                self.instance_selfLinks.append(instance_with_named_ports['instance'])
             request = self.compute.instanceGroups().listInstances_next(
                 previous_request=request, previous_response=response)
-        return instances
 
     def delete_instance_group(self) -> dict:
         """ Delete the instance group in the compute engine

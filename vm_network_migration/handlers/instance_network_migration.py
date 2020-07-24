@@ -20,26 +20,27 @@ import warnings
 
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.module_helpers.address_helper import AddressHelper
+from googleapiclient.http import HttpError
 from vm_network_migration.errors import *
+from vm_network_migration.module_helpers.address_helper import AddressHelper
+from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.instance import (
     Instance,
     InstanceStatus,
 )
-from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 
 
 class InstanceNetworkMigration:
-    def __init__(self, project, zone,  original_instance_name,
-                          network_name,
-                          subnetwork_name, preserve_external_ip):
+    def __init__(self, compute, project, zone, original_instance_name,
+                 network_name,
+                 subnetwork_name, preserve_external_ip):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
             project: project ID
             zone: zone of the instance
         """
-        self.compute = self.set_compute_engine()
+        self.compute = compute
         self.project = project
         self.zone = zone
         self.region = self.get_region()
@@ -48,15 +49,6 @@ class InstanceNetworkMigration:
         self.subnetwork_name = subnetwork_name
         self.preserve_external_ip = preserve_external_ip
         self.instance = None
-
-    def set_compute_engine(self):
-        """ Credential setup
-
-        Returns:google compute engine
-
-        """
-        credentials, default_project = google.auth.default()
-        return discovery.build('compute', 'v1', credentials=credentials)
 
     def get_region(self) -> dict:
         """ Get region information
@@ -97,19 +89,22 @@ class InstanceNetworkMigration:
             print('Retrieving the original instance configs.')
             if self.instance == None:
                 self.instance = Instance(self.compute, self.project,
-                                                  self.original_instance_name,
-                                                  self.region,
-                                                  self.zone, None)
-            address_factory = AddressHelper(self.compute, self.project, self.region)
+                                         self.original_instance_name,
+                                         self.region,
+                                         self.zone, None)
+            address_factory = AddressHelper(self.compute, self.project,
+                                            self.region)
             self.instance.address = address_factory.generate_address(
                 self.instance.original_instance_configs)
 
             print('Modifying IP address.')
             self.instance.address.preserve_ip_addresses_handler(
                 self.preserve_external_ip)
-            subnetwork_factory = SubnetNetworkHelper(self.compute, self.project, self.zone, self.region)
-            self.instance.network = subnetwork_factory.generate_network(self.network_name,
-                                                              self.subnetwork_name)
+            subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
+                                                     self.zone, self.region)
+            self.instance.network = subnetwork_factory.generate_network(
+                self.network_name,
+                self.subnetwork_name)
             self.instance.update_instance_configs()
 
             print('Stopping the VM.')
@@ -127,26 +122,30 @@ class InstanceNetworkMigration:
             print('create_instance_operation is running.')
             print('DEBUGGING:', self.instance.new_instance_configs)
             self.instance.create_instance(self.instance.new_instance_configs)
-            self.instance.migrated = True
-            if self.instance.original_status == InstanceStatus.TERMINATED:
-                print('Since the original instance was terminated, '
-                      'the new instance is terminating.')
-                self.instance.stop_instance()
             print('The migration is successful.')
-
         except Exception as e:
             warnings.warn(str(e), Warning)
-            self.rollback_failure_protection()
-            return
+            # self.rollback_failure_protection()
+            self.rollback()
+            raise MigrationFailed('Rollback to the original instance.')
+        # If the original status is terminated, the tool will try to terminate
+        # the migrated instance
+        if self.instance.original_status == InstanceStatus.TERMINATED:
+            print('Since the original instance was terminated, '
+                  'the new instance is terminating.')
+            try:
+                self.instance.stop_instance()
+            except:
+                print('Unable to terminate the new instance, but the migration'
+                      'has been finished.')
 
-    def rollback_original_instance(self):
-        """ Roll back to the original VM. Reattach the disks to the
+    def rollback(self):
+        """ Rollback to the original VM. Reattach the disks to the
         original instance and restart it.
 
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
+        Args:
+            force: force to rollback
         """
-
         warnings.warn(
             'VM network migration is failed. Rolling back to the original VM.',
             Warning)
@@ -157,10 +156,35 @@ class InstanceNetworkMigration:
         instance_status = self.instance.get_instance_status()
 
         if instance_status == InstanceStatus.RUNNING:
-            return
-        elif instance_status == InstanceStatus.NOTEXISTS:
-            print('Recreating the original VM.')
-            self.instance.create_instance(self.instance.original_instance_configs)
+            if self.instance.migrated:
+                # The migration has been finished, but force to rollback
+                print('Stopping the instance.')
+                self.instance.stop_instance()
+                print('Detaching the disks.')
+                self.instance.detach_disks()
+                print('Deleting the instance in the target network.')
+                self.instance.delete_instance()
+            else:
+                return
+
+        instance_status = self.instance.get_instance_status()
+        if instance_status == InstanceStatus.NOTEXISTS:
+            try:
+                print(
+                    'Recreating the original instance in the legacy network.')
+                self.instance.create_instance(
+                    self.instance.original_instance_configs)
+            except HttpError as e:
+                error_reason = e._get_reason()
+                print(error_reason)
+                if 'not found in region' in error_reason:
+                    # The original external IP can not be preserved.
+                    # A new external IP will be picked.
+                    self.instance.create_instance_with_ephemeral_external_ip(
+                        self.instance.original_instance_configs)
+                else:
+                    raise e
+
         else:
             print('Attaching disks back to the original VM.')
             print('attach_disk_operation is running')
@@ -168,24 +192,25 @@ class InstanceNetworkMigration:
             print('Restarting the original VM')
             print('start_instance_operation is running')
             self.instance.start_instance()
+        self.instance.migrated = False
 
-    def rollback_failure_protection(self) -> bool:
-        """Try to rollback to the original VM. If the rollback procedure also fails,
-        then print out the original VM's instance configs in the console
-
-            Returns: True/False for successful/failed rollback
-            Raises: RollbackError
-        """
-        try:
-            self.rollback_original_instance()
-        except Exception as e:
-            warnings.warn('Rollback failed.', Warning)
-            print(e)
-            print(
-                'The original VM may have been deleted. '
-                'The instance configs of the original VM is: ')
-            print(self.instance.original_instance_configs)
-            raise RollbackError('Rollback to the original VM is failed.')
-
-        print('Rollback finished. The original VM is running.')
-        return True
+    # def rollback_failure_protection(self) -> bool:
+    #     """Try to rollback to the original VM. If the rollback procedure also fails,
+    #     then print out the original VM's instance configs in the console
+    #
+    #         Returns: True/False for successful/failed rollback
+    #         Raises: RollbackError
+    #     """
+    #     try:
+    #         self.rollback_original_instance()
+    #     except Exception as e:
+    #         warnings.warn('Rollback failed.', Warning)
+    #         print(e)
+    #         print(
+    #             'The original VM may have been deleted. '
+    #             'The instance configs of the original VM is: ')
+    #         print(self.instance.original_instance_configs)
+    #         raise RollbackError('Rollback to the original VM is failed.')
+    #
+    #     print('Rollback finished. The original VM is running.')
+    #     return True

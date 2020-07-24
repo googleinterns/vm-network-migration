@@ -63,3 +63,22 @@ class AddInstanceToInstanceGroupError(Exception):
     pass
 
 
+class TargetTypeError(Exception):
+    """The target type is not supported"""
+    pass
+
+class UnsupportedForwardingRule(Exception):
+    """The type of the forwarding rule is not supported"""
+    pass
+
+class UnsupportedBackendService(Exception):
+    """The type of the backend service is not supported"""
+    pass
+
+class MigrationFailed(Exception):
+    """The migration is failed, and the rollback was called"""
+    pass
+
+class InvalidSelfLink(Exception):
+    """The selfLink is unable to be parsed"""
+    pass

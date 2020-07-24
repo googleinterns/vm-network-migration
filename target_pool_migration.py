@@ -28,17 +28,23 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 instance_group_migration.py --project_id=test-project
-     --zone=us-central1-a --instance_group_name=test-group --network=test-network
-     --subnetwork=test-network --preserve_external_ip=False
+     python3 target_pool_migration.py --project_id=test-project
+     --target_pool_name=test-target-pool --network=test-network
+     --subnetwork=test-network --preserve_instance_external_ip=False
+     --region=us-central1
 
 """
 import warnings
-
+import google.auth
+from googleapiclient import discovery
 import argparse
 from vm_network_migration.handlers.target_pool_migration import TargetPoolMigration
 
 if __name__ == '__main__':
+    # google credentrial setup
+    credentials, default_project = google.auth.default()
+    compute = discovery.build('compute', 'v1', credentials=credentials)
+
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)

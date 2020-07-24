@@ -52,7 +52,7 @@ class ExternalBackendService(BackendService):
         }
         return self.compute.backendServices().get(**args).execute()
 
-    def detach_a_backend(self, backend_configs):
+    def detach_a_backend(self, backend_selfLink):
         """ Detach a backend from the backend service
 
         Args:
@@ -66,7 +66,7 @@ class ExternalBackendService(BackendService):
         updated_backend_service['backends'] = [v for v in
                                                updated_backend_service[
                                                    'backends'] if
-                                               v != backend_configs]
+                                               v['group'] != backend_selfLink]
         args = {
             'project': self.project,
             'backendService': self.backend_service_name,

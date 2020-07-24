@@ -16,17 +16,15 @@
 from its legacy network to a subnetwork mode network.
 
 """
-import warnings
 
-import google.auth
-from googleapiclient import discovery
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.internal_backend_service import \
     InternalBackendService
 
 
 class InternalBackendServiceNetworkMigration:
-    def __init__(self, project, backend_service_name, network, subnetwork,
+    def __init__(self, compute, project, backend_service_name, network,
+                 subnetwork,
                  preserve_instance_external_ip, region, backend_service):
         """ Initialize a InstanceNetworkMigration object
 
@@ -40,7 +38,7 @@ class InternalBackendServiceNetworkMigration:
             region: region of the internal load balancer
             backend_service: an InternalBackEndService object
         """
-        self.compute = self.set_compute_engine()
+        self.compute = compute
         self.project = project
         self.region = region
         self.network = network
@@ -58,15 +56,6 @@ class InternalBackendServiceNetworkMigration:
                                                           self.preserve_instance_external_ip,
                                                           self.region)
 
-    def set_compute_engine(self):
-        """ Credential setup
-
-        Returns:google compute engine
-
-        """
-        credentials, default_project = google.auth.default()
-        return discovery.build('compute', 'v1', credentials=credentials)
-
     def migrate_backends(self):
         """ Migrate the backends of the backend service one by one
 
@@ -78,7 +67,8 @@ class InternalBackendServiceNetworkMigration:
             return None
         backends = self.backend_service.backend_service_configs['backends']
         for backend in backends:
-            selfLink_executor = SelfLinkExecutor(backend['group'], self.network,
+            selfLink_executor = SelfLinkExecutor(self.compute, backend['group'],
+                                                 self.network,
                                                  self.subnetwork,
                                                  self.preserve_instance_external_ip)
             backend_migration_handler = selfLink_executor.build_instance_group_migration_handler()
@@ -90,26 +80,40 @@ class InternalBackendServiceNetworkMigration:
         If there is a forwarding rule serving the backend service,
         the forwarding rule needs to be deleted and recreated.
         """
-        try:
-            if self.backend_service.forwarding_rule_name != None:
-                print('Deleting the forwarding rule.')
-                self.backend_service.delete_forwarding_rule()
+
+        count_forwarding_rules = self.backend_service.count_forwarding_rules()
+        if count_forwarding_rules == 1:
+            print(
+                'The backend service is in use by one forwarding rules. Please try to use forwarding rule migration method.')
+        elif count_forwarding_rules > 1:
+            print(
+                'The backend service is in use by two or more forwarding rules. It cannot be migrated. Terminating.')
+        else:
             print('Deleting the backend service.')
             self.backend_service.delete_backend_service()
             print('Migrating the backends one by one.')
             self.migrate_backends()
             print('Creating the backend service in the target subnet')
-            self.backend_service.insert_backend_service(self.backend_service.new_backend_service_configs)
-            if self.backend_service.forwarding_rule_name != None:
-                print('Recreating the forwarding rule.')
-                self.backend_service.insert_forwarding_rule(self.backend_service.new_forwarding_rule_configs)
-
-        except Exception as e:
-            warnings.warn(e, Warning)
-            print(
-                'The backend service migration was failed. Rolling back to the original instance group.')
-            self.rollback()
+            self.backend_service.insert_backend_service(
+                self.backend_service.new_backend_service_configs)
 
     def rollback(self):
-        # TODO
-        pass
+        """ Rollback
+
+        Returns:
+
+        """
+        if self.backend_service.check_backend_service_exists():
+            if self.backend_service.migrated:
+                print('Deleting the new backend service')
+                self.backend_service.delete_backend_service()
+            else:
+                # The original backend service wasn't deleted.
+                # Therefore, the migration never started.
+                return
+        print('Rolling back the backends to the original network ')
+        for backend_migration_handler in self.backend_migration_handlers:
+            backend_migration_handler.rollback()
+        print('Recreating the backend service with the original configuration')
+        self.backend_service.insert_backend_service(
+            self.backend_service.backend_service_configs)
