@@ -96,7 +96,12 @@ class ExternalBackendServiceNetworkMigration:
         self.migrate_backends()
         self.backend_service.migrated = True
 
-    def rollback(self, force=False):
+    def rollback(self):
+        """ Rollback
+
+        Returns:
+
+        """
         # Rollback the instance group backends one by one
         for backend_migration_handler in self.backend_migration_handlers:
             print('Detaching a backend.')

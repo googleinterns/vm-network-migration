@@ -108,7 +108,12 @@ class InternalBackendServiceNetworkMigration:
             self.backend_service.insert_backend_service(
                 self.backend_service.new_backend_service_configs)
 
-    def rollback(self, force=False):
+    def rollback(self):
+        """ Rollback
+
+        Returns:
+
+        """
         if self.backend_service.check_backend_service_exists():
             if self.backend_service.migrated:
                 print('Deleting the new backend service')

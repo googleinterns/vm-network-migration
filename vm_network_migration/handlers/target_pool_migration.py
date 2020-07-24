@@ -140,7 +140,12 @@ class TargetPoolMigration:
             self.rollback()
             raise MigrationFailed('Rollback has been finished.')
 
-    def rollback(self, force=False):
+    def rollback(self):
+        """ Rollback
+
+        Returns:
+
+        """
         print('Rolling back the single instance backends')
         for instance_migration_handler in self.instance_migration_handlers:
             print('Target: ',

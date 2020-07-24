@@ -271,7 +271,7 @@ class InstanceGroupNetworkMigration:
                     print('Recreating the autoscaler.')
                     self.instance_group.insert_autoscaler()
 
-    def rollback(self, force=False):
+    def rollback(self):
         """ Rollback to the original instance group
 
         """
