@@ -17,10 +17,12 @@ according to the given resource's selfLink.
 
 """
 import re
+
 from vm_network_migration.errors import *
 
+
 class SelfLinkExecutor:
-    def __init__(self, selfLink, network, subnetwork,
+    def __init__(self, compute, selfLink, network, subnetwork,
                  preserve_instance_external_ip):
         """ Initialization
 
@@ -31,6 +33,7 @@ class SelfLinkExecutor:
             preserve_instance_external_ip: whether to preserve the external ip
             of the instances in this resource
         """
+        self.compute = compute
         self.selfLink = selfLink
         self.project = self.extract_project()
         self.zone = self.extract_zone()
@@ -156,7 +159,6 @@ class SelfLinkExecutor:
         else:
             raise InvalidSelfLink('Unable to parse the selfLink.')
 
-
     def build_instance_group_migration_handler(self):
         """ Build an instance group migration handler
 
@@ -166,6 +168,7 @@ class SelfLinkExecutor:
         from vm_network_migration.handlers.instance_group_network_migration import InstanceGroupNetworkMigration
         if self.instance_group != None:
             instance_group_migration_handler = InstanceGroupNetworkMigration(
+                self.compute,
                 self.project,
                 self.network,
                 self.subnetwork,
@@ -184,50 +187,15 @@ class SelfLinkExecutor:
         from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
 
         if self.instance != None:
-            instance_migration_handler = InstanceNetworkMigration(
-                self.project,
-                self.zone,
-                self.instance,
-                self.network,
-                self.subnetwork,
-                self.preserve_instance_external_ip
-            )
+            instance_migration_handler = InstanceNetworkMigration(self.compute,
+                                                                  self.project,
+                                                                  self.zone,
+                                                                  self.instance,
+                                                                  self.network,
+                                                                  self.subnetwork,
+                                                                  self.preserve_instance_external_ip
+                                                                  )
             return instance_migration_handler
-
-    def build_an_instance(self, compute):
-        """ Build an Instance object from the selfLink
-
-        Args:
-            compute: google compute engine
-
-        Returns: an Instance object
-
-        """
-        from vm_network_migration.modules.instance import Instance
-        print(self.instance)
-        if self.instance != None:
-            instance = Instance(compute, self.project, self.instance,
-                                self.region, self.zone)
-            return instance
-
-    def build_an_instance_group(self, compute):
-        """ Build an InstanceGroup object from the selfLink
-
-        Args:
-            compute: google compute engine
-
-        Returns: an InstanceGroup object
-
-        """
-        from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
-        if self.instance_group != None:
-            instance_group_helper = InstanceGroupHelper(compute,
-                                                        self.project,
-                                                        self.instance_group,
-                                                        self.region,
-                                                        self.zone)
-            instance_group = instance_group_helper.build_instance_group()
-            return instance_group
 
     def build_backend_service_migration_handler(self):
         """ Build a backend service migration handler
@@ -238,6 +206,7 @@ class SelfLinkExecutor:
         from vm_network_migration.handlers.backend_service_migration import BackendServiceMigration
         if self.backend_service != None:
             backend_service_migration_handler = BackendServiceMigration(
+                self.compute,
                 self.project,
                 self.backend_service,
                 self.network,
@@ -256,6 +225,7 @@ class SelfLinkExecutor:
         from vm_network_migration.handlers.forwarding_rule_migration import ForwardingRuleMigration
         if self.forwarding_rule != None:
             forwarding_rule_migration_handler = ForwardingRuleMigration(
+                self.compute,
                 self.project, self.forwarding_rule,
                 self.network, self.subnetwork,
                 self.preserve_instance_external_ip, self.region)
@@ -269,12 +239,12 @@ class SelfLinkExecutor:
         """
         from vm_network_migration.handlers.target_pool_migration import TargetPoolMigration
         if self.target_pool != None:
-            target_pool_migration_handler = TargetPoolMigration(
-                self.project,
-                self.target_pool,
-                self.network,
-                self.subnetwork,
-                self.preserve_instance_external_ip,
-                self.region
-            )
+            target_pool_migration_handler = TargetPoolMigration(self.compute,
+                                                                self.project,
+                                                                self.target_pool,
+                                                                self.network,
+                                                                self.subnetwork,
+                                                                self.preserve_instance_external_ip,
+                                                                self.region
+                                                                )
             return target_pool_migration_handler

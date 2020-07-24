@@ -24,7 +24,7 @@ from vm_network_migration.modules.target_pool import TargetPool
 
 
 class TargetPoolMigration:
-    def __init__(self, project, target_pool_name, network, subnetwork,
+    def __init__(self, compute, project, target_pool_name, network, subnetwork,
                  preserve_instance_external_ip, region):
         """ Initialize a BackendServiceMigration object
 
@@ -37,7 +37,7 @@ class TargetPoolMigration:
             of the instances which serves this load balancer
             region: region of the internal load balancer
         """
-        self.compute = self.set_compute_engine()
+        self.compute = compute
         self.project = project
         self.region = region
         self.network = network
@@ -54,15 +54,6 @@ class TargetPoolMigration:
         self.instance_group_migration_handlers = []
         self.build_instance_group_migration_handlers()
 
-    def set_compute_engine(self):
-        """ Credential setup
-
-        Returns:google compute engine
-
-        """
-        credentials, default_project = google.auth.default()
-        return discovery.build('compute', 'v1', credentials=credentials)
-
     def build_instance_migration_handlers(self):
         """ Use instance's selfLinks to create a list of InstanceMigrationHandler
 
@@ -70,7 +61,7 @@ class TargetPoolMigration:
 
         """
         for selfLink in self.target_pool.attached_single_instances_selfLinks:
-            executor = SelfLinkExecutor(selfLink,
+            executor = SelfLinkExecutor(self.compute, selfLink,
                                         self.network,
                                         self.subnetwork,
                                         self.preserve_instance_external_ip)
@@ -86,7 +77,7 @@ class TargetPoolMigration:
 
         """
         for selfLink in self.target_pool.attached_managed_instance_groups_selfLinks:
-            executor = SelfLinkExecutor(selfLink,
+            executor = SelfLinkExecutor(self.compute, selfLink,
                                         self.network,
                                         self.subnetwork,
                                         self.preserve_instance_external_ip)
@@ -99,7 +90,7 @@ class TargetPoolMigration:
             # groups will be migrated to the new network. But in the next version,
             # the tool may give the user's options about how to process
             # these unmanaged instance groups and instance in these groups
-            executor = SelfLinkExecutor(selfLink,
+            executor = SelfLinkExecutor(self.compute, selfLink,
                                         self.network,
                                         self.subnetwork,
                                         self.preserve_instance_external_ip)

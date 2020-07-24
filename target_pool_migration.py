@@ -35,11 +35,16 @@ Run the script by terminal, for example:
 
 """
 import warnings
-
+import google.auth
+from googleapiclient import discovery
 import argparse
 from vm_network_migration.handlers.target_pool_migration import TargetPoolMigration
 
 if __name__ == '__main__':
+    # google credentrial setup
+    credentials, default_project = google.auth.default()
+    compute = discovery.build('compute', 'v1', credentials=credentials)
+
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)

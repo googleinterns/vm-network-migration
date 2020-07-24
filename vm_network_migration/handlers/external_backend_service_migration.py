@@ -17,15 +17,14 @@ from its legacy network to a subnetwork mode network.
 
 """
 
-import google.auth
-from googleapiclient import discovery
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.external_backend_service import \
     ExternalBackendService
 
 
 class ExternalBackendServiceNetworkMigration:
-    def __init__(self, project, backend_service_name, network, subnetwork,
+    def __init__(self, compute, project, backend_service_name, network,
+                 subnetwork,
                  preserve_instance_external_ip, region, backend_service):
         """ Initialize a InstanceNetworkMigration object
 
@@ -39,7 +38,7 @@ class ExternalBackendServiceNetworkMigration:
             region: region of the internal load balancer
             backend_service: an InternalBackEndService object
         """
-        self.compute = self.set_compute_engine()
+        self.compute = compute
         self.project = project
         self.region = region
         self.network = network
@@ -56,15 +55,6 @@ class ExternalBackendServiceNetworkMigration:
                                                           self.subnetwork,
                                                           self.preserve_instance_external_ip)
 
-    def set_compute_engine(self):
-        """ Credential setup
-
-        Returns:google compute engine
-
-        """
-        credentials, default_project = google.auth.default()
-        return discovery.build('compute', 'v1', credentials=credentials)
-
     def migrate_backends(self):
         """ Migrate the backends of the backend service one by one
         without deleting or recreating the backend service
@@ -78,7 +68,8 @@ class ExternalBackendServiceNetworkMigration:
             return None
         backends = self.backend_service.backend_service_configs['backends']
         for backend in backends:
-            migration_helper = SelfLinkExecutor(backend['group'], self.network,
+            migration_helper = SelfLinkExecutor(self.compute, backend['group'],
+                                                self.network,
                                                 self.subnetwork,
                                                 self.preserve_instance_external_ip)
             backend_migration_handler = migration_helper.build_instance_group_migration_handler()

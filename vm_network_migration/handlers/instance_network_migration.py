@@ -31,7 +31,7 @@ from vm_network_migration.modules.instance import (
 
 
 class InstanceNetworkMigration:
-    def __init__(self, project, zone, original_instance_name,
+    def __init__(self, compute, project, zone, original_instance_name,
                  network_name,
                  subnetwork_name, preserve_external_ip):
         """ Initialize a InstanceNetworkMigration object
@@ -40,7 +40,7 @@ class InstanceNetworkMigration:
             project: project ID
             zone: zone of the instance
         """
-        self.compute = self.set_compute_engine()
+        self.compute = compute
         self.project = project
         self.zone = zone
         self.region = self.get_region()
@@ -49,15 +49,6 @@ class InstanceNetworkMigration:
         self.subnetwork_name = subnetwork_name
         self.preserve_external_ip = preserve_external_ip
         self.instance = None
-
-    def set_compute_engine(self):
-        """ Credential setup
-
-        Returns:google compute engine
-
-        """
-        credentials, default_project = google.auth.default()
-        return discovery.build('compute', 'v1', credentials=credentials)
 
     def get_region(self) -> dict:
         """ Get region information

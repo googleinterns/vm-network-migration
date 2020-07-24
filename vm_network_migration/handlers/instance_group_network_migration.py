@@ -21,10 +21,8 @@ Ihe Google API python client module is imported to manage the GCP Compute Engine
 
 from copy import deepcopy
 from warnings import warn
+
 from vm_network_migration.errors import *
-import google.auth
-from googleapiclient import discovery
-from googleapiclient.http import HttpError
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
@@ -34,7 +32,7 @@ from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInsta
 
 
 class InstanceGroupNetworkMigration:
-    def __init__(self, project,
+    def __init__(self, compute, project,
                  network_name,
                  subnetwork_name, preserve_external_ip, zone, region,
                  instance_group_name):
@@ -45,7 +43,7 @@ class InstanceGroupNetworkMigration:
             zone: zone of the instance group
             region:
         """
-        self.compute = self.set_compute_engine()
+        self.compute = compute
         self.project = project
         self.network_name = network_name
         self.subnetwork_name = subnetwork_name
@@ -72,15 +70,6 @@ class InstanceGroupNetworkMigration:
                                                     self.zone)
         instance_group = instance_group_helper.build_instance_group()
         return instance_group
-
-    def set_compute_engine(self):
-        """ Credential setup
-
-        Returns:google compute engine
-
-        """
-        credentials, default_project = google.auth.default()
-        return discovery.build('compute', 'v1', credentials=credentials)
 
     def network_migration(self):
         """ The main method of the instance network migration process
@@ -144,7 +133,8 @@ class InstanceGroupNetworkMigration:
         print(
             'Migrating all the instances in the instance group to the new network.')
         for instance_selfLink in self.instance_group.instance_selfLinks:
-            selfLink_executor = SelfLinkExecutor(instance_selfLink,
+            selfLink_executor = SelfLinkExecutor(self.compute,
+                                                 instance_selfLink,
                                                  self.network_name,
                                                  self.subnetwork_name,
                                                  self.preserve_external_ip)
@@ -233,7 +223,7 @@ class InstanceGroupNetworkMigration:
         # and should be added back to the instance group.
         print('Force rolling back all the instances in the group.')
         for instance_migration_handler in self.instance_migration_handlers:
-            instance_migration_handler.rollback(force=True)
+            instance_migration_handler.rollback()
 
         instance_group_status = self.instance_group.get_status()
         # The original instance group has been deleted, it needs to be recreated.

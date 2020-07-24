@@ -1,11 +1,15 @@
-from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-
 import warnings
 
 import argparse
-from vm_network_migration.handler_helper import selfLink_executor
+import google.auth
+from googleapiclient import discovery
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 
 if __name__ == '__main__':
+    # google credentrial setup
+    credentials, default_project = google.auth.default()
+    compute = discovery.build('compute', 'v1', credentials=credentials)
+
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -41,7 +45,8 @@ if __name__ == '__main__':
             'Do you still want to preserve the external IP? y/n: ')
         if continue_execution == 'n':
             args.preserve_instance_external_ip = False
-    selfLink_executor = SelfLinkExecutor(args.selfLink, args.network, args.subnetwork,
-                 args.preserve_instance_external_ip)
+    selfLink_executor = SelfLinkExecutor(compute, args.selfLink, args.network,
+                                         args.subnetwork,
+                                         args.preserve_instance_external_ip)
     migration_handler = selfLink_executor.build_migration_handler()
     migration_handler.network_migration()
