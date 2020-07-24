@@ -36,13 +36,14 @@ Run the script by terminal, for example:
 
 """
 import warnings
+
+import argparse
 import google.auth
 from googleapiclient import discovery
-import argparse
 from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
 
 if __name__ == '__main__':
-    # google credentrial setup
+    # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
 
@@ -83,7 +84,8 @@ if __name__ == '__main__':
         if continue_execution == 'n':
             args.preserve_external_ip = False
 
-    instance_migration = InstanceNetworkMigration(args.project_id, args.zone,
+    instance_migration = InstanceNetworkMigration(compute, args.project_id,
+                                                  args.zone,
                                                   args.original_instance_name,
                                                   args.network,
                                                   args.subnetwork,

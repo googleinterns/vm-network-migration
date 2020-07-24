@@ -35,13 +35,14 @@ Run the script by terminal, for example:
 
 """
 import warnings
+
+import argparse
 import google.auth
 from googleapiclient import discovery
-import argparse
 from vm_network_migration.handlers.forwarding_rule_migration import ForwardingRuleMigration
 
 if __name__ == '__main__':
-    # google credentrial setup
+    # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
 
@@ -85,6 +86,11 @@ if __name__ == '__main__':
         if continue_execution == 'n':
             args.preserve_instance_external_ip = False
 
-    forwarding_rule_migration = ForwardingRuleMigration(args.project_id, args.forwarding_rule_name, args.network, args.subnetwork,
-                 args.preserve_instance_external_ip, args.region)
+    forwarding_rule_migration = ForwardingRuleMigration(compute,
+                                                        args.project_id,
+                                                        args.forwarding_rule_name,
+                                                        args.network,
+                                                        args.subnetwork,
+                                                        args.preserve_instance_external_ip,
+                                                        args.region)
     forwarding_rule_migration.network_migration()

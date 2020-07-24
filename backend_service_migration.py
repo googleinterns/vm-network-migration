@@ -41,7 +41,7 @@ import argparse
 from vm_network_migration.handlers.backend_service_migration import BackendServiceMigration
 
 if __name__ == '__main__':
-    # google credentrial setup
+    # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
         if continue_execution == 'n':
             args.preserve_external_ip = False
 
-    backend_service_migration = BackendServiceMigration(args.project_id,
+    backend_service_migration = BackendServiceMigration(compute, args.project_id,
                                                         args.backend_service_name,
                                                         args.network,
                                                         args.subnetwork,
