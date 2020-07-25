@@ -46,11 +46,12 @@ class Instance(object):
         self.zone = zone
         self.network = network
         self.subnetwork = subnetwork
-        self.network_object = self.get_network()
-        self.address_object = self.get_address()
+        self.preserve_instance_ip = preserve_instance_ip
         self.original_instance_configs = instance_configs
         if self.original_instance_configs == None:
             self.original_instance_configs = self.retrieve_instance_configs()
+        self.network_object = self.get_network()
+        self.address_object = self.get_address()
         self.new_instance_configs = self.get_new_instance_configs()
 
         self.operations = Operations(compute, project, zone, region)
@@ -82,6 +83,8 @@ class Instance(object):
         Returns: Address object
 
         """
+        if self.original_instance_configs == None:
+            self.original_instance_configs = self.retrieve_instance_configs()
         address_factory = AddressHelper(self.compute, self.project,
                                         self.region)
         address = address_factory.generate_address(
@@ -277,8 +280,12 @@ class Instance(object):
         new_instance_configs = deepcopy(self.original_instance_configs)
         if self.address_object == None or self.network == None:
             raise AttributeNotExistError('Missing address or network object.')
-        self.modify_instance_configs_with_external_ip(
-            self.address_object.external_ip, new_instance_configs)
+        if not self.preserve_instance_ip:
+            self.modify_instance_configs_with_external_ip(
+                None, new_instance_configs)
+        else:
+            self.modify_instance_configs_with_external_ip(
+                self.address_object.external_ip, new_instance_configs)
         self.modify_instance_configs_with_new_network(
             self.network_object.network_link,
             self.network_object.subnetwork_link,

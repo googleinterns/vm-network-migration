@@ -21,8 +21,8 @@ from vm_network_migration.modules.other_modules.operations import Operations
 
 class ZonalManagedInstanceGroup(ManagedInstanceGroup):
 
-    def __init__(self, compute, project, instance_group_name, zone, network,
-                 subnetwork, preserve_instance_ip=False):
+    def __init__(self, compute, project, instance_group_name, network,
+                 subnetwork, preserve_instance_ip, zone):
         """ Initialization
 
         Args:

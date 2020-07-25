@@ -58,17 +58,19 @@ class InstanceGroupHelper:
                 print('Migrating an unmanaged instance group.')
                 return UnmanagedInstanceGroup(self.compute, self.project,
                                               self.instance_group_name,
-                                              self.zone, self.network,
+                                              self.network,
                                               self.subnetwork,
-                                              self.preserve_instance_ip)
+                                              self.preserve_instance_ip,
+                                              self.zone)
             else:
                 print('Migrating a single-zone managed instance group.')
                 return ZonalManagedInstanceGroup(self.compute,
                                                  self.project,
                                                  self.instance_group_name,
-                                                 self.zone, self.network,
+                                                 self.network,
                                                  self.subnetwork,
-                                                 self.preserve_instance_ip)
+                                                 self.preserve_instance_ip,
+                                                 self.zone)
         try:
             self.get_instance_group_in_region()
         except Exception as e:
@@ -77,9 +79,10 @@ class InstanceGroupHelper:
             print('Migrating a regional managed instance group.')
             return RegionalManagedInstanceGroup(self.compute, self.project,
                                                 self.instance_group_name,
-                                                self.region, self.network,
+                                                self.network,
                                                 self.subnetwork,
-                                                self.preserve_instance_ip)
+                                                self.preserve_instance_ip,
+                                                self.region)
 
     def get_instance_group_in_zone(self) -> dict:
         """ Get a single zone instance group's configurations

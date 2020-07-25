@@ -85,6 +85,6 @@ if __name__ == '__main__':
         if continue_execution == 'n':
             args.preserve_instance_external_ip = False
 
-    target_pool_migration = TargetPoolMigration(args.project_id, args.target_pool_name, args.network, args.subnetwork,
+    target_pool_migration = TargetPoolMigration(compute, args.project_id, args.target_pool_name, args.network, args.subnetwork,
                  args.preserve_instance_external_ip, args.region)
     target_pool_migration.network_migration()

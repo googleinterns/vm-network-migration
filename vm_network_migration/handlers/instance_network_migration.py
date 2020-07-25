@@ -90,6 +90,8 @@ class InstanceNetworkMigration:
                                          self.zone, self.network_name,
                                          self.subnetwork_name,
                                          preserve_instance_ip=self.preserve_external_ip)
+            print('Checking the external IP address.')
+            self.instance.address_object.preserve_ip_addresses_handler(self.preserve_external_ip)
 
             print('Stopping the VM.')
             print('stop_instance_operation is running.')
