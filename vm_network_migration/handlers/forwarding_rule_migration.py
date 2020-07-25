@@ -206,8 +206,6 @@ class ForwardingRuleMigration(object):
                 self.migrate_a_global_forwarding_rule()
         except Exception as e:
             warnings.warn(e, Warning)
-            print(
-                'The migration is failed. Rolling back to the original instance group.')
             self.rollback()
             raise MigrationFailed('Rollback has been finished.')
 

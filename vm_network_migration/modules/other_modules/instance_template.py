@@ -73,7 +73,8 @@ class InstanceTemplate:
         return delete_operation
 
     def modify_instance_template_with_new_network(self, new_network_link,
-                                                  new_subnetwork_link):
+                                                  new_subnetwork_link,
+                                                  add_network_metadata=True):
         """ Modify the instance template with the new network links
 
             Args:
@@ -85,6 +86,22 @@ class InstanceTemplate:
             'network'] = new_network_link
         self.instance_template_body['properties']['networkInterfaces'][0][
             'subnetwork'] = new_subnetwork_link
+        # For testing
+        if add_network_metadata:
+            if 'items' not in self.instance_template_body['properties'][
+                'metadata']:
+                self.instance_template_body['properties']['metadata'][
+                    'items'] = []
+
+            for item in self.instance_template_body['properties']['metadata']['items']:
+                if item['key'] == 'network':
+                    item['value'] = new_subnetwork_link
+                    return
+
+            self.instance_template_body['properties']['metadata'][
+                'items'].append({
+                                    'key': 'network',
+                                    'value': new_subnetwork_link})
 
     def get_selfLink(self) -> str:
         """ Get the selfLink of the instance template
@@ -100,6 +117,7 @@ class InstanceTemplate:
 
         Returns: new name
         """
-        self.instance_template_name = self.instance_template_name[0:15] + '-' + generate_timestamp_string()
+        self.instance_template_name = self.instance_template_name[
+                                      0:15] + '-' + generate_timestamp_string()
         self.instance_template_body['name'] = self.instance_template_name
         return self.instance_template_name
