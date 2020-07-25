@@ -41,15 +41,13 @@ class Instance(object):
         """
         self.compute = compute
         self.name = name
-        self.region = region
         self.project = project
         self.zone = zone
+        self.region = region or self.get_region()
         self.network = network
         self.subnetwork = subnetwork
         self.preserve_instance_ip = preserve_instance_ip
-        self.original_instance_configs = instance_configs
-        if self.original_instance_configs == None:
-            self.original_instance_configs = self.retrieve_instance_configs()
+        self.original_instance_configs = instance_configs or self.retrieve_instance_configs()
         self.network_object = self.get_network()
         self.address_object = self.get_address()
         self.new_instance_configs = self.get_new_instance_configs()
@@ -384,6 +382,17 @@ class Instance(object):
             request = self.compute.instances().listReferrers_next(
                 previous_request=request, previous_response=response)
         return referrer_selfLinks
+
+    def get_region(self) -> dict:
+        """ Get region information
+            Returns:
+                region name of the self.zone
+            Raises:
+                googleapiclient.errors.HttpError: invalid request
+        """
+        return self.compute.zones().get(
+            project=self.project,
+            zone=self.zone).execute()['region'].split('regions/')[1]
 
 
 class InstanceStatus(Enum):

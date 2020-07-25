@@ -263,7 +263,7 @@ class ManagedInstanceGroup(InstanceGroup):
             }
         }
         self.add_zone_or_region_into_args(args)
-        set_target_pool_operation = self.compute.instanceGroupManagers().setTargetPools(
+        set_target_pool_operation = self.instance_group_manager_api.setTargetPools(
             **args).execute()
         if self.is_multi_zone:
             self.operation.wait_for_region_operation(
