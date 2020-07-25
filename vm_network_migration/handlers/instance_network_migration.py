@@ -106,7 +106,7 @@ class InstanceNetworkMigration:
 
             print('Creating a new VM.')
             print('create_instance_operation is running.')
-            print('DEBUGGING:', self.instance.new_instance_configs)
+            print('Modified instance configuration:', self.instance.new_instance_configs)
             self.instance.create_instance(self.instance.new_instance_configs)
             print('The migration is successful.')
 
@@ -118,7 +118,7 @@ class InstanceNetworkMigration:
         # the migrated instance
         if self.instance.original_status == InstanceStatus.TERMINATED:
             print('Since the original instance was terminated, '
-                  'the new instance is terminating.')
+                  'the new instance is going to be terminated.')
             try:
                 self.instance.stop_instance()
             except:
@@ -130,7 +130,7 @@ class InstanceNetworkMigration:
         original instance and restart it.
         """
         warnings.warn(
-            'VM network migration is failed. Rolling back to the original VM.',
+            'VM network migration was failed. Rolling back to the original VM.',
             Warning)
         if self.instance == None or self.instance.original_instance_configs == None:
             print(
