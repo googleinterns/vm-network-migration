@@ -96,10 +96,10 @@ class InstanceGroupNetworkMigration:
                     warn(
                         'For a managed instance group, the external IP addresses '
                         'of the instances can not be reserved.', Warning)
-                    continue_execution = input(
-                        'Do you still want to migrate the instance group? y/n: ')
-                    if continue_execution == 'n':
-                        return
+                    # continue_execution = input(
+                    #     'Do you still want to migrate the instance group? y/n: ')
+                    # if continue_execution == 'n':
+                    #     return
 
                 if self.instance_group.autoscaler != None:
                     warn(

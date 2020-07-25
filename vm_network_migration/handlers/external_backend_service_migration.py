@@ -77,8 +77,11 @@ class ExternalBackendServiceNetworkMigration:
             if backend_migration_handler == None:
                 continue
             self.backend_migration_handlers.append(backend_migration_handler)
+            print('Detaching:', backend['group'])
             self.backend_service.detach_a_backend(backend['group'])
+            print('Migrating:', backend['group'])
             backend_migration_handler.network_migration()
+            print('Reattaching:', backend['group'])
             self.backend_service.reattach_all_backends()
 
     def network_migration(self):

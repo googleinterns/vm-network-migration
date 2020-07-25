@@ -77,9 +77,11 @@ if __name__ == '__main__':
     if args.preserve_instance_external_ip:
 
         warnings.warn(
-            'You choose to preserve the external IP. If the original instance '
-            'has an ephemeral IP, it will be reserved as a static external IP after the '
-            'execution.',
+            'You choose to preserve the external IPs of the instances serving '
+            'the target pool. If the instance is within an managed instance '
+            'group, its external IP can not be preserved. For other instances with '
+            'an ephemeral IP, its external IP will be reserved as a static '
+            'external IP after the execution.',
             Warning)
         continue_execution = input(
             'Do you still want to preserve the external IP? y/n: ')

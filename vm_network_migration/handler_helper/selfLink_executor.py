@@ -114,7 +114,6 @@ class SelfLinkExecutor:
         """
         backend_service_match = re.search(r'\/backendServices\/(.*)',
                                           self.selfLink)
-        print('DEBUGGING BACKEND SERVICE MATCVH:', backend_service_match)
         if backend_service_match != None:
             return backend_service_match[1]
 
