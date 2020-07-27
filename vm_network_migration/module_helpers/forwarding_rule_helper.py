@@ -14,11 +14,11 @@
 """ Create a subclass instance of the ForwardingRuleMigration class
 
 """
-from vm_network_migration.modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
-from vm_network_migration.modules.forwarding_rule import ForwardingRule
-from vm_network_migration.modules.global_forwarding_rule import GlobalForwardingRule
-from vm_network_migration.modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
 from vm_network_migration.errors import *
+from vm_network_migration.modules.forwarding_rule_modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
 
 
 class ForwardingRuleHelper:

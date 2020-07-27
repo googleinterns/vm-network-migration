@@ -21,9 +21,9 @@ import warnings
 from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.module_helpers.forwarding_rule_helper import ForwardingRuleHelper
-from vm_network_migration.modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
-from vm_network_migration.modules.global_forwarding_rule import GlobalForwardingRule
-from vm_network_migration.modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
 
 
 class ForwardingRuleMigration(object):
@@ -206,8 +206,6 @@ class ForwardingRuleMigration(object):
                 self.migrate_a_global_forwarding_rule()
         except Exception as e:
             warnings.warn(e, Warning)
-            print(
-                'The migration is failed. Rolling back to the original instance group.')
             self.rollback()
             raise MigrationFailed('Rollback has been finished.')
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 """ SubnetNetworkHelper class: helps to create a SubnetNetwork object
 """
-from vm_network_migration.modules.subnet_network import SubnetNetwork
+from vm_network_migration.modules.other_modules.subnet_network import SubnetNetwork
 
 
 class SubnetNetworkHelper:

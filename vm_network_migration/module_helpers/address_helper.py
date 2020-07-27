@@ -14,7 +14,7 @@
 """ AddressHelper class: helps to generate an Address class object.
 
 """
-from vm_network_migration.modules.address import Address
+from vm_network_migration.modules.other_modules.address import Address
 
 
 class AddressHelper:

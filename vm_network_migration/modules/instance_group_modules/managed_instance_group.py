@@ -13,13 +13,14 @@
 # limitations under the License.
 """ ManagedInstanceGroup: describes a managed instance group
 """
-from vm_network_migration.modules.instance_group import InstanceGroup
 from googleapiclient.http import HttpError
+from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroup
 
 
 class ManagedInstanceGroup(InstanceGroup):
 
-    def __init__(self, compute, project, instance_group_name):
+    def __init__(self, compute, project, instance_group_name, network,
+                 subnetwork, preserve_instance_ip):
         """ Initialization
 
         Args:
@@ -28,7 +29,9 @@ class ManagedInstanceGroup(InstanceGroup):
             instance_group_name: name of the instance group
         """
         super(ManagedInstanceGroup, self).__init__(compute, project,
-                                                   instance_group_name)
+                                                   instance_group_name, network,
+                                                   subnetwork,
+                                                   preserve_instance_ip)
         self.instance_group_manager_api = None
         self.autoscaler_api = None
         self.operation = None
@@ -253,14 +256,15 @@ class ManagedInstanceGroup(InstanceGroup):
         args = {
             'project': self.project,
             'instanceGroupManager': self.instance_group_name,
-            'body':{
-              "targetPools": [
-                target_pool_selfLink
-              ]
+            'body': {
+                "targetPools": [
+                    target_pool_selfLink
+                ]
             }
         }
         self.add_zone_or_region_into_args(args)
-        set_target_pool_operation = self.compute.instanceGroupManagers().setTargetPools(**args).execute()
+        set_target_pool_operation = self.instance_group_manager_api.setTargetPools(
+            **args).execute()
         if self.is_multi_zone:
             self.operation.wait_for_region_operation(
                 set_target_pool_operation['name'])

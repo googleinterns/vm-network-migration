@@ -18,13 +18,9 @@ subnetwork mode network.
 """
 import warnings
 
-import google.auth
-from googleapiclient import discovery
 from googleapiclient.http import HttpError
 from vm_network_migration.errors import *
-from vm_network_migration.module_helpers.address_helper import AddressHelper
-from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
-from vm_network_migration.modules.instance import (
+from vm_network_migration.modules.instance_modules.instance import (
     Instance,
     InstanceStatus,
 )
@@ -91,21 +87,11 @@ class InstanceNetworkMigration:
                 self.instance = Instance(self.compute, self.project,
                                          self.original_instance_name,
                                          self.region,
-                                         self.zone, None)
-            address_factory = AddressHelper(self.compute, self.project,
-                                            self.region)
-            self.instance.address = address_factory.generate_address(
-                self.instance.original_instance_configs)
-
-            print('Modifying IP address.')
-            self.instance.address.preserve_ip_addresses_handler(
-                self.preserve_external_ip)
-            subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                     self.zone, self.region)
-            self.instance.network = subnetwork_factory.generate_network(
-                self.network_name,
-                self.subnetwork_name)
-            self.instance.update_instance_configs()
+                                         self.zone, self.network_name,
+                                         self.subnetwork_name,
+                                         preserve_instance_ip=self.preserve_external_ip)
+            print('Checking the external IP address.')
+            self.instance.address_object.preserve_ip_addresses_handler(self.preserve_external_ip)
 
             print('Stopping the VM.')
             print('stop_instance_operation is running.')
@@ -120,19 +106,19 @@ class InstanceNetworkMigration:
 
             print('Creating a new VM.')
             print('create_instance_operation is running.')
-            print('DEBUGGING:', self.instance.new_instance_configs)
+            print('Modified instance configuration:', self.instance.new_instance_configs)
             self.instance.create_instance(self.instance.new_instance_configs)
             print('The migration is successful.')
+
         except Exception as e:
             warnings.warn(str(e), Warning)
-            # self.rollback_failure_protection()
             self.rollback()
             raise MigrationFailed('Rollback to the original instance.')
         # If the original status is terminated, the tool will try to terminate
         # the migrated instance
         if self.instance.original_status == InstanceStatus.TERMINATED:
             print('Since the original instance was terminated, '
-                  'the new instance is terminating.')
+                  'the new instance is going to be terminated.')
             try:
                 self.instance.stop_instance()
             except:
@@ -142,12 +128,9 @@ class InstanceNetworkMigration:
     def rollback(self):
         """ Rollback to the original VM. Reattach the disks to the
         original instance and restart it.
-
-        Args:
-            force: force to rollback
         """
         warnings.warn(
-            'VM network migration is failed. Rolling back to the original VM.',
+            'VM network migration was failed. Rolling back to the original VM.',
             Warning)
         if self.instance == None or self.instance.original_instance_configs == None:
             print(

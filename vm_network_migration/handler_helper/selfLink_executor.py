@@ -53,7 +53,8 @@ class SelfLinkExecutor:
         Returns: project id
 
         """
-        project_match = re.search(r'\/projects\/(.*)\/', self.selfLink)
+        project_match = re.search(r'\/projects\/(.*)\/', self.selfLink) \
+                        or re.search(r'^projects\/(.*)\/', self.selfLink)
         if project_match != None:
             return project_match[1].split('/')[0]
 
@@ -113,7 +114,6 @@ class SelfLinkExecutor:
         """
         backend_service_match = re.search(r'\/backendServices\/(.*)',
                                           self.selfLink)
-        print('DEBUGGING BACKEND SERVICE MATCVH:', backend_service_match)
         if backend_service_match != None:
             return backend_service_match[1]
 
@@ -230,6 +230,38 @@ class SelfLinkExecutor:
                 self.network, self.subnetwork,
                 self.preserve_instance_external_ip, self.region)
             return forwarding_rule_migration_handler
+
+    def build_an_instance(self):
+        """ Build an Instance object from the selfLink
+        Args:
+            compute: google compute engine
+        Returns: an Instance object
+        """
+        from vm_network_migration.modules.instance_modules.instance import Instance
+        if self.instance != None:
+            instance = Instance(self.compute, self.project, self.instance,
+                                self.region, self.zone, self.network,
+                                self.subnetwork,
+                                self.preserve_instance_external_ip)
+            return instance
+
+    def build_an_instance_group(self):
+        """ Build an InstanceGroup object from the selfLink
+        Args:
+            compute: google compute engine
+        Returns: an InstanceGroup object
+        """
+        from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
+        if self.instance_group != None:
+            instance_group_helper = InstanceGroupHelper(self.compute,
+                                                        self.project,
+                                                        self.instance_group,
+                                                        self.region,
+                                                        self.zone, self.network,
+                                                        self.subnetwork,
+                                                        self.preserve_instance_external_ip)
+            instance_group = instance_group_helper.build_instance_group()
+            return instance_group
 
     def build_target_pool_migration_handler(self):
         """Build a target pool migration handler

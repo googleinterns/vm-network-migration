@@ -17,7 +17,7 @@
 from copy import deepcopy
 
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
-from vm_network_migration.modules.regional_forwarding_rule import RegionalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.regional_forwarding_rule import RegionalForwardingRule
 
 
 class InternalRegionalForwardingRule(RegionalForwardingRule):

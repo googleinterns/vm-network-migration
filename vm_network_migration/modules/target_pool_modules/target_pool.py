@@ -15,9 +15,9 @@
 
 """
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.modules.operations import Operations
-from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
-
+from vm_network_migration.modules.other_modules.operations import Operations
+from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from googleapiclient.http import HttpError
 
 class TargetPool:
     def __init__(self, compute, project, target_pool_name, region, network,
@@ -101,14 +101,19 @@ class TargetPool:
         """
         instance_group_and_instances = {}
         for instance_selfLink in self.target_pool_config['instances']:
-            instance_selfLink_executor = SelfLinkExecutor(instance_selfLink,
+            instance_selfLink_executor = SelfLinkExecutor(self.compute,instance_selfLink,
                                                           self.network,
                                                           self.subnetwork,
                                                           self.preserve_instance_external_ip)
-            print(instance_selfLink)
-            instance = instance_selfLink_executor.build_an_instance(
-                self.compute)
-            instance_group_selfLinks = instance.get_referrer_selfLinks()
+            try:
+                instance = instance_selfLink_executor.build_an_instance()
+                instance_group_selfLinks = instance.get_referrer_selfLinks()
+            except HttpError as e:
+                error_message = e._get_reason()
+                if 'not found' in error_message:
+                    continue
+                else:
+                    raise e
             # No instance group is associated with this instance
             if len(instance_group_selfLinks) == 0:
                 self.attached_single_instances_selfLinks.append(
@@ -123,11 +128,11 @@ class TargetPool:
                             instance.selfLink]
 
         for instance_group_selfLink, instance_selfLink_list in instance_group_and_instances.items():
-            instance_group_selfLink_executor = SelfLinkExecutor(
+            instance_group_selfLink_executor = SelfLinkExecutor(self.compute,
                 instance_group_selfLink, self.network, self.subnetwork,
                 self.preserve_instance_external_ip)
-            instance_group = instance_group_selfLink_executor.build_an_instance_group(
-                self.compute)
+
+            instance_group = instance_group_selfLink_executor.build_an_instance_group()
             if isinstance(instance_group, UnmanagedInstanceGroup):
                 self.attached_unmanaged_instance_groups_selfLinks.append(
                     instance_group.selfLink)

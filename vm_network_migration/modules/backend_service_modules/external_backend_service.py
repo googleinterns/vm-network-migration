@@ -18,8 +18,8 @@ It is always a global compute engine resource.
 """
 from copy import deepcopy
 
-from vm_network_migration.modules.backend_service import BackendService
-from vm_network_migration.modules.operations import Operations
+from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
+from vm_network_migration.modules.other_modules.operations import Operations
 
 
 class ExternalBackendService(BackendService):

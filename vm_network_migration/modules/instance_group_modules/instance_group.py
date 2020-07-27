@@ -20,7 +20,8 @@ from googleapiclient.http import HttpError
 
 
 class InstanceGroup(object):
-    def __init__(self, compute, project, instance_group_name):
+    def __init__(self, compute, project, instance_group_name, network,
+                 subnetwork, preserve_instance_ip):
         """ Initialize an instance group.
 
         Args:
@@ -31,6 +32,9 @@ class InstanceGroup(object):
         self.compute = compute
         self.project = project
         self.instance_group_name = instance_group_name
+        self.network_name = network
+        self.subnetwork_name = subnetwork
+        self.preserve_instance_ip = preserve_instance_ip
         self.original_instance_group_configs = None
         self.new_instance_group_configs = None
         self.status = None

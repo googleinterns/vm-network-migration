@@ -15,12 +15,13 @@
 """
 from copy import deepcopy
 
-from vm_network_migration.modules.managed_instance_group import ManagedInstanceGroup
-from vm_network_migration.modules.operations import Operations
+from vm_network_migration.modules.instance_group_modules.managed_instance_group import ManagedInstanceGroup
+from vm_network_migration.modules.other_modules.operations import Operations
 
 
 class RegionalManagedInstanceGroup(ManagedInstanceGroup):
-    def __init__(self, compute, project, instance_group_name, region):
+    def __init__(self, compute, project, instance_group_name, network,
+                 subnetwork, preserve_instance_ip, region):
         """ Initialization
 
         Args:
@@ -30,7 +31,9 @@ class RegionalManagedInstanceGroup(ManagedInstanceGroup):
             region: region of the instance group
         """
         super(RegionalManagedInstanceGroup, self).__init__(compute, project,
-                                                           instance_group_name)
+                                                           instance_group_name,
+                                                           network, subnetwork,
+                                                           preserve_instance_ip)
         self.zone_or_region = region
         self.operation = Operations(self.compute, self.project, None, region)
         self.instance_group_manager_api = self.compute.regionInstanceGroupManagers()

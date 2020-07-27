@@ -26,9 +26,9 @@ from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
-from vm_network_migration.modules.instance_group import InstanceGroupStatus
-from vm_network_migration.modules.instance_template import InstanceTemplate
-from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroupStatus
+from vm_network_migration.modules.other_modules.instance_template import InstanceTemplate
+from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 
 
 class InstanceGroupNetworkMigration:
@@ -67,7 +67,7 @@ class InstanceGroupNetworkMigration:
                                                     self.project,
                                                     self.instance_group_name,
                                                     self.region,
-                                                    self.zone)
+                                                    self.zone, self.network_name, self.subnetwork_name, self.preserve_external_ip)
         instance_group = instance_group_helper.build_instance_group()
         return instance_group
 
@@ -96,10 +96,10 @@ class InstanceGroupNetworkMigration:
                     warn(
                         'For a managed instance group, the external IP addresses '
                         'of the instances can not be reserved.', Warning)
-                    continue_execution = input(
-                        'Do you still want to migrate the instance group? y/n: ')
-                    if continue_execution == 'n':
-                        return
+                    # continue_execution = input(
+                    #     'Do you still want to migrate the instance group? y/n: ')
+                    # if continue_execution == 'n':
+                    #     return
 
                 if self.instance_group.autoscaler != None:
                     warn(
@@ -123,12 +123,6 @@ class InstanceGroupNetworkMigration:
         """
         if self.region == None:
             self.region = self.get_region()
-        print('Checking the target network information.')
-        subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                 self.zone, self.region)
-        self.instance_group.network = subnetwork_factory.generate_network(
-            self.network_name,
-            self.subnetwork_name)
 
         print(
             'Migrating all the instances in the instance group to the new network.')
@@ -143,9 +137,6 @@ class InstanceGroupNetworkMigration:
         for instance_migration_handler in self.instance_migration_handlers:
             instance_migration_handler.network_migration()
 
-        print('Modifying the instance group configs to use the new network.')
-        self.instance_group.modify_network_info_in_instance_group_configs(
-            self.instance_group.new_instance_group_configs)
         print('Deleting the original instance group.')
         self.instance_group.delete_instance_group()
         print('Creating a new instance group in the new network.')
@@ -267,6 +258,7 @@ class InstanceGroupNetworkMigration:
         """
         if self.instance_group == None:
             print('Unable to fetch the resource.')
+            return
         elif isinstance(self.instance_group, UnmanagedInstanceGroup):
             self.rollback_unmanaged_instance_group()
         else:

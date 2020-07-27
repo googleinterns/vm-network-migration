@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ A regional forwarding rule which has an 'EXTERNAL' load balancing schema.
-It is in use by a target pool.
+Its backend is a target pool.
 
 """
-from vm_network_migration.modules.regional_forwarding_rule import RegionalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.regional_forwarding_rule import RegionalForwardingRule
 
 
 class ExternalRegionalForwardingRule(RegionalForwardingRule):

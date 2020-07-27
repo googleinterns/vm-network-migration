@@ -18,7 +18,7 @@ from its legacy network to a subnetwork mode network.
 """
 
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.modules.internal_backend_service import \
+from vm_network_migration.modules.backend_service_modules.internal_backend_service import \
     InternalBackendService
 
 
@@ -103,6 +103,9 @@ class InternalBackendServiceNetworkMigration:
         Returns:
 
         """
+        if self.backend_service == None:
+            print('Unable to fetch the backend service.')
+            return
         if self.backend_service.check_backend_service_exists():
             if self.backend_service.migrated:
                 print('Deleting the new backend service')
