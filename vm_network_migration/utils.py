@@ -14,7 +14,33 @@
 """ Utility functions for the library
 
 """
+import inspect
 import time
+from functools import wraps
+
+
+def initializer(fun):
+    """ Actomatically initialize instance varaibles
+
+    Args:
+        fun: an init function
+
+    Returns: a wrapper function
+
+    """
+    names, varargs, keywords, defaults, kwonlyargs, kwonlydefaults, annotations = inspect.getfullargspec(fun)
+
+    @wraps(fun)
+    def wrapper(self, *args, **kwargs):
+        for name, arg in list(zip(names[1:], args)) + list(kwargs.items()):
+            setattr(self, name, arg)
+        for i in range(len(defaults)):
+            index = -(i + 1)
+            if not hasattr(self, names[index]):
+                setattr(self, names[index], defaults[index])
+        fun(self, *args, **kwargs)
+
+    return wrapper
 
 
 def generate_timestamp_string() -> str:

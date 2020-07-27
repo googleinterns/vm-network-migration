@@ -16,8 +16,8 @@
 """
 from copy import deepcopy
 from enum import Enum
-
 from googleapiclient.errors import HttpError
+from vm_network_migration.utils import *
 from vm_network_migration.errors import *
 from vm_network_migration.modules.other_modules.operations import Operations
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
@@ -25,6 +25,7 @@ from vm_network_migration.module_helpers.address_helper import AddressHelper
 
 
 class Instance(object):
+    @initializer
     def __init__(self, compute, project, name, region, zone, network,
                  subnetwork, preserve_instance_ip=False,
                  instance_configs=None):
@@ -39,14 +40,8 @@ class Instance(object):
             instance_configs: the instance template of the instance
             stauts:instance's status
         """
-        self.compute = compute
-        self.name = name
-        self.project = project
-        self.zone = zone
+
         self.region = region or self.get_region()
-        self.network = network
-        self.subnetwork = subnetwork
-        self.preserve_instance_ip = preserve_instance_ip
         self.original_instance_configs = instance_configs or self.retrieve_instance_configs()
         self.network_object = self.get_network()
         self.address_object = self.get_address()
