@@ -20,7 +20,7 @@ from functools import wraps
 
 
 def initializer(fun):
-    """ Actomatically initialize instance varaibles
+    """ Automatically initialize instance variables
 
     Args:
         fun: an init function
