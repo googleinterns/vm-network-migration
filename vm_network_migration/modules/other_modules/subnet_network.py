@@ -15,9 +15,11 @@
     SubnetNetworkHelper class: helps to create a SubnetNetwork object
 """
 from vm_network_migration.errors import *
+from vm_network_migration.utils import initializer
 
 
 class SubnetNetwork():
+    @initializer
     def __init__(self, compute, project, zone, region, network,
                  subnetwork=None):
         """ Initialize a SubnetNetwork object.
@@ -31,12 +33,6 @@ class SubnetNetwork():
             network: network name
             subnetwork: subnetwork name
         """
-        self.compute = compute
-        self.project = project
-        self.zone = zone
-        self.region = region
-        self.network = network
-        self.subnetwork = subnetwork
         self.network_link = None
         self.subnetwork_link = None
 
@@ -92,4 +88,3 @@ class SubnetNetwork():
                 'The target network is not a subnetwork mode network')
         auto_mode_status = network_info['autoCreateSubnetworks']
         return auto_mode_status
-

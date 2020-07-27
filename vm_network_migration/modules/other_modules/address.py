@@ -18,10 +18,11 @@ import warnings
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.utils import generate_timestamp_string
+from vm_network_migration.utils import *
 
 
 class Address:
+    @initializer
     def __init__(self, compute, project, region, external_ip=None):
         """ Initialize an Address object
         Args:
@@ -30,11 +31,8 @@ class Address:
             region: region of the instance
             external_ip: external IP address, such as "123.123.123.123"
         """
-        self.compute = compute
-        self.project = project
-        self.region = region
         self.operations = Operations(compute, project, None, region)
-        self.external_ip = external_ip
+
 
     def retrieve_ip_from_network_interface(self, network_interface):
         """ Get external IP address from the network interface dict

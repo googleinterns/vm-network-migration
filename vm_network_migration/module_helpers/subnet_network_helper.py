@@ -14,9 +14,10 @@
 """ SubnetNetworkHelper class: helps to create a SubnetNetwork object
 """
 from vm_network_migration.modules.other_modules.subnet_network import SubnetNetwork
-
+from vm_network_migration.utils import initializer
 
 class SubnetNetworkHelper:
+    @initializer
     def __init__(self, compute, project, zone, region):
         """ Initialization
 
@@ -26,10 +27,7 @@ class SubnetNetworkHelper:
             zone: zone of the network
             region: region of the network
         """
-        self.compute = compute
-        self.project = project
-        self.zone = zone
-        self.region = region
+        pass
 
     def generate_network(self, network, subnetwork):
         """ Generate a network object

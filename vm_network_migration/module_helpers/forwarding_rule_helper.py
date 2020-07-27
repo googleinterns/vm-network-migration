@@ -19,9 +19,11 @@ from vm_network_migration.modules.forwarding_rule_modules.external_regional_forw
 from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
+from vm_network_migration.utils import initializer
 
 
 class ForwardingRuleHelper:
+    @initializer
     def __init__(self, compute, project, forwarding_rule_name, network,
                  subnetwork,
                  region=None):
@@ -35,12 +37,7 @@ class ForwardingRuleHelper:
             subnetwork: target subnet
             region: region of the forwarding rule. It is None for a global one
         """
-        self.compute = compute
-        self.project = project
-        self.forwarding_rule_name = forwarding_rule_name
-        self.network = network
-        self.subnetwork = subnetwork
-        self.region = region
+        pass
 
     def build_a_forwarding_rule(self) -> ForwardingRule:
         """ Build a forwarding rule with a specific type according to the attributes

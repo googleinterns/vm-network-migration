@@ -27,11 +27,13 @@ from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecut
 from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroupStatus
-from vm_network_migration.modules.other_modules.instance_template import InstanceTemplate
 from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.other_modules.instance_template import InstanceTemplate
+from vm_network_migration.utils import initializer
 
 
 class InstanceGroupNetworkMigration:
+    @initializer
     def __init__(self, compute, project,
                  network_name,
                  subnetwork_name, preserve_external_ip, zone, region,
@@ -43,15 +45,7 @@ class InstanceGroupNetworkMigration:
             zone: zone of the instance group
             region:
         """
-        self.compute = compute
-        self.project = project
-        self.network_name = network_name
-        self.subnetwork_name = subnetwork_name
-        self.preserve_external_ip = preserve_external_ip
-        self.zone = zone
-        self.region = region
         self.instance_group = None
-        self.instance_group_name = instance_group_name
         self.instance_migration_handlers = []
 
     def build_instance_group(self) -> object:
@@ -67,7 +61,10 @@ class InstanceGroupNetworkMigration:
                                                     self.project,
                                                     self.instance_group_name,
                                                     self.region,
-                                                    self.zone, self.network_name, self.subnetwork_name, self.preserve_external_ip)
+                                                    self.zone,
+                                                    self.network_name,
+                                                    self.subnetwork_name,
+                                                    self.preserve_external_ip)
         instance_group = instance_group_helper.build_instance_group()
         return instance_group
 

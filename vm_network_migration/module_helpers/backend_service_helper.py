@@ -14,12 +14,14 @@
 """ BackendServiceHelper: helps to create a subclass instance of the BackendService.
 """
 from googleapiclient.http import HttpError
+from vm_network_migration.errors import *
 from vm_network_migration.modules.backend_service_modules.external_backend_service import ExternalBackendService
 from vm_network_migration.modules.backend_service_modules.internal_backend_service import InternalBackendService
-from vm_network_migration.errors import *
+from vm_network_migration.utils import initializer
 
 
 class BackendServiceHelper:
+    @initializer
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork, preserve_instance_external_ip, region=None):
         """ Initialization
@@ -34,14 +36,7 @@ class BackendServiceHelper:
             of the instances which serves this load balancer
             region: region of the internal load balancer
         """
-        self.compute = compute
-        self.project = project
-        self.region = region
-        self.backend_service_name = backend_service_name
         self.backend_config = None
-        self.network = network
-        self.subnetwork = subnetwork
-        self.preserve_instance_external_ip = preserve_instance_external_ip
 
     def build_backend_service(self):
         """ Create a BackendService object

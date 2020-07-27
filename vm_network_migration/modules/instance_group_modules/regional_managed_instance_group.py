@@ -20,8 +20,8 @@ from vm_network_migration.modules.other_modules.operations import Operations
 
 
 class RegionalManagedInstanceGroup(ManagedInstanceGroup):
-    def __init__(self, compute, project, instance_group_name, network,
-                 subnetwork, preserve_instance_ip, region):
+    def __init__(self, compute, project, instance_group_name, network_name,
+                 subnetwork_name, preserve_instance_ip, region):
         """ Initialization
 
         Args:
@@ -32,7 +32,7 @@ class RegionalManagedInstanceGroup(ManagedInstanceGroup):
         """
         super(RegionalManagedInstanceGroup, self).__init__(compute, project,
                                                            instance_group_name,
-                                                           network, subnetwork,
+                                                           network_name, subnetwork_name,
                                                            preserve_instance_ip)
         self.zone_or_region = region
         self.operation = Operations(self.compute, self.project, None, region)

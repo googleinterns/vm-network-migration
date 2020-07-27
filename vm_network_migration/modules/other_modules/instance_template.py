@@ -16,10 +16,11 @@
 
 """
 from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.utils import generate_timestamp_string
+from vm_network_migration.utils import *
 
 
 class InstanceTemplate:
+    @initializer
     def __init__(self, compute, project, instance_template_name,
                  instance_template_body=None):
         """ Initialize an instance template object
@@ -30,11 +31,9 @@ class InstanceTemplate:
             instance_template_name: name of the instance template
             instance_template_body: a dictionary of the instance template's configs
         """
-        self.compute = compute
-        self.project = project
-        self.instance_template_name = instance_template_name
+
         self.operation = Operations(self.compute, self.project, None, None)
-        self.instance_template_body = instance_template_body
+
         if self.instance_template_body == None:
             self.instance_template_body = self.get_instance_template_body()
 
@@ -93,15 +92,16 @@ class InstanceTemplate:
                 self.instance_template_body['properties']['metadata'][
                     'items'] = []
 
-            for item in self.instance_template_body['properties']['metadata']['items']:
+            for item in self.instance_template_body['properties']['metadata'][
+                'items']:
                 if item['key'] == 'network':
                     item['value'] = new_subnetwork_link
                     return
 
             self.instance_template_body['properties']['metadata'][
                 'items'].append({
-                                    'key': 'network',
-                                    'value': new_subnetwork_link})
+                'key': 'network',
+                'value': new_subnetwork_link})
 
     def get_selfLink(self) -> str:
         """ Get the selfLink of the instance template

@@ -19,8 +19,8 @@ from vm_network_migration.modules.instance_group_modules.instance_group import I
 
 class ManagedInstanceGroup(InstanceGroup):
 
-    def __init__(self, compute, project, instance_group_name, network,
-                 subnetwork, preserve_instance_ip):
+    def __init__(self, compute, project, instance_group_name, network_name,
+                 subnetwork_name, preserve_instance_ip):
         """ Initialization
 
         Args:
@@ -29,8 +29,8 @@ class ManagedInstanceGroup(InstanceGroup):
             instance_group_name: name of the instance group
         """
         super(ManagedInstanceGroup, self).__init__(compute, project,
-                                                   instance_group_name, network,
-                                                   subnetwork,
+                                                   instance_group_name, network_name,
+                                                   subnetwork_name,
                                                    preserve_instance_ip)
         self.instance_group_manager_api = None
         self.autoscaler_api = None

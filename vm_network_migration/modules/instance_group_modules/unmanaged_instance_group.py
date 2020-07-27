@@ -26,8 +26,8 @@ from vm_network_migration.modules.other_modules.operations import Operations
 
 
 class UnmanagedInstanceGroup(InstanceGroup):
-    def __init__(self, compute, project, instance_group_name, network,
-                 subnetwork, preserve_instance_ip,zone):
+    def __init__(self, compute, project, instance_group_name, network_name,
+                 subnetwork_name, preserve_instance_ip,zone):
         """ Initialize an unmanaged instance group object
 
         Args:
@@ -39,10 +39,9 @@ class UnmanagedInstanceGroup(InstanceGroup):
         """
         super(UnmanagedInstanceGroup, self).__init__(compute, project,
                                                      instance_group_name,
-                                                     network, subnetwork,
+                                                     network_name, subnetwork_name,
                                                      preserve_instance_ip)
         self.zone = zone
-
         self.region = self.get_region()
         self.instances = []
         self.instance_selfLinks = []

@@ -16,12 +16,13 @@
 """
 from copy import deepcopy
 from enum import Enum
+
 from googleapiclient.errors import HttpError
-from vm_network_migration.utils import *
 from vm_network_migration.errors import *
-from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.module_helpers.address_helper import AddressHelper
+from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
+from vm_network_migration.modules.other_modules.operations import Operations
+from vm_network_migration.utils import initializer
 
 
 class Instance(object):
@@ -218,7 +219,8 @@ class Instance(object):
 
     def modify_instance_configs_with_new_network(self, new_network_link,
                                                  new_subnetwork_link,
-                                                 instance_configs, add_network_metadata=True):
+                                                 instance_configs,
+                                                 add_network_metadata=True):
         """ Modify the instance template with the new network links
 
             Args:

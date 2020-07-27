@@ -24,9 +24,11 @@ from vm_network_migration.modules.instance_modules.instance import (
     Instance,
     InstanceStatus,
 )
+from vm_network_migration.utils import initializer
 
 
 class InstanceNetworkMigration:
+    @initializer
     def __init__(self, compute, project, zone, original_instance_name,
                  network_name,
                  subnetwork_name, preserve_external_ip):
@@ -36,14 +38,8 @@ class InstanceNetworkMigration:
             project: project ID
             zone: zone of the instance
         """
-        self.compute = compute
-        self.project = project
-        self.zone = zone
+
         self.region = self.get_region()
-        self.original_instance_name = original_instance_name
-        self.network_name = network_name
-        self.subnetwork_name = subnetwork_name
-        self.preserve_external_ip = preserve_external_ip
         self.instance = None
 
     def get_region(self) -> dict:
@@ -91,7 +87,8 @@ class InstanceNetworkMigration:
                                          self.subnetwork_name,
                                          preserve_instance_ip=self.preserve_external_ip)
             print('Checking the external IP address.')
-            self.instance.address_object.preserve_ip_addresses_handler(self.preserve_external_ip)
+            self.instance.address_object.preserve_ip_addresses_handler(
+                self.preserve_external_ip)
 
             print('Stopping the VM.')
             print('stop_instance_operation is running.')
@@ -106,7 +103,8 @@ class InstanceNetworkMigration:
 
             print('Creating a new VM.')
             print('create_instance_operation is running.')
-            print('Modified instance configuration:', self.instance.new_instance_configs)
+            print('Modified instance configuration:',
+                  self.instance.new_instance_configs)
             self.instance.create_instance(self.instance.new_instance_configs)
             print('The migration is successful.')
 

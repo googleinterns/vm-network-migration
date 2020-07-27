@@ -16,9 +16,10 @@
 import time
 
 from vm_network_migration.errors import *
-
+from vm_network_migration.utils import initializer
 
 class Operations:
+    @initializer
     def __init__(self, compute, project, zone=None, region=None):
         """ Initialize an Operation object
 
@@ -28,10 +29,7 @@ class Operations:
             zone: zone name
             region: region name
         """
-        self.compute = compute
-        self.project = project
-        self.zone = zone
-        self.region = region
+        pass
 
     def wait_for_zone_operation(self, operation):
         """ Keep waiting for a zone operation until it finishes
