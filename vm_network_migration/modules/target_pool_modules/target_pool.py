@@ -14,12 +14,15 @@
 """ TargetPool class: describes a target pool and its API methods
 
 """
-from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from googleapiclient.http import HttpError
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
+from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.other_modules.operations import Operations
+from vm_network_migration.utils import initializer
+
 
 class TargetPool:
+    @initializer
     def __init__(self, compute, project, target_pool_name, region, network,
                  subnetwork, preserve_instance_external_ip):
         """ Initialization
@@ -34,17 +37,11 @@ class TargetPool:
             preserve_instance_external_ip: whether to preserve the external IPs
             of the instances serving the backends
         """
-        self.compute = compute
-        self.project = project
-        self.target_pool_name = target_pool_name
-        self.region = region
-        self.network = network
-        self.subnetwork = subnetwork
+
         self.target_pool_config = self.get_target_pool_configs()
         self.selfLink = self.get_selfLink()
         self.operations = Operations(self.compute, self.project, None,
                                      self.region)
-        self.preserve_instance_external_ip = preserve_instance_external_ip
         # The instances which don't belong to any instance groups
         self.attached_single_instances_selfLinks = []
         # The instances which belong to one or more unmanaged instance groups
@@ -84,7 +81,8 @@ class TargetPool:
             region=self.region,
             targetPool=self.target_pool_name,
             body={
-                'instances': [{'instance': instance_selfLink}]
+                'instances': [{
+                                  'instance': instance_selfLink}]
             }).execute()
         self.operations.wait_for_region_operation(
             add_instance_operation['name'])
@@ -101,7 +99,8 @@ class TargetPool:
         """
         instance_group_and_instances = {}
         for instance_selfLink in self.target_pool_config['instances']:
-            instance_selfLink_executor = SelfLinkExecutor(self.compute,instance_selfLink,
+            instance_selfLink_executor = SelfLinkExecutor(self.compute,
+                                                          instance_selfLink,
                                                           self.network,
                                                           self.subnetwork,
                                                           self.preserve_instance_external_ip)
@@ -129,8 +128,10 @@ class TargetPool:
 
         for instance_group_selfLink, instance_selfLink_list in instance_group_and_instances.items():
             instance_group_selfLink_executor = SelfLinkExecutor(self.compute,
-                instance_group_selfLink, self.network, self.subnetwork,
-                self.preserve_instance_external_ip)
+                                                                instance_group_selfLink,
+                                                                self.network,
+                                                                self.subnetwork,
+                                                                self.preserve_instance_external_ip)
 
             instance_group = instance_group_selfLink_executor.build_an_instance_group()
             if isinstance(instance_group, UnmanagedInstanceGroup):
