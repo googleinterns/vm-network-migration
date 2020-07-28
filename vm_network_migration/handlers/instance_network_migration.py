@@ -40,7 +40,12 @@ class InstanceNetworkMigration:
         """
 
         self.region = self.get_region()
-        self.instance = None
+        self.instance =  Instance(self.compute, self.project,
+                                 self.original_instance_name,
+                                 self.region,
+                                 self.zone, self.network_name,
+                                 self.subnetwork_name,
+                                 preserve_instance_ip=self.preserve_external_ip)
 
     def get_region(self) -> dict:
         """ Get region information
@@ -78,14 +83,6 @@ class InstanceNetworkMigration:
         """
 
         try:
-            print('Retrieving the original instance configs.')
-            if self.instance == None:
-                self.instance = Instance(self.compute, self.project,
-                                         self.original_instance_name,
-                                         self.region,
-                                         self.zone, self.network_name,
-                                         self.subnetwork_name,
-                                         preserve_instance_ip=self.preserve_external_ip)
             print('Checking the external IP address.')
             self.instance.address_object.preserve_ip_addresses_handler(
                 self.preserve_external_ip)

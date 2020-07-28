@@ -16,9 +16,9 @@
 from googleapiclient.http import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.modules.backend_service_modules.external_backend_service import ExternalBackendService
-from vm_network_migration.modules.backend_service_modules.internal_backend_service import InternalBackendService
 from vm_network_migration.utils import initializer
-
+from vm_network_migration.modules.backend_service_modules.regional_internal_backend_service import RegionalInternalBackendService
+from vm_network_migration.modules.backend_service_modules.global_internal_backend_service import GlobalInternalBackendService
 
 class BackendServiceHelper:
     @initializer
@@ -56,6 +56,12 @@ class BackendServiceHelper:
                                                   self.network,
                                                   self.subnetwork,
                                                   self.preserve_instance_external_ip)
+                elif self.backend_config['loadBalancingScheme'] == 'INTERNAL':
+                    return GlobalInternalBackendService(self.compute, self.project,
+                                                  self.backend_service_name,
+                                                  self.network,
+                                                  self.subnetwork,
+                                                  self.preserve_instance_external_ip)
                 else:
                     raise UnsupportedBackendService(
                         'The typeof the backend service is not supported. Migration is terminating.')
@@ -68,7 +74,7 @@ class BackendServiceHelper:
                 raise e
             else:
                 if self.backend_config['loadBalancingScheme'] == 'INTERNAL':
-                    return InternalBackendService(self.compute, self.project,
+                    return RegionalInternalBackendService(self.compute, self.project,
                                                   self.backend_service_name,
                                                   self.network,
                                                   self.subnetwork,

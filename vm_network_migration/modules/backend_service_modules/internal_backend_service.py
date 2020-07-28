@@ -16,16 +16,14 @@
 TCP/UDP internal load balancer. It is always regional.
 
 """
-from copy import deepcopy
 
-from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
-from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
-from vm_network_migration.modules.other_modules.operations import Operations
 from googleapiclient.http import HttpError
+from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
+
 
 class InternalBackendService(BackendService):
     def __init__(self, compute, project, backend_service_name, network,
-                 subnetwork, preserve_instance_external_ip, region):
+                 subnetwork, preserve_instance_external_ip):
         """ Initialization
 
         Args:
@@ -35,19 +33,22 @@ class InternalBackendService(BackendService):
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether to preserve the external IP
-            region: region of the load balancer
         """
         super(InternalBackendService, self).__init__(compute, project,
                                                      backend_service_name,
                                                      network, subnetwork,
                                                      preserve_instance_external_ip)
-        self.region = region
-        self.backend_service_configs = self.get_backend_service_configs()
-        self.operations = Operations(self.compute, self.project, None,
-                                     self.region)
-        self.network_object = self.build_network_object()
-        self.new_backend_service_configs = self.get_new_backend_config_with_new_network_info(
-            self.backend_service_configs)
+
+        self.region = None
+        self.operations = None
+        self.compute_engine_api = None
+        self.backend_service_configs = None
+        self.network_object = None
+        self.new_backend_service_configs = None
+
+    def add_region_info(self, args):
+        if self.region != None:
+            args['region'] = self.region
 
     def get_backend_service_configs(self):
         """ Get the configs of the backend service
@@ -55,54 +56,12 @@ class InternalBackendService(BackendService):
         Returns: a deserialized python object of the response
 
         """
-        return self.compute.regionBackendServices().get(
-            project=self.project,
-            region=self.region,
-            backendService=self.backend_service_name).execute()
-
-    def build_network_object(self):
-        """ Build network object
-
-        Returns: SubnetNetwork object
-
-        """
-        subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                 None, self.region)
-        network_object = subnetwork_factory.generate_network(
-            self.network,
-            self.subnetwork)
-        return network_object
-
-    def get_new_forwarding_rule_with_new_network_info(self,
-                                                      forwarding_rule_configs):
-        """ Generate a new forwarding rule with the new network info
-
-        Args:
-            forwarding_rule_configs:
-
-        Returns:
-
-        """
-        new_forwarding_rule_configs = deepcopy(forwarding_rule_configs)
-        new_forwarding_rule_configs[
-            'network'] = self.network_object.network_link
-        new_forwarding_rule_configs[
-            'subnetwork'] = self.network_object.subnetwork_link
-        return new_forwarding_rule_configs
-
-    def get_new_backend_config_with_new_network_info(self,
-                                                     backend_service_configs):
-        """ Generate a new backend configs with the new network info
-
-        Args:
-            backend_service_configs: configs of the backend service
-
-        Returns:
-
-        """
-        new_backend_configs = deepcopy(backend_service_configs)
-        new_backend_configs['network'] = self.network_object.network_link
-        return new_backend_configs
+        args = {
+            'project': self.project,
+            'backendService': self.backend_service_name
+        }
+        self.add_region_info(args)
+        return self.compute_engine_api.get(**args).execute()
 
     def delete_backend_service(self):
         """ Delete the backend service
@@ -110,13 +69,19 @@ class InternalBackendService(BackendService):
              Returns: a deserialized python object of the response
 
         """
-        delete_backend_service_operation = self.compute.regionBackendServices(
-        ).delete(
-            project=self.project,
-            region=self.region,
-            backendService=self.backend_service_name).execute()
-        self.operations.wait_for_region_operation(
-            delete_backend_service_operation['name'])
+        args = {
+            'project': self.project,
+            'backendService': self.backend_service_name
+        }
+        self.add_region_info(args)
+        delete_backend_service_operation = self.compute_engine_api.delete(
+            **args).execute()
+        if self.region == None:
+            self.operations.wait_for_global_operation(
+                delete_backend_service_operation['name'])
+        else:
+            self.operations.wait_for_region_operation(
+                delete_backend_service_operation['name'])
         return delete_backend_service_operation
 
     def insert_backend_service(self, backend_service_configs):
@@ -125,13 +90,19 @@ class InternalBackendService(BackendService):
              Returns: a deserialized python object of the response
 
         """
-        insert_backend_service_operation = self.compute.regionBackendServices(
-        ).insert(
-            project=self.project,
-            region=self.region,
-            body=backend_service_configs).execute()
-        self.operations.wait_for_region_operation(
-            insert_backend_service_operation['name'])
+        args = {
+            'project': self.project,
+            'body': backend_service_configs
+        }
+        self.add_region_info(args)
+        insert_backend_service_operation = self.compute_engine_api.insert(
+            **args).execute()
+        if self.region == None:
+            self.operations.wait_for_global_operation(
+                insert_backend_service_operation['name'])
+        else:
+            self.operations.wait_for_region_operation(
+                insert_backend_service_operation['name'])
         if backend_service_configs == self.new_backend_service_configs:
             self.migrated = True
         else:
@@ -159,9 +130,15 @@ class InternalBackendService(BackendService):
         """
         forwarding_rule_list = []
         backend_service_selfLink = self.backend_service_configs['selfLink']
-
-        request = self.compute.forwardingRules().list(project=self.project,
-                                                      region=self.region)
+        args = {
+            'project': self.project,
+        }
+        self.add_region_info(args)
+        if self.region == None:
+            forwarding_rule_api = self.compute.forwardingRules()
+        else:
+            forwarding_rule_api = self.compute.regionForwardingRules()
+        request = forwarding_rule_api.list(**args)
         while request is not None:
             response = request.execute()
             for forwarding_rule in response['items']:
@@ -169,7 +146,7 @@ class InternalBackendService(BackendService):
                     'backendService'] == backend_service_selfLink:
                     forwarding_rule_list.append(forwarding_rule)
 
-            request = self.compute.forwardingRules().list_next(
+            request = forwarding_rule_api.list_next(
                 previous_request=request,
                 previous_response=response)
         return forwarding_rule_list

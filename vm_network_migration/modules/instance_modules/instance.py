@@ -108,7 +108,7 @@ class Instance(object):
 
         """
         if 'selfLink' in instance_configs:
-            return self.original_instance_configs['selfLink']
+            return instance_configs['selfLink']
 
     def start_instance(self) -> dict:
         """ Start the instance.
