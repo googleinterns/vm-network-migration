@@ -79,7 +79,7 @@ class InternalBackendServiceNetworkMigration:
         count_forwarding_rules = self.backend_service.count_forwarding_rules()
         if count_forwarding_rules == 1:
             print(
-                'The backend service is in use by one forwarding rules. Please try to use forwarding rule migration method.')
+                'The backend service is in use by a forwarding rule. Please try the forwarding rule migration method instead.')
         elif count_forwarding_rules > 1:
             print(
                 'The backend service is in use by two or more forwarding rules. It cannot be migrated. Terminating.')
