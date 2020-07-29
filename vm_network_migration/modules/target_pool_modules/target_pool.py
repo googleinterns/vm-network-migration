@@ -138,12 +138,9 @@ class TargetPool:
                     'The instance %s is within an unmanaged instance group %s. '
                     'If you want to migrate this instance group, you should '
                     'detach this instance or this instance group from the '
-                    'target pool through the GCP console, and then call'
-                    ' the instance group migration method instead. '
-                    'After migrating this unmanaged instance group, '
-                    'you can try to migrate this target pool again.'
-                    ' Finally, reattach this instance group or the instances '
-                    'from this instance group to the migrated target pool.'
+                    'target pool, and then call the instance group migration '
+                    'method instead. After detaching, you can try to migrate '
+                    'the instaces of this target pool again.'
                     % (instance_selfLink_list, instance_group_selfLink))
 
             else:
@@ -156,21 +153,18 @@ class TargetPool:
                         instance_group.selfLink)
                 elif self.selfLink not in target_pool_list:
                     raise AmbiguousTargetResource(
-                        'The instance %s is within a managed instance group %s, \n'
+                        'The instances %s are within a managed instance group %s, \n'
                         'but this instance group is not serving the target pool. \n'
                         'If you want to migrate this instance group, please \n'
-                        'detach the instance %s from the target pool and then \n'
+                        'detach these instances from the target pool and then \n'
                         'try out the instance group migration method. \n'
-                        'After detaching the instance, you can also try to \n'
-                        'migrate this target pool again. Finally, you can still \n'
-                        'attach any instances or instance groups after migrating \n'
-                        ' the target pool. ' % (
-                            instance_selfLink_list, instance_group_selfLink,
-                            instance_selfLink_list)
+                        'After detaching the instances, you can also try to \n'
+                        'migrate the instances of the target pool again. ' % (
+                            instance_selfLink_list, instance_group_selfLink)
                     )
                 else:
                     raise MultipleTargetPools(
-                        "The instance group %s is serving mutliple target pools, \n"
+                        "The instance group %s is serving multiple target pools, \n"
                         " please detach it from the other target pools or \n"
                         "backend services and try again." % (
                             instance_group_selfLink))
