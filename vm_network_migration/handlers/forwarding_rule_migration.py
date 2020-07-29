@@ -192,6 +192,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
+        print('Migrating: %s' %(self.forwarding_rule_name))
         try:
             if isinstance(self.forwarding_rule, ExternalRegionalForwardingRule):
                 self.migrate_an_external_regional_forwarding_rule()

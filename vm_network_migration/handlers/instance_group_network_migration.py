@@ -85,7 +85,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             if self.instance_group == None:
                 self.instance_group = self.build_instance_group()
             if isinstance(self.instance_group, UnmanagedInstanceGroup):
-                print('Migrating an unmanaged instance group.')
+                print('Migrating an unmanaged instance group %s.' %(self.instance_group_name))
                 self.migrate_unmanaged_instance_group()
 
             else:
@@ -104,7 +104,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                         'The autoscaler serving the instance group will be deleted and recreated during the migration',
                         Warning)
 
-                print('Migrating a managed instance group.')
+                print('Migrating a managed instance group %s.'%(self.instance_group_name))
                 self.migrate_managed_instance_group()
 
         except Exception as e:
@@ -135,12 +135,12 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         for instance_migration_handler in self.instance_migration_handlers:
             instance_migration_handler.network_migration()
 
-        print('Deleting the original instance group.')
+        print('Deleting the original instance group %s.' %(self.instance_group_name))
         self.instance_group.delete_instance_group()
         print('Creating a new instance group in the new network.')
         self.instance_group.create_instance_group(
             self.instance_group.new_instance_group_configs)
-        print('Adding the instances back to the new instance group.')
+        print('Adding the instances back to the new instance group %s.'%(self.instance_group_name))
         self.instance_group.add_all_instances()
 
     def migrate_managed_instance_group(self):
@@ -175,7 +175,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                                                 self.region)
         subnet_network = subnetwork_helper.generate_network(self.network_name,
                                                             self.subnetwork_name)
-        print('Generating a new instance template.')
+        print('Generating a new instance template to use the target network information.')
         new_instance_template.modify_instance_template_with_new_network(
             subnet_network.network_link, subnet_network.subnetwork_link)
         new_instance_template.random_change_name()
@@ -227,14 +227,14 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         instance_group_status = self.instance_group.get_status()
         # Either original instance group or new instance group doesn't exist
         if instance_group_status == InstanceGroupStatus.NOTEXISTS:
-            print('Recreating the instance group.')
+            print('Recreating the instance group %s.'%(self.instance_group_name))
             self.instance_group.create_instance_group(
                 self.instance_group.original_instance_group_configs
             )
         else:
             # The new instance group has been created
             if self.instance_group.migrated:
-                print('Deleting the instance group.')
+                print('Deleting the instance group %s.'%(self.instance_group_name))
                 self.instance_group.delete_instance_group()
                 print(
                     'Recreating the instance group with the original configuration')
@@ -253,7 +253,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
 
         """
         if self.instance_group == None:
-            print('Unable to fetch the resource.')
+            print('Unable to fetch the instance group %s.'%(self.instance_group_name))
             return
         elif isinstance(self.instance_group, UnmanagedInstanceGroup):
             self.rollback_unmanaged_instance_group()

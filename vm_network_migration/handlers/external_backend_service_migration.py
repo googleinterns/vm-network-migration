@@ -73,16 +73,17 @@ class ExternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
             if backend_migration_handler == None:
                 continue
             self.backend_migration_handlers.append(backend_migration_handler)
-            print('Detaching:', backend['group'])
+            print('Detaching: %s' %(backend['group']))
             self.backend_service.detach_a_backend(backend['group'])
-            print('Migrating:', backend['group'])
+            print('Migrating: %s' %(backend['group']))
             backend_migration_handler.network_migration()
-            print('Reattaching:', backend['group'])
+            print('Reattaching: %s' %(backend['group']))
             self.backend_service.reattach_all_backends()
 
     def network_migration(self):
         """ Migrate the network of an external backend service.
         """
+        print('Migrating an external backend service %s' %(self.backend_service.backend_service_name))
         self.migrate_backends()
         self.backend_service.migrated = True
 
