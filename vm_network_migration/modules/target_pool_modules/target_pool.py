@@ -144,8 +144,33 @@ class TargetPool:
                     'you can try to migrate this target pool again.'
                     ' Finally, reattach this instance group or the instances '
                     'from this instance group to the migrated target pool.'
-                    %(instance_selfLink_list, instance_group_selfLink))
+                    % (instance_selfLink_list, instance_group_selfLink))
 
             else:
-                self.attached_managed_instance_groups_selfLinks.append(
-                    instance_group.selfLink)
+                target_pool_list = instance_group.get_target_pool(
+                    instance_group.original_instance_group_configs)
+                if len(target_pool_list) == 1 and self.selfLink == \
+                        target_pool_list[0]:
+
+                    self.attached_managed_instance_groups_selfLinks.append(
+                        instance_group.selfLink)
+                elif self.selfLink not in target_pool_list:
+                    raise AmbiguousTargetResource(
+                        'The instance %s is within a managed instance group %s, \n'
+                        'but this instance group is not serving the target pool. \n'
+                        'If you want to migrate this instance group, please \n'
+                        'detach the instance %s from the target pool and then \n'
+                        'try out the instance group migration method. \n'
+                        'After detaching the instance, you can also try to \n'
+                        'migrate this target pool again. Finally, you can still \n'
+                        'attach any instances or instance groups after migrating \n'
+                        ' the target pool. ' % (
+                            instance_selfLink_list, instance_group_selfLink,
+                            instance_selfLink_list)
+                    )
+                else:
+                    raise MultipleTargetPools(
+                        "The instance group %s is serving mutliple target pools, \n"
+                        " please detach it from the other target pools or \n"
+                        "backend services and try again." % (
+                            instance_group_selfLink))

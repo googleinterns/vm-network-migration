@@ -29,7 +29,8 @@ class ManagedInstanceGroup(InstanceGroup):
             instance_group_name: name of the instance group
         """
         super(ManagedInstanceGroup, self).__init__(compute, project,
-                                                   instance_group_name, network_name,
+                                                   instance_group_name,
+                                                   network_name,
                                                    subnetwork_name,
                                                    preserve_instance_ip)
         self.instance_group_manager_api = None
@@ -257,7 +258,7 @@ class ManagedInstanceGroup(InstanceGroup):
             'project': self.project,
             'instanceGroupManager': self.instance_group_name,
             'body': {
-                "targetPools": [
+                'targetPools': [
                     target_pool_selfLink
                 ]
             }
@@ -272,3 +273,7 @@ class ManagedInstanceGroup(InstanceGroup):
             self.operation.wait_for_zone_operation(
                 set_target_pool_operation['name'])
         return set_target_pool_operation
+
+    def get_target_pools(self, configs):
+        """Get a list of target pools served by the instance group"""
+        return configs['targetPools']
