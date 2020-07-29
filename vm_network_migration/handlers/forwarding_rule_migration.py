@@ -110,15 +110,15 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                 print(
                     'Unable to handle the one backend service to many forwarding rule case. Terminating. ')
                 return
-        else:
-            print('Deleting the forwarding rule.')
-            self.forwarding_rule.delete_forwarding_rule()
-            for backend_service_migration_handler in self.backends_migration_handlers:
-                print('Migrating the backend service.')
-                backend_service_migration_handler.network_migration()
-            print('Recreating the forwarding rule in the target subnet.')
-            self.forwarding_rule.insert_forwarding_rule(
-                self.forwarding_rule.new_forwarding_rule_configs)
+
+        print('Deleting the forwarding rule.')
+        self.forwarding_rule.delete_forwarding_rule()
+        for backend_service_migration_handler in self.backends_migration_handlers:
+            print('Migrating the backend service.')
+            backend_service_migration_handler.network_migration()
+        print('Recreating the forwarding rule in the target subnet.')
+        self.forwarding_rule.insert_forwarding_rule(
+            self.forwarding_rule.new_forwarding_rule_configs)
 
     def migrate_a_global_forwarding_rule(self):
         """ Network migration for a global forwarding rule. The global
