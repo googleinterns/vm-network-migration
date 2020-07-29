@@ -25,9 +25,9 @@ from vm_network_migration.modules.instance_modules.instance import (
     InstanceStatus,
 )
 from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
-
-class InstanceNetworkMigration:
+class InstanceNetworkMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, zone, original_instance_name,
                  network_name,
@@ -38,7 +38,7 @@ class InstanceNetworkMigration:
             project: project ID
             zone: zone of the instance
         """
-
+        super(InstanceNetworkMigration, self).__init__()
         self.region = self.get_region()
         self.instance =  Instance(self.compute, self.project,
                                  self.original_instance_name,

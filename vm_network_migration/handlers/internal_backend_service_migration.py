@@ -21,8 +21,10 @@ from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecut
 from vm_network_migration.modules.backend_service_modules.internal_backend_service import \
     InternalBackendService
 from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
-class InternalBackendServiceNetworkMigration:
+
+class InternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork,
@@ -39,7 +41,7 @@ class InternalBackendServiceNetworkMigration:
             region: region of the internal load balancer
             backend_service: an InternalBackEndService object
         """
-
+        super(InternalBackendServiceNetworkMigration, self).__init__()
         self.backend_migration_handlers = []
 
         if backend_service == None:

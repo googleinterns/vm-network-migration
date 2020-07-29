@@ -25,9 +25,9 @@ from vm_network_migration.modules.backend_service_modules.backend_service import
 from vm_network_migration.modules.backend_service_modules.external_backend_service import ExternalBackendService
 from vm_network_migration.modules.backend_service_modules.internal_backend_service import InternalBackendService
 from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
-
-class BackendServiceMigration:
+class BackendServiceMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork,
@@ -43,7 +43,7 @@ class BackendServiceMigration:
             of the instances which serves this load balancer
             region: region of the internal load balancer
         """
-
+        super(BackendServiceMigration, self).__init__()
         self.backend_service_migration_handler = None
         self.backend_service = self.build_backend_service()
 

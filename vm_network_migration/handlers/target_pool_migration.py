@@ -20,9 +20,10 @@ from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.target_pool_modules.target_pool import TargetPool
 from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
 
-class TargetPoolMigration:
+class TargetPoolMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, target_pool_name, network, subnetwork,
                  preserve_instance_external_ip, region):
@@ -37,6 +38,7 @@ class TargetPoolMigration:
             of the instances which serves this load balancer
             region: region of the internal load balancer
         """
+        super(TargetPoolMigration, self).__init__()
         self.target_pool = TargetPool(self.compute, self.project,
                                       self.target_pool_name, self.region,
                                       self.network,

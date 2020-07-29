@@ -30,9 +30,9 @@ from vm_network_migration.modules.instance_group_modules.instance_group import I
 from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.other_modules.instance_template import InstanceTemplate
 from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
-
-class InstanceGroupNetworkMigration:
+class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project,
                  network_name,
@@ -45,6 +45,7 @@ class InstanceGroupNetworkMigration:
             zone: zone of the instance group
             region:
         """
+        super(InstanceGroupNetworkMigration, self).__init__()
         self.instance_group = None
         self.instance_migration_handlers = []
 
