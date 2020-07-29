@@ -19,6 +19,7 @@ from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecut
 from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.other_modules.operations import Operations
 from vm_network_migration.utils import initializer
+from vm_network_migration.errors import *
 
 
 class TargetPool:
@@ -45,9 +46,7 @@ class TargetPool:
         # The instances which don't belong to any instance groups
         self.attached_single_instances_selfLinks = []
         # The instances which belong to one or more unmanaged instance groups
-        self.attached_instances_in_unmanaged_instance_group_selfLinks = []
         self.attached_managed_instance_groups_selfLinks = []
-        self.attached_unmanaged_instance_groups_selfLinks = []
         self.get_attached_backends()
 
     def get_target_pool_configs(self):
@@ -82,7 +81,7 @@ class TargetPool:
             targetPool=self.target_pool_name,
             body={
                 'instances': [{
-                                  'instance': instance_selfLink}]
+                    'instance': instance_selfLink}]
             }).execute()
         self.operations.wait_for_region_operation(
             add_instance_operation['name'])
@@ -135,10 +134,18 @@ class TargetPool:
 
             instance_group = instance_group_selfLink_executor.build_an_instance_group()
             if isinstance(instance_group, UnmanagedInstanceGroup):
-                self.attached_unmanaged_instance_groups_selfLinks.append(
-                    instance_group.selfLink)
-                self.attached_instances_in_unmanaged_instance_group_selfLinks.extend(
-                    instance_selfLink_list)
+                raise AmbiguousTargetResource(
+                    'The instance %s is within an unmanaged instance group %s. '
+                    'If you want to migrate this instance group, you should '
+                    'detach this instance or this instance group from the '
+                    'target pool through the GCP console, and then call'
+                    ' the instance group migration method instead. '
+                    'After migrating this unmanaged instance group, '
+                    'you can try to migrate this target pool again.'
+                    ' Finally, reattach this instance group or the instances '
+                    'from this instance group to the migrated target pool.'
+                    %(instance_selfLink_list, instance_group_selfLink))
+
             else:
                 self.attached_managed_instance_groups_selfLinks.append(
                     instance_group.selfLink)

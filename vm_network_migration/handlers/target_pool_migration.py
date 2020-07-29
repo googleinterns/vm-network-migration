@@ -45,7 +45,6 @@ class TargetPoolMigration:
         self.instance_migration_handlers = []
         self.build_instance_migration_handlers()
         self.instance_group_migration_handlers = []
-        self.unmanaged_instance_group_migration_handlers = []
         self.build_instance_group_migration_handlers()
 
     def build_instance_migration_handlers(self):
@@ -79,19 +78,6 @@ class TargetPoolMigration:
             instance_group_migration_handler = executor.build_instance_group_migration_handler()
             self.instance_group_migration_handlers.append(
                 instance_group_migration_handler)
-        for selfLink in self.target_pool.attached_unmanaged_instance_groups_selfLinks:
-            # In the current version, all the instances in the unmanaged instance
-            # groups will be migrated to the new network. But in the next version,
-            # the tool may give the user's options about how to process
-            # these unmanaged instance groups and instance in these groups
-            executor = SelfLinkExecutor(self.compute, selfLink,
-                                        self.network,
-                                        self.subnetwork,
-                                        self.preserve_instance_external_ip)
-
-            unmanaged_instance_group_migration_handler = executor.build_instance_group_migration_handler()
-            self.unmanaged_instance_group_migration_handlers.append(
-                unmanaged_instance_group_migration_handler)
 
     def network_migration(self):
         """ Migrate the backends of the target pool one by one from a legacy
@@ -107,15 +93,6 @@ class TargetPoolMigration:
                 print('Reattaching the instance to the target pool')
                 self.target_pool.add_instance(
                     instance_migration_handler.get_instance_selfLink())
-
-            print('Migrating unmanaged instance group backends')
-            for unmanaged_instance_group_migration_handler in self.unmanaged_instance_group_migration_handlers:
-                print('Migrating:', unmanaged_instance_group_migration_handler.instance_group_name)
-                unmanaged_instance_group_migration_handler.network_migration()
-                print('Reattaching it to the target pool')
-                for instance_migration_handler in unmanaged_instance_group_migration_handler.instance_migration_handlers:
-                    instance_selfLink = instance_migration_handler.get_instance_selfLink()
-                    self.target_pool.add_instance(instance_selfLink)
 
             print('Migrating managed instance group backends')
             for instance_group_migration_handler in self.instance_group_migration_handlers:
