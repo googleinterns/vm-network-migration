@@ -16,6 +16,7 @@
 from vm_network_migration.modules.other_modules.subnet_network import SubnetNetwork
 from vm_network_migration.utils import initializer
 
+
 class SubnetNetworkHelper:
     @initializer
     def __init__(self, compute, project, zone, region):
@@ -27,7 +28,8 @@ class SubnetNetworkHelper:
             zone: zone of the network
             region: region of the network
         """
-        pass
+        if self.region == None:
+            self.region = self.get_region()
 
     def generate_network(self, network, subnetwork):
         """ Generate a network object
@@ -45,3 +47,16 @@ class SubnetNetworkHelper:
         network.generate_new_network_info()
 
         return network
+
+    def get_region(self) -> dict:
+        """ Get region information
+
+            Returns:
+                region name of the self.zone
+
+            Raises:
+                googleapiclient.errors.HttpError: invalid request
+        """
+        return self.compute.zones().get(
+            project=self.project,
+            zone=self.zone).execute()['region'].split('regions/')[1]

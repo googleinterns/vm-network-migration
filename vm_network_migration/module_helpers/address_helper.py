@@ -15,13 +15,14 @@
 
 """
 from vm_network_migration.modules.other_modules.address import Address
+from vm_network_migration.utils import initializer
 
 
 class AddressHelper:
-    def __init__(self, compute, project, region):
-        self.compute = compute
-        self.project = project
-        self.region = region
+    @initializer
+    def __init__(self, compute, project, zone, region):
+        if self.region == None:
+            self.region = self.get_region()
 
     def generate_address(self, instance_template):
         """ Generate an address object
@@ -36,3 +37,16 @@ class AddressHelper:
         address.retrieve_ip_from_network_interface(
             instance_template['networkInterfaces'][0])
         return address
+
+    def get_region(self) -> dict:
+        """ Get region information
+
+            Returns:
+                region name of the self.zone
+
+            Raises:
+                googleapiclient.errors.HttpError: invalid request
+        """
+        return self.compute.zones().get(
+            project=self.project,
+            zone=self.zone).execute()['region'].split('regions/')[1]

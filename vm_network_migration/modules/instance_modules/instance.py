@@ -42,7 +42,6 @@ class Instance(object):
             stauts:instance's status
         """
 
-        self.region = region or self.get_region()
         self.original_instance_configs = instance_configs or self.retrieve_instance_configs()
         self.network_object = self.get_network()
         self.address_object = self.get_address()
@@ -80,7 +79,7 @@ class Instance(object):
         if self.original_instance_configs == None:
             self.original_instance_configs = self.retrieve_instance_configs()
         address_factory = AddressHelper(self.compute, self.project,
-                                        self.region)
+                                        self.zone, self.region)
         address = address_factory.generate_address(
             self.original_instance_configs)
         return address
@@ -392,17 +391,6 @@ class Instance(object):
             request = self.compute.instances().listReferrers_next(
                 previous_request=request, previous_response=response)
         return referrer_selfLinks
-
-    def get_region(self) -> dict:
-        """ Get region information
-            Returns:
-                region name of the self.zone
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
-        """
-        return self.compute.zones().get(
-            project=self.project,
-            zone=self.zone).execute()['region'].split('regions/')[1]
 
 
 class InstanceStatus(Enum):

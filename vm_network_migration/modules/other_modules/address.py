@@ -33,6 +33,18 @@ class Address:
         """
         self.operations = Operations(compute, project, None, region)
 
+    def get_region(self) -> dict:
+        """ Get region information
+
+            Returns:
+                region name of the self.zone
+
+            Raises:
+                googleapiclient.errors.HttpError: invalid request
+        """
+        return self.compute.zones().get(
+            project=self.project,
+            zone=self.zone).execute()['region'].split('regions/')[1]
 
     def retrieve_ip_from_network_interface(self, network_interface):
         """ Get external IP address from the network interface dict

@@ -155,8 +155,6 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
-        if self.region == None:
-            self.region = self.get_region()
 
         print('Retrieving the instance template.')
         instance_template_name = self.instance_group.retrieve_instance_template_name(
@@ -263,15 +261,4 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             self.rollback_managed_instance_group()
         self.instance_group.migrated = False
 
-    def get_region(self) -> dict:
-        """ Get region information
 
-            Returns:
-                region name of the self.zone
-
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
-        """
-        return self.compute.zones().get(
-            project=self.project,
-            zone=self.zone).execute()['region'].split('regions/')[1]
