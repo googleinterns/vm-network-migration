@@ -26,7 +26,7 @@ from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule
 from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
-
+from vm_network_migration.modules.backend_service_modules.internal_backend_service import InternalBackendService
 class ForwardingRuleMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, forwarding_rule_name,
@@ -104,7 +104,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
             self.backends_migration_handlers.append(backends_migration_handler)
             backend_service = backends_migration_handler.backend_service
 
-            if backend_service.count_forwarding_rules() > 1:
+            if isinstance(backend_service, InternalBackendService) and backend_service.count_forwarding_rules() > 1:
                 print(
                     'The backend service is associated with two or more forwarding rules, so it can not be migrated.')
                 print(
@@ -113,9 +113,8 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
 
         print('Deleting the forwarding rule.')
         self.forwarding_rule.delete_forwarding_rule()
-        for backend_service_migration_handler in self.backends_migration_handlers:
-            print('Migrating the backend service.')
-            backend_service_migration_handler.network_migration()
+        print('Migrating the backend service.')
+        self.backends_migration_handlers[0].network_migration()
         print('Recreating the forwarding rule in the target subnet.')
         self.forwarding_rule.insert_forwarding_rule(
             self.forwarding_rule.new_forwarding_rule_configs)
