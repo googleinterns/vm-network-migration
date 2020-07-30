@@ -36,3 +36,20 @@ class BackendService(object):
 
     def get_backend_service_configs(self):
         pass
+
+    def get_connecting_forwarding_rule_list(self):
+        """ Get the configs of the forwarding rule which serves this backend service
+
+        Returns: a deserialized python object of the response
+
+        """
+        pass
+
+    def count_forwarding_rules(self) -> int:
+        """ Count the number of forwarding rules connecting this backend service
+        to check whether it is only serving a single forwarding rule
+
+        Returns: True or False
+
+        """
+        return len(self.get_connecting_forwarding_rule_list())

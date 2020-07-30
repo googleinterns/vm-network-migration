@@ -164,6 +164,8 @@ class InternalBackendService(BackendService):
                                                       region=self.region)
         while request is not None:
             response = request.execute()
+            if 'items' not in response:
+                break
             for forwarding_rule in response['items']:
                 if 'backendService' in forwarding_rule and forwarding_rule[
                     'backendService'] == backend_service_selfLink:
@@ -174,11 +176,3 @@ class InternalBackendService(BackendService):
                 previous_response=response)
         return forwarding_rule_list
 
-    def count_forwarding_rules(self) -> int:
-        """ Count the number of forwarding rules connecting this backend service
-        to check whether it is only serving a single forwarding rule
-
-        Returns: True or False
-
-        """
-        return len(self.get_connecting_forwarding_rule_list())

@@ -56,6 +56,8 @@ class InternalRegionalForwardingRule(RegionalForwardingRule):
         """
         if 'backendService' in self.forwarding_rule_configs:
             return self.forwarding_rule_configs['backendService']
+        elif 'target' in self.forwarding_rule_configs:
+            return self.forwarding_rule_configs['target']
 
     def get_new_forwarding_rule_with_new_network_info(self,
                                                       forwarding_rule_configs):

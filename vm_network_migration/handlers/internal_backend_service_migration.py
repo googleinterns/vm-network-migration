@@ -68,9 +68,10 @@ class InternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
                                                  self.network,
                                                  self.subnetwork,
                                                  self.preserve_instance_external_ip)
-            backend_migration_handler = selfLink_executor.build_instance_group_migration_handler()
-            backend_migration_handler.network_migration()
-            self.backend_migration_handlers.append(backend_migration_handler)
+            backend_migration_handler = selfLink_executor.build_migration_handler()
+            if backend_migration_handler != None:
+                backend_migration_handler.network_migration()
+                self.backend_migration_handlers.append(backend_migration_handler)
 
     def network_migration(self):
         """ Migrate the network of an internal backend service.
