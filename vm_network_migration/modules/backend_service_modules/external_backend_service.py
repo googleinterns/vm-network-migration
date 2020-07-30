@@ -136,11 +136,4 @@ class ExternalBackendService(BackendService):
                 previous_response=response)
         return forwarding_rule_list
 
-    def count_forwarding_rules(self) -> int:
-        """ Count the number of forwarding rules connecting this backend service
-        to check whether it is only serving a single forwarding rule
 
-        Returns: True or False
-
-        """
-        return len(self.get_connecting_forwarding_rule_list())
