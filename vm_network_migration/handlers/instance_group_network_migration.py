@@ -135,8 +135,9 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                                                  self.network_name,
                                                  self.subnetwork_name,
                                                  self.preserve_external_ip)
-            instance_migration_handler = selfLink_executor.build_instance_migration_handler()
-            self.instance_migration_handlers.append(instance_migration_handler)
+            instance_migration_handler = selfLink_executor.build_migration_handler()
+            if instance_migration_handler != None:
+                self.instance_migration_handlers.append(instance_migration_handler)
         for instance_migration_handler in self.instance_migration_handlers:
             instance_migration_handler.network_migration()
 
