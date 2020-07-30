@@ -20,7 +20,7 @@ import re
 
 from vm_network_migration.errors import *
 from vm_network_migration.utils import initializer
-
+import warnings
 
 class SelfLinkExecutor:
     @initializer
@@ -169,7 +169,7 @@ class SelfLinkExecutor:
         elif self.target_instance != None:
             return self.build_target_instance_migration_handler()
         else:
-            raise InvalidSelfLink('Unable to parse the selfLink.')
+            return None
 
     def build_instance_group_migration_handler(self):
         """ Build an instance group migration handler
