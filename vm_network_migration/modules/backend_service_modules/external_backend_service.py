@@ -124,6 +124,8 @@ class ExternalBackendService(BackendService):
             project=self.project)
         while request is not None:
             response = request.execute()
+            if 'items' not in response:
+                break
             for forwarding_rule in response['items']:
                 if 'backendService' in forwarding_rule and forwarding_rule[
                     'backendService'] == backend_service_selfLink:

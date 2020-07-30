@@ -112,14 +112,13 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                         print(
                             'The backend service is associated with two or more forwarding rules, \n'
                             'so it can not be migrated. \n'
-                            ' Unable to handle the one backend service to many forwarding rule case. \n'
                             'Terminating. ')
                         return
 
-        print('Deleting the forwarding rule.')
+        print('Deleting the forwarding rule %s.' %(self.forwarding_rule_name))
         self.forwarding_rule.delete_forwarding_rule()
         for backend_service in self.backends_migration_handlers:
-            print('Migrating the backend service.')
+            print('Migrating the backends of the forwarding rule.')
             backend_service.network_migration()
         print('Recreating the forwarding rule in the target subnet.')
         self.forwarding_rule.insert_forwarding_rule(
