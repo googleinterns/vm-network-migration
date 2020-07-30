@@ -77,10 +77,11 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                                              self.network_name,
                                              self.subnetwork_name,
                                              self.preserve_instance_external_ip)
-        backends_migration_handler = selfLink_executor.build_target_pool_migration_handler()
-        self.backends_migration_handlers.append(backends_migration_handler)
-        print('Migrating the target pool.')
-        backends_migration_handler.network_migration()
+        backends_migration_handler = selfLink_executor.build_migration_handler()
+        if backends_migration_handler != None:
+            self.backends_migration_handlers.append(backends_migration_handler)
+            print('Migrating the target pool.')
+            backends_migration_handler.network_migration()
 
     def migrate_an_internal_regional_forwarding_rule(self):
         """ Network migration for an internal regional forwarding rule.
@@ -143,11 +144,12 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                                                  self.network_name,
                                                  self.subnetwork_name,
                                                  self.preserve_instance_external_ip)
-            backend_service_migration_handler = selfLink_executor.build_backend_service_migration_handler()
+            backend_service_migration_handler = selfLink_executor.build_migration_handler()
             # Save handlers for rollback purpose
-            self.backends_migration_handlers.append(
-                backend_service_migration_handler)
-            backend_service_migration_handler.network_migration()
+            if backend_service_migration_handler != None:
+                self.backends_migration_handlers.append(
+                    backend_service_migration_handler)
+                backend_service_migration_handler.network_migration()
 
     def rollback_a_global_forwarding_rule(self):
         """ Rollback a global forwarding rule
