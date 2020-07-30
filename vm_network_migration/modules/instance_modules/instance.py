@@ -16,12 +16,13 @@
 """
 from copy import deepcopy
 from enum import Enum
+
 from googleapiclient.errors import HttpError
-from vm_network_migration.utils import *
 from vm_network_migration.errors import *
-from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.module_helpers.address_helper import AddressHelper
+from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
+from vm_network_migration.modules.other_modules.operations import Operations
+from vm_network_migration.utils import initializer
 
 
 class Instance(object):
@@ -41,7 +42,6 @@ class Instance(object):
             stauts:instance's status
         """
 
-        self.region = region or self.get_region()
         self.original_instance_configs = instance_configs or self.retrieve_instance_configs()
         self.network_object = self.get_network()
         self.address_object = self.get_address()
@@ -79,7 +79,7 @@ class Instance(object):
         if self.original_instance_configs == None:
             self.original_instance_configs = self.retrieve_instance_configs()
         address_factory = AddressHelper(self.compute, self.project,
-                                        self.region)
+                                        self.zone, self.region)
         address = address_factory.generate_address(
             self.original_instance_configs)
         return address
@@ -107,7 +107,7 @@ class Instance(object):
 
         """
         if 'selfLink' in instance_configs:
-            return self.original_instance_configs['selfLink']
+            return instance_configs['selfLink']
 
     def start_instance(self) -> dict:
         """ Start the instance.
@@ -218,7 +218,8 @@ class Instance(object):
 
     def modify_instance_configs_with_new_network(self, new_network_link,
                                                  new_subnetwork_link,
-                                                 instance_configs, add_network_metadata=True):
+                                                 instance_configs,
+                                                 add_network_metadata=True):
         """ Modify the instance template with the new network links
 
             Args:
@@ -390,17 +391,6 @@ class Instance(object):
             request = self.compute.instances().listReferrers_next(
                 previous_request=request, previous_response=response)
         return referrer_selfLinks
-
-    def get_region(self) -> dict:
-        """ Get region information
-            Returns:
-                region name of the self.zone
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
-        """
-        return self.compute.zones().get(
-            project=self.project,
-            zone=self.zone).execute()['region'].split('regions/')[1]
 
 
 class InstanceStatus(Enum):

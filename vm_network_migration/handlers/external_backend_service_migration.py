@@ -20,9 +20,11 @@ from its legacy network to a subnetwork mode network.
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.backend_service_modules.external_backend_service import \
     ExternalBackendService
+from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
-
-class ExternalBackendServiceNetworkMigration:
+class ExternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
+    @initializer
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork,
                  preserve_instance_external_ip, region, backend_service):
@@ -38,15 +40,9 @@ class ExternalBackendServiceNetworkMigration:
             region: region of the internal load balancer
             backend_service: an InternalBackEndService object
         """
-        self.compute = compute
-        self.project = project
-        self.region = region
-        self.network = network
-        self.subnetwork = subnetwork
-        self.backend_service_name = backend_service_name
+        super(ExternalBackendServiceNetworkMigration, self).__init__()
         self.backend_migration_handlers = []
-        self.preserve_instance_external_ip = preserve_instance_external_ip
-        self.backend_service = backend_service
+
         if backend_service == None:
             self.backend_service = ExternalBackendService(self.compute,
                                                           self.project,
@@ -77,16 +73,17 @@ class ExternalBackendServiceNetworkMigration:
             if backend_migration_handler == None:
                 continue
             self.backend_migration_handlers.append(backend_migration_handler)
-            print('Detaching:', backend['group'])
+            print('Detaching: %s' %(backend['group']))
             self.backend_service.detach_a_backend(backend['group'])
-            print('Migrating:', backend['group'])
+            print('Migrating: %s' %(backend['group']))
             backend_migration_handler.network_migration()
-            print('Reattaching:', backend['group'])
+            print('Reattaching: %s' %(backend['group']))
             self.backend_service.reattach_all_backends()
 
     def network_migration(self):
         """ Migrate the network of an external backend service.
         """
+        print('Migrating an external backend service %s' %(self.backend_service.backend_service_name))
         self.migrate_backends()
         self.backend_service.migrated = True
 

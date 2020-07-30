@@ -17,9 +17,11 @@
 from vm_network_migration.modules.instance_group_modules.regional_managed_instance_group import RegionalManagedInstanceGroup
 from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.instance_group_modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
+from vm_network_migration.utils import initializer
 
 
 class InstanceGroupHelper:
+    @initializer
     def __init__(self, compute, project, instance_group_name,
                  region, zone, network, subnetwork, preserve_instance_ip=False):
         """ Initialize an instance group helper object
@@ -31,15 +33,8 @@ class InstanceGroupHelper:
             region: region of the instance group
             zone: zone of the instance group
         """
-        self.compute = compute
-        self.project = project
-        self.instance_group_name = instance_group_name
-        self.region = region
-        self.zone = zone
+
         self.status = None
-        self.network = network
-        self.subnetwork = subnetwork
-        self.preserve_instance_ip = preserve_instance_ip
 
     def build_instance_group(self) -> object:
         """ Initialize a subclass object of the InstanceGroup.

@@ -24,9 +24,11 @@ from vm_network_migration.module_helpers.forwarding_rule_helper import Forwardin
 from vm_network_migration.modules.forwarding_rule_modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
+from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
-
-class ForwardingRuleMigration(object):
+class ForwardingRuleMigration(ComputeEngineResourceMigration):
+    @initializer
     def __init__(self, compute, project, forwarding_rule_name,
                  network_name, subnetwork_name,
                  preserve_instance_external_ip, region=None):
@@ -41,13 +43,7 @@ class ForwardingRuleMigration(object):
             of the instances which serves this load balancer
             region: region of the internal load balancer
         """
-        self.compute = compute
-        self.project = project
-        self.network_name = network_name
-        self.subnetwork_name = subnetwork_name
-        self.preserve_instance_external_ip = preserve_instance_external_ip
-        self.region = region
-        self.forwarding_rule_name = forwarding_rule_name
+        super(ForwardingRuleMigration, self).__init__()
         self.forwarding_rule = self.build_forwarding_rule()
         self.backends_migration_handlers = []
 
@@ -196,6 +192,7 @@ class ForwardingRuleMigration(object):
         Returns:
 
         """
+        print('Migrating: %s' %(self.forwarding_rule_name))
         try:
             if isinstance(self.forwarding_rule, ExternalRegionalForwardingRule):
                 self.migrate_an_external_regional_forwarding_rule()

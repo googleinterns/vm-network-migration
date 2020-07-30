@@ -34,10 +34,11 @@ def initializer(fun):
     def wrapper(self, *args, **kwargs):
         for name, arg in list(zip(names[1:], args)) + list(kwargs.items()):
             setattr(self, name, arg)
-        for i in range(len(defaults)):
-            index = -(i + 1)
-            if not hasattr(self, names[index]):
-                setattr(self, names[index], defaults[index])
+        if defaults !=None:
+            for i in range(len(defaults)):
+                index = -(i + 1)
+                if not hasattr(self, names[index]):
+                    setattr(self, names[index], defaults[index])
         fun(self, *args, **kwargs)
 
     return wrapper

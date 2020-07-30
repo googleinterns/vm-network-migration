@@ -19,9 +19,11 @@ according to the given resource's selfLink.
 import re
 
 from vm_network_migration.errors import *
+from vm_network_migration.utils import initializer
 
 
 class SelfLinkExecutor:
+    @initializer
     def __init__(self, compute, selfLink, network, subnetwork,
                  preserve_instance_external_ip):
         """ Initialization
@@ -33,8 +35,6 @@ class SelfLinkExecutor:
             preserve_instance_external_ip: whether to preserve the external ip
             of the instances in this resource
         """
-        self.compute = compute
-        self.selfLink = selfLink
         self.project = self.extract_project()
         self.zone = self.extract_zone()
         self.region = self.extract_region()
@@ -43,9 +43,6 @@ class SelfLinkExecutor:
         self.backend_service = self.extract_backend_service()
         self.target_pool = self.extract_target_pool()
         self.forwarding_rule = self.extract_forwarding_rule()
-        self.network = network
-        self.subnetwork = subnetwork
-        self.preserve_instance_external_ip = preserve_instance_external_ip
 
     def extract_project(self) -> str:
         """ Extract project id

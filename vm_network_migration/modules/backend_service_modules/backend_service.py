@@ -14,8 +14,14 @@
 
 """ BackendService class: describe a backend service.
 """
+from vm_network_migration.utils import initializer
+
+
 class BackendService(object):
-    def __init__(self, compute, project, backend_service_name, network, subnetwork, preserve_instance_external_ip):
+
+    @initializer
+    def __init__(self, compute, project, backend_service_name, network,
+                 subnetwork, preserve_instance_external_ip):
         """ Initialization
 
         Args:
@@ -23,14 +29,9 @@ class BackendService(object):
             project: Project ID
             backend_service_name: name of the backend service
         """
-        self.compute = compute
-        self.project = project
-        self.backend_service_name = backend_service_name
+
         self.backend_service_configs = None
         self.operations = None
-        self.network = network
-        self.subnetwork = subnetwork
-        self.preserve_instance_external_ip = preserve_instance_external_ip
         self.migrated = False
 
     def get_backend_service_configs(self):

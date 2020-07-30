@@ -20,9 +20,12 @@ from its legacy network to a subnetwork mode network.
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.backend_service_modules.internal_backend_service import \
     InternalBackendService
+from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
 
-class InternalBackendServiceNetworkMigration:
+class InternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
+    @initializer
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork,
                  preserve_instance_external_ip, region, backend_service):
@@ -38,15 +41,9 @@ class InternalBackendServiceNetworkMigration:
             region: region of the internal load balancer
             backend_service: an InternalBackEndService object
         """
-        self.compute = compute
-        self.project = project
-        self.region = region
-        self.network = network
-        self.subnetwork = subnetwork
-        self.backend_service_name = backend_service_name
+        super(InternalBackendServiceNetworkMigration, self).__init__()
         self.backend_migration_handlers = []
-        self.preserve_instance_external_ip = preserve_instance_external_ip
-        self.backend_service = backend_service
+
         if backend_service == None:
             self.backend_service = InternalBackendService(self.compute,
                                                           self.project,
@@ -84,7 +81,7 @@ class InternalBackendServiceNetworkMigration:
         count_forwarding_rules = self.backend_service.count_forwarding_rules()
         if count_forwarding_rules == 1:
             print(
-                'The backend service is in use by one forwarding rules. Please try to use forwarding rule migration method.')
+                'The backend service is in use by a forwarding rule. Please try the forwarding rule migration method instead.')
         elif count_forwarding_rules > 1:
             print(
                 'The backend service is in use by two or more forwarding rules. It cannot be migrated. Terminating.')

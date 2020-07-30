@@ -82,3 +82,12 @@ class MigrationFailed(Exception):
 class InvalidSelfLink(Exception):
     """The selfLink is unable to be parsed"""
     pass
+
+
+class AmbiguousTargetResource(Exception):
+    """The target resource can be an instance group or a single instance"""
+    pass
+
+class MultipleTargetPools(Exception):
+    """The instance group is serving mutliple target pools at the same time"""
+    pass

@@ -19,9 +19,12 @@ import warnings
 from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.target_pool_modules.target_pool import TargetPool
+from vm_network_migration.utils import initializer
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
 
-class TargetPoolMigration:
+class TargetPoolMigration(ComputeEngineResourceMigration):
+    @initializer
     def __init__(self, compute, project, target_pool_name, network, subnetwork,
                  preserve_instance_external_ip, region):
         """ Initialize a BackendServiceMigration object
@@ -35,13 +38,7 @@ class TargetPoolMigration:
             of the instances which serves this load balancer
             region: region of the internal load balancer
         """
-        self.compute = compute
-        self.project = project
-        self.region = region
-        self.network = network
-        self.subnetwork = subnetwork
-        self.target_pool_name = target_pool_name
-        self.preserve_instance_external_ip = preserve_instance_external_ip
+        super(TargetPoolMigration, self).__init__()
         self.target_pool = TargetPool(self.compute, self.project,
                                       self.target_pool_name, self.region,
                                       self.network,
@@ -83,19 +80,6 @@ class TargetPoolMigration:
             instance_group_migration_handler = executor.build_instance_group_migration_handler()
             self.instance_group_migration_handlers.append(
                 instance_group_migration_handler)
-        for selfLink in self.target_pool.attached_unmanaged_instance_groups_selfLinks:
-            # In the current version, all the instances in the unmanaged instance
-            # groups will be migrated to the new network. But in the next version,
-            # the tool may give the user's options about how to process
-            # these unmanaged instance groups and instance in these groups
-            executor = SelfLinkExecutor(self.compute, selfLink,
-                                        self.network,
-                                        self.subnetwork,
-                                        self.preserve_instance_external_ip)
-
-            instance_group_migration_handler = executor.build_instance_group_migration_handler()
-            self.instance_group_migration_handlers.append(
-                instance_group_migration_handler)
 
     def network_migration(self):
         """ Migrate the backends of the target pool one by one from a legacy
@@ -112,7 +96,7 @@ class TargetPoolMigration:
                 self.target_pool.add_instance(
                     instance_migration_handler.get_instance_selfLink())
 
-            print('Migrating instance group backends')
+            print('Migrating managed instance group backends')
             for instance_group_migration_handler in self.instance_group_migration_handlers:
                 print('Migrating:',
                       instance_group_migration_handler.instance_group_name)
