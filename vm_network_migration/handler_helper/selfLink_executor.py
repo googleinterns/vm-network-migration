@@ -166,6 +166,8 @@ class SelfLinkExecutor:
             return self.build_target_pool_migration_handler()
         elif self.forwarding_rule != None:
             return self.build_forwarding_rule_migration_handler()
+        elif self.target_instance != None:
+            return self.build_target_instance_migration_handler()
         else:
             raise InvalidSelfLink('Unable to parse the selfLink.')
 
