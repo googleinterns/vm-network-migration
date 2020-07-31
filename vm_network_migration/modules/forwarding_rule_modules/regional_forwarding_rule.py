@@ -100,11 +100,9 @@ class RegionalForwardingRule(ForwardingRule):
         except HttpError as e:
             error_reason = e._get_reason()
             if 'internal IP is outside' in error_reason:
-                warnings.warn(error_reason, Warning)
-                print(
-                    'The original IP address of the forwarding rule was an ' \
+                warnings.warn('The original IP address of the forwarding rule was an ' \
                     'ephemeral one. After the migration, a new IP address is ' \
-                    'assigned to the forwarding rule.')
+                    'assigned to the forwarding rule.', Warning)
                 # Set the IPAddress to ephemeral
                 if 'IPAddress' in forwarding_rule_config:
                     del forwarding_rule_config['IPAddress']

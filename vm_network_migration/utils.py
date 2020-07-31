@@ -51,3 +51,38 @@ def generate_timestamp_string() -> str:
 
     """
     return str(time.strftime('%s', time.gmtime()))
+
+def find_all_matching_strings_from_a_dict(dict_object, matching_string, result_set):
+    """ Recursively find all matching strings if it appears in the dictionary
+
+    Args:
+        dict_object: a dictionary
+        matching_string: string to be matched
+        result_set: strings which are matched with the matching_string
+
+    Returns:
+
+    """
+    if type(dict_object) is str:
+        if matching_string in dict_object:
+            result_set.add(dict_object)
+            return
+    elif type(dict_object) is dict:
+        for key in dict_object:
+            find_all_matching_strings_from_a_dict(dict_object[key], matching_string, result_set)
+
+    elif type(dict_object) is list:
+        for i in range(len(dict_object)):
+            find_all_matching_strings_from_a_dict(dict_object[i], matching_string, result_set)
+
+def is_equal_or_contians(url1, url2):
+    """ Check if two url is the same or contains each other
+
+    Args:
+        url1:
+        url2:
+
+    Returns: true or false
+
+    """
+    return url1 == url2 or url1 in url2 or url2 in url1

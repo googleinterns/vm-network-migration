@@ -20,7 +20,7 @@ import re
 
 from vm_network_migration.errors import *
 from vm_network_migration.utils import initializer
-
+import warnings
 
 class SelfLinkExecutor:
     @initializer
@@ -43,6 +43,7 @@ class SelfLinkExecutor:
         self.backend_service = self.extract_backend_service()
         self.target_pool = self.extract_target_pool()
         self.forwarding_rule = self.extract_forwarding_rule()
+        self.target_instance = self.extract_target_instance()
 
     def extract_project(self) -> str:
         """ Extract project id
@@ -137,6 +138,18 @@ class SelfLinkExecutor:
         if forwarding_rule_match != None:
             return forwarding_rule_match[1]
 
+    def extract_target_instance(self) -> str:
+        """ Extract target instance name from the selfLink
+
+          Returns: name of the target pool
+
+          """
+
+        target_instance_match = re.search(r'\/targetInstances\/(.*)',
+                                          self.selfLink)
+        if target_instance_match != None:
+            return target_instance_match[1]
+
     def build_migration_handler(self) -> object:
         """ Build a migration handler
 
@@ -153,8 +166,10 @@ class SelfLinkExecutor:
             return self.build_target_pool_migration_handler()
         elif self.forwarding_rule != None:
             return self.build_forwarding_rule_migration_handler()
+        elif self.target_instance != None:
+            return self.build_target_instance_migration_handler()
         else:
-            raise InvalidSelfLink('Unable to parse the selfLink.')
+            return None
 
     def build_instance_group_migration_handler(self):
         """ Build an instance group migration handler
@@ -259,6 +274,24 @@ class SelfLinkExecutor:
                                                         self.preserve_instance_external_ip)
             instance_group = instance_group_helper.build_instance_group()
             return instance_group
+
+    def build_target_instance_migration_handler(self):
+        """ Build a target instance migration handler
+
+        Returns: TargetInstanceMigration
+
+        """
+        from vm_network_migration.handlers.target_instance_migration import TargetInstanceMigration
+        if self.target_instance != None:
+            target_instance_handler = TargetInstanceMigration(self.compute,
+                                                              self.project,
+                                                              self.target_instance,
+                                                              self.network,
+                                                              self.subnetwork,
+                                                              self.preserve_instance_external_ip,
+                                                              self.zone)
+            
+            return target_instance_handler
 
     def build_target_pool_migration_handler(self):
         """Build a target pool migration handler

@@ -42,6 +42,8 @@ import argparse
 import google.auth
 from googleapiclient import discovery
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
+from vm_network_migration.errors import *
+
 
 if __name__ == '__main__':
     # google credential setup
@@ -87,4 +89,6 @@ if __name__ == '__main__':
                                          args.subnetwork,
                                          args.preserve_instance_external_ip)
     migration_handler = selfLink_executor.build_migration_handler()
+    if migration_handler == None:
+        raise InvalidSelfLink('Unable to parse the selfLink.')
     migration_handler.network_migration()

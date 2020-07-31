@@ -18,7 +18,7 @@ targetHttpsProxy, targetTcpProxy, targetSslProxy.
 """
 from vm_network_migration.errors import *
 from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
-
+from vm_network_migration.utils import find_all_matching_strings_from_a_dict
 
 class GlobalForwardingRule(ForwardingRule):
     proxy_type_to_proxy_keyword = {
@@ -104,22 +104,12 @@ class GlobalForwardingRule(ForwardingRule):
         if 'service' in target_proxy_configs:
             return [target_proxy_configs['service']]
         elif 'urlMap' in target_proxy_configs:
-            backend_services_selfLinks = []
+            backend_services_selfLinks = set()
             urlMap_name = target_proxy_configs['urlMap'].split('/')[-1]
             urlMap_configs = self.compute.urlMaps().get(project=self.project,
                                                         urlMap=urlMap_name).execute()
-
-            if 'defaultService' in urlMap_configs:
-                backend_services_selfLinks.append(
-                    urlMap_configs['defaultService'])
-            if 'defaultRouteAction' in urlMap_configs and 'weightedBackendServices' in \
-                    urlMap_configs['defaultRouteAction']:
-                for weighted_backend_service in \
-                        urlMap_configs['defaultRouteAction'][
-                            'weightedBackendServices']:
-                    backend_services_selfLinks.append(
-                        weighted_backend_service['backendService'])
-            return backend_services_selfLinks
+            find_all_matching_strings_from_a_dict(urlMap_configs, "compute/v1/projects/", backend_services_selfLinks)
+            return list(backend_services_selfLinks)
         return []
 
     def get_backend_service_selfLinks(self) -> list:

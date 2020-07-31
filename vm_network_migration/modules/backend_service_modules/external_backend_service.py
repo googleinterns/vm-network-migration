@@ -20,6 +20,7 @@ from copy import deepcopy
 
 from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
 from vm_network_migration.modules.other_modules.operations import Operations
+from vm_network_migration.utils import is_equal_or_contians
 
 
 class ExternalBackendService(BackendService):
@@ -66,7 +67,8 @@ class ExternalBackendService(BackendService):
         updated_backend_service['backends'] = [v for v in
                                                updated_backend_service[
                                                    'backends'] if
-                                               v['group'] != backend_selfLink]
+                                               not is_equal_or_contians(v['group'],
+                                                                    backend_selfLink)]
         args = {
             'project': self.project,
             'backendService': self.backend_service_name,
@@ -77,7 +79,7 @@ class ExternalBackendService(BackendService):
 
         self.operations.wait_for_global_operation(
             detach_a_backend_operation['name'])
-
+        print('Instance group %s has been detached.' % (backend_selfLink))
         return detach_a_backend_operation
 
     def reattach_all_backends(self):
@@ -110,3 +112,28 @@ class ExternalBackendService(BackendService):
         """
         current_config = self.get_backend_service_configs()
         return current_config['fingerprint']
+
+    def get_connecting_forwarding_rule_list(self):
+        """ Get the configs of the forwarding rule which serves this backend service
+
+        Returns: a deserialized python object of the response
+
+        """
+        forwarding_rule_list = []
+        backend_service_selfLink = self.backend_service_configs['selfLink']
+
+        request = self.compute.globalForwardingRules().list(
+            project=self.project)
+        while request is not None:
+            response = request.execute()
+            if 'items' not in response:
+                break
+            for forwarding_rule in response['items']:
+                if 'backendService' in forwarding_rule and forwarding_rule[
+                    'backendService'] == backend_service_selfLink:
+                    forwarding_rule_list.append(forwarding_rule)
+
+            request = self.compute.globalForwardingRules().list_next(
+                previous_request=request,
+                previous_response=response)
+        return forwarding_rule_list
