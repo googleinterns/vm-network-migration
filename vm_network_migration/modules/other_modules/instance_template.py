@@ -118,6 +118,6 @@ class InstanceTemplate:
         Returns: new name
         """
         self.instance_template_name = self.instance_template_name[
-                                      0:15] + '-' + generate_timestamp_string()
+                                      0:25] + '-' + generate_timestamp_string()
         self.instance_template_body['name'] = self.instance_template_name
         return self.instance_template_name
