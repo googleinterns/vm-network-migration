@@ -109,19 +109,6 @@ class GlobalForwardingRule(ForwardingRule):
             urlMap_configs = self.compute.urlMaps().get(project=self.project,
                                                         urlMap=urlMap_name).execute()
             find_all_matching_strings_from_a_dict(urlMap_configs, "compute/v1/projects/", backend_services_selfLinks)
-            print('DEBUGGING LINKS:', backend_services_selfLinks)
-            # if 'defaultService' in urlMap_configs:
-            #     backend_services_selfLinks.append(
-            #         urlMap_configs['defaultService'])
-            # if 'defaultRouteAction' in urlMap_configs and 'weightedBackendServices' in \
-            #         urlMap_configs['defaultRouteAction']:
-            #     for weighted_backend_service in \
-            #             urlMap_configs['defaultRouteAction'][
-            #                 'weightedBackendServices']:
-            #         backend_services_selfLinks.append(
-            #             weighted_backend_service['backendService'])
-            # if 'pathMatchers' in urlMap_configs:
-
             return list(backend_services_selfLinks)
         return []
 
