@@ -256,8 +256,12 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                         not self.instance_group.autoscaler_exists():
                     print('Recreating the autoscaler.')
                     self.instance_group.insert_autoscaler()
+
         if self.new_instance_template != None:
-            self.new_instance_template.delete()
+            try:
+                self.new_instance_template.delete()
+            except:
+                return
 
     def rollback(self):
         """ Rollback to the original instance group

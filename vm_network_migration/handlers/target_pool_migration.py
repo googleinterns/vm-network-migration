@@ -21,7 +21,7 @@ from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecut
 from vm_network_migration.modules.target_pool_modules.target_pool import TargetPool
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
-
+from googleapiclient.errors import HttpError
 
 class TargetPoolMigration(ComputeEngineResourceMigration):
     @initializer
@@ -60,9 +60,14 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                                         self.network,
                                         self.subnetwork,
                                         self.preserve_instance_external_ip)
-
-            instance_migration_handler = executor.build_instance_migration_handler()
-            self.instance_migration_handlers.append(instance_migration_handler)
+            try:
+                instance_migration_handler = executor.build_instance_migration_handler()
+                self.instance_migration_handlers.append(instance_migration_handler)
+            except HttpError as e:
+                if 'not found' in e._get_reason():
+                    continue
+                else:
+                    raise e
 
     def build_instance_group_migration_handlers(self):
         """ Use instance group's selfLinks to create a list of
@@ -76,10 +81,15 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                                         self.network,
                                         self.subnetwork,
                                         self.preserve_instance_external_ip)
-
-            instance_group_migration_handler = executor.build_instance_group_migration_handler()
-            self.instance_group_migration_handlers.append(
-                instance_group_migration_handler)
+            try:
+                instance_group_migration_handler = executor.build_instance_group_migration_handler()
+                self.instance_group_migration_handlers.append(
+                    instance_group_migration_handler)
+            except HttpError as e:
+                if 'not found' in e._get_reason():
+                    continue
+                else:
+                    raise e
 
     def network_migration(self):
         """ Migrate the backends of the target pool one by one from a legacy

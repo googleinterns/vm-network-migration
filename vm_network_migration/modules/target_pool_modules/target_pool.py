@@ -48,6 +48,8 @@ class TargetPool:
         # The instances which belong to one or more unmanaged instance groups
         self.attached_managed_instance_groups_selfLinks = []
         self.get_attached_backends()
+        print('DEBUGGING:', self.attached_single_instances_selfLinks)
+        print('DEBUGGING:', self.attached_managed_instance_groups_selfLinks)
 
     def get_target_pool_configs(self):
         """ Get the configs of the target pool
