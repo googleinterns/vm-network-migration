@@ -14,12 +14,16 @@
 """ TargetPool class: describes a target pool and its API methods
 
 """
+from googleapiclient.http import HttpError
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.modules.operations import Operations
-from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.other_modules.operations import Operations
+from vm_network_migration.utils import initializer
+from vm_network_migration.errors import *
 
 
 class TargetPool:
+    @initializer
     def __init__(self, compute, project, target_pool_name, region, network,
                  subnetwork, preserve_instance_external_ip):
         """ Initialization
@@ -34,24 +38,18 @@ class TargetPool:
             preserve_instance_external_ip: whether to preserve the external IPs
             of the instances serving the backends
         """
-        self.compute = compute
-        self.project = project
-        self.target_pool_name = target_pool_name
-        self.region = region
-        self.network = network
-        self.subnetwork = subnetwork
+
         self.target_pool_config = self.get_target_pool_configs()
         self.selfLink = self.get_selfLink()
         self.operations = Operations(self.compute, self.project, None,
                                      self.region)
-        self.preserve_instance_external_ip = preserve_instance_external_ip
         # The instances which don't belong to any instance groups
         self.attached_single_instances_selfLinks = []
         # The instances which belong to one or more unmanaged instance groups
-        self.attached_instances_in_unmanaged_instance_group_selfLinks = []
         self.attached_managed_instance_groups_selfLinks = []
-        self.attached_unmanaged_instance_groups_selfLinks = []
         self.get_attached_backends()
+        print('DEBUGGING:', self.attached_single_instances_selfLinks)
+        print('DEBUGGING:', self.attached_managed_instance_groups_selfLinks)
 
     def get_target_pool_configs(self):
         """ Get the configs of the target pool
@@ -84,7 +82,8 @@ class TargetPool:
             region=self.region,
             targetPool=self.target_pool_name,
             body={
-                'instances': [{'instance': instance_selfLink}]
+                'instances': [{
+                    'instance': instance_selfLink}]
             }).execute()
         self.operations.wait_for_region_operation(
             add_instance_operation['name'])
@@ -101,14 +100,20 @@ class TargetPool:
         """
         instance_group_and_instances = {}
         for instance_selfLink in self.target_pool_config['instances']:
-            instance_selfLink_executor = SelfLinkExecutor(instance_selfLink,
+            instance_selfLink_executor = SelfLinkExecutor(self.compute,
+                                                          instance_selfLink,
                                                           self.network,
                                                           self.subnetwork,
                                                           self.preserve_instance_external_ip)
-            print(instance_selfLink)
-            instance = instance_selfLink_executor.build_an_instance(
-                self.compute)
-            instance_group_selfLinks = instance.get_referrer_selfLinks()
+            try:
+                instance = instance_selfLink_executor.build_an_instance()
+                instance_group_selfLinks = instance.get_referrer_selfLinks()
+            except HttpError as e:
+                error_message = e._get_reason()
+                if 'not found' in error_message:
+                    continue
+                else:
+                    raise e
             # No instance group is associated with this instance
             if len(instance_group_selfLinks) == 0:
                 self.attached_single_instances_selfLinks.append(
@@ -123,16 +128,45 @@ class TargetPool:
                             instance.selfLink]
 
         for instance_group_selfLink, instance_selfLink_list in instance_group_and_instances.items():
-            instance_group_selfLink_executor = SelfLinkExecutor(
-                instance_group_selfLink, self.network, self.subnetwork,
-                self.preserve_instance_external_ip)
-            instance_group = instance_group_selfLink_executor.build_an_instance_group(
-                self.compute)
+            instance_group_selfLink_executor = SelfLinkExecutor(self.compute,
+                                                                instance_group_selfLink,
+                                                                self.network,
+                                                                self.subnetwork,
+                                                                self.preserve_instance_external_ip)
+
+            instance_group = instance_group_selfLink_executor.build_an_instance_group()
             if isinstance(instance_group, UnmanagedInstanceGroup):
-                self.attached_unmanaged_instance_groups_selfLinks.append(
-                    instance_group.selfLink)
-                self.attached_instances_in_unmanaged_instance_group_selfLinks.extend(
-                    instance_selfLink_list)
+                raise AmbiguousTargetResource(
+                    'The instance %s is within an unmanaged instance group %s. '
+                    'If you want to migrate this instance group, you should '
+                    'detach this instance or this instance group from the '
+                    'target pool, and then call the instance group migration '
+                    'method instead. After detaching, you can try to migrate '
+                    'the instaces of this target pool again.'
+                    % (instance_selfLink_list, instance_group_selfLink))
+
             else:
-                self.attached_managed_instance_groups_selfLinks.append(
-                    instance_group.selfLink)
+                target_pool_list = instance_group.get_target_pools(
+                    instance_group.original_instance_group_configs)
+                if len(target_pool_list) == 1 and self.selfLink == \
+                        target_pool_list[0]:
+
+                    self.attached_managed_instance_groups_selfLinks.append(
+                        instance_group.selfLink)
+                elif self.selfLink not in target_pool_list:
+                    raise AmbiguousTargetResource(
+                        'The instances %s are within a managed instance group %s, \n'
+                        'but this instance group is not serving the target pool. \n'
+                        'If you want to migrate this instance group, please \n'
+                        'detach these instances from the target pool and then \n'
+                        'try out the instance group migration method. \n'
+                        'After detaching the instances, you can also try to \n'
+                        'migrate the instances of the target pool again. ' % (
+                            instance_selfLink_list, instance_group_selfLink)
+                    )
+                else:
+                    raise MultipleTargetPools(
+                        "The instance group %s is serving multiple target pools, \n"
+                        " please detach it from the other target pools or \n"
+                        "backend services and try again." % (
+                            instance_group_selfLink))

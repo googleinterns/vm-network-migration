@@ -14,8 +14,14 @@
 
 """ BackendService class: describe a backend service.
 """
+from vm_network_migration.utils import initializer
+
+
 class BackendService(object):
-    def __init__(self, compute, project, backend_service_name, network, subnetwork, preserve_instance_external_ip):
+
+    @initializer
+    def __init__(self, compute, project, backend_service_name, network,
+                 subnetwork, preserve_instance_external_ip):
         """ Initialization
 
         Args:
@@ -23,14 +29,27 @@ class BackendService(object):
             project: Project ID
             backend_service_name: name of the backend service
         """
-        self.compute = compute
-        self.project = project
-        self.backend_service_name = backend_service_name
+
         self.backend_service_configs = None
         self.operations = None
-        self.network = network
-        self.subnetwork = subnetwork
-        self.preserve_instance_external_ip = preserve_instance_external_ip
+        self.migrated = False
 
     def get_backend_service_configs(self):
         pass
+
+    def get_connecting_forwarding_rule_list(self):
+        """ Get the configs of the forwarding rule which serves this backend service
+
+        Returns: a deserialized python object of the response
+
+        """
+        pass
+
+    def count_forwarding_rules(self) -> int:
+        """ Count the number of forwarding rules connecting this backend service
+        to check whether it is only serving a single forwarding rule
+
+        Returns: True or False
+
+        """
+        return len(self.get_connecting_forwarding_rule_list())

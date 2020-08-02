@@ -28,17 +28,23 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 instance_group_migration.py --project_id=test-project
-     --zone=us-central1-a --instance_group_name=test-group --network=test-network
+     python3 backend_service_migration.py --project_id=test-project
+     --backend_service_name=test-backend --network=test-network
      --subnetwork=test-network --preserve_external_ip=False
+     --region=us-central1
 
 """
 import warnings
-
+import google.auth
+from googleapiclient import discovery
 import argparse
 from vm_network_migration.handlers.backend_service_migration import BackendServiceMigration
 
 if __name__ == '__main__':
+    # google credential setup
+    credentials, default_project = google.auth.default()
+    compute = discovery.build('compute', 'v1', credentials=credentials)
+
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -69,16 +75,18 @@ if __name__ == '__main__':
     if args.preserve_external_ip:
 
         warnings.warn(
-            'You choose to preserve the external IP. If the original instance '
-            'has an ephemeral IP, it will be reserved as a static external IP after the '
-            'execution.',
+            'You choose to preserve the external IPs of the instances serving '
+            'the target pool. If the instance is within an managed instance '
+            'group, its external IP can not be preserved. For other instances with '
+            'an ephemeral IP, its external IP will be reserved as a static '
+            'external IP after the execution.',
             Warning)
         continue_execution = input(
             'Do you still want to preserve the external IP? y/n: ')
         if continue_execution == 'n':
             args.preserve_external_ip = False
 
-    backend_service_migration = BackendServiceMigration(args.project_id,
+    backend_service_migration = BackendServiceMigration(compute, args.project_id,
                                                         args.backend_service_name,
                                                         args.network,
                                                         args.subnetwork,

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The script takes the arguments and run the target pool migration handler.
+""" The script takes the arguments and run the forwarding rule migration handler.
 
 Before running:
     1. If not already done, enable the Compute Engine API
@@ -28,20 +28,21 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 target_pool_migration.py --project_id=test-project
-     --target_pool_name=test-target-pool --network=test-network
+     python3 forwarding_rule_migration.py --project_id=test-project
+     --forwarding_rule_name=forwarding-rule-legacy --network=test-network
      --subnetwork=test-network --preserve_instance_external_ip=False
      --region=us-central1
 
 """
 import warnings
+
+import argparse
 import google.auth
 from googleapiclient import discovery
-import argparse
-from vm_network_migration.handlers.target_pool_migration import TargetPoolMigration
+from vm_network_migration.handlers.forwarding_rule_migration import ForwardingRuleMigration
 
 if __name__ == '__main__':
-    # google credentrial setup
+    # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
 
@@ -49,22 +50,22 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--project_id',
-                        help='The project ID of the target pool.')
+                        help='The project ID of the forwarding rule.')
 
     parser.add_argument('--region', default=None,
-                        help='The region of the target pool.')
-    parser.add_argument('--target_pool_name',
-                        help='The name of the target pool')
-    parser.add_argument('--network', help='The name of the new network')
+                        help='The region of the forwarding rule.')
+    parser.add_argument('--forwarding_rule_name',
+                        help='The name of the forwarding rule.')
+    parser.add_argument('--network', help='The name of the target network.')
     parser.add_argument(
         '--subnetwork',
         default=None,
-        help='The name of the subnetwork. For auto mode networks,'
+        help='The name of target subnetwork. For auto mode networks,'
              ' this field is optional')
     parser.add_argument(
         '--preserve_instance_external_ip',
         default=False,
-        help='Preserve the external IP addresses of the instances serving this target pool')
+        help='Preserve the external IP addresses of the instances serving this forwarding rule')
 
     args = parser.parse_args()
 
@@ -87,6 +88,11 @@ if __name__ == '__main__':
         if continue_execution == 'n':
             args.preserve_instance_external_ip = False
 
-    target_pool_migration = TargetPoolMigration(compute, args.project_id, args.target_pool_name, args.network, args.subnetwork,
-                 args.preserve_instance_external_ip, args.region)
-    target_pool_migration.network_migration()
+    forwarding_rule_migration = ForwardingRuleMigration(compute,
+                                                        args.project_id,
+                                                        args.forwarding_rule_name,
+                                                        args.network,
+                                                        args.subnetwork,
+                                                        args.preserve_instance_external_ip,
+                                                        args.region)
+    forwarding_rule_migration.network_migration()

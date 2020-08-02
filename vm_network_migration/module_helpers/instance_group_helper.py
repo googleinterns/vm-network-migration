@@ -14,14 +14,16 @@
 """ InstanceGroupHelper class helps to create an InstanceGroup object.
 """
 
-from vm_network_migration.modules.regional_managed_instance_group import RegionalManagedInstanceGroup
-from vm_network_migration.modules.unmanaged_instance_group import UnmanagedInstanceGroup
-from vm_network_migration.modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
+from vm_network_migration.modules.instance_group_modules.regional_managed_instance_group import RegionalManagedInstanceGroup
+from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
+from vm_network_migration.modules.instance_group_modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
+from vm_network_migration.utils import initializer
 
 
 class InstanceGroupHelper:
+    @initializer
     def __init__(self, compute, project, instance_group_name,
-                 region, zone):
+                 region, zone, network, subnetwork, preserve_instance_ip=False):
         """ Initialize an instance group helper object
 
         Args:
@@ -31,13 +33,8 @@ class InstanceGroupHelper:
             region: region of the instance group
             zone: zone of the instance group
         """
-        self.compute = compute
-        self.project = project
-        self.instance_group_name = instance_group_name
-        self.region = region
-        self.zone = zone
-        self.status = None
 
+        self.status = None
 
     def build_instance_group(self) -> object:
         """ Initialize a subclass object of the InstanceGroup.
@@ -56,12 +53,18 @@ class InstanceGroupHelper:
                 print('Migrating an unmanaged instance group.')
                 return UnmanagedInstanceGroup(self.compute, self.project,
                                               self.instance_group_name,
+                                              self.network,
+                                              self.subnetwork,
+                                              self.preserve_instance_ip,
                                               self.zone)
             else:
                 print('Migrating a single-zone managed instance group.')
                 return ZonalManagedInstanceGroup(self.compute,
                                                  self.project,
                                                  self.instance_group_name,
+                                                 self.network,
+                                                 self.subnetwork,
+                                                 self.preserve_instance_ip,
                                                  self.zone)
         try:
             self.get_instance_group_in_region()
@@ -71,6 +74,9 @@ class InstanceGroupHelper:
             print('Migrating a regional managed instance group.')
             return RegionalManagedInstanceGroup(self.compute, self.project,
                                                 self.instance_group_name,
+                                                self.network,
+                                                self.subnetwork,
+                                                self.preserve_instance_ip,
                                                 self.region)
 
     def get_instance_group_in_zone(self) -> dict:

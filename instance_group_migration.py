@@ -36,9 +36,15 @@ Run the script by terminal, for example:
 import warnings
 
 import argparse
+import google.auth
+from googleapiclient import discovery
 from vm_network_migration.handlers.instance_group_network_migration import InstanceGroupNetworkMigration
 
 if __name__ == '__main__':
+    # google credential setup
+    credentials, default_project = google.auth.default()
+    compute = discovery.build('compute', 'v1', credentials=credentials)
+
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -71,16 +77,19 @@ if __name__ == '__main__':
     if args.preserve_external_ip:
 
         warnings.warn(
-            'You choose to preserve the external IP. If the original instance '
+            'You choose to preserve the external IP of the instances in the '
+            'instance group. For an unmanged instance group, if the original instance '
             'has an ephemeral IP, it will be reserved as a static external IP after the '
-            'execution.',
+            'execution. For a managed instance group, the external IPs'
+            'of the instances can not be preserved.',
             Warning)
         continue_execution = input(
             'Do you still want to preserve the external IP? y/n: ')
         if continue_execution == 'n':
             args.preserve_external_ip = False
 
-    instance_group_migration = InstanceGroupNetworkMigration(args.project_id,
+    instance_group_migration = InstanceGroupNetworkMigration(compute,
+                                                             args.project_id,
                                                              args.network,
                                                              args.subnetwork,
                                                              args.preserve_external_ip,

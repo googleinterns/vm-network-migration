@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The script takes the arguments and call the vm_network_migration module.
+""" Given the selfLink of a compute engine resource, and
+network information arguments, the script can recognize the resource type
+and run the resource migration.
 
 Before running:
     1. If not already done, enable the Compute Engine API
@@ -28,11 +30,10 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 instance_migration.py --project_id=test-project
-     --zone=us-central1-a --original_instance_name=instance-legacy
-     --network=tests-network
-     --subnetwork=tests-network
-     --preserve_external_ip = False
+     python3 migrate_by_selfLink.py --selfLink=projects/sample-project/global/forwardingRules/sample-rule
+     --network=test-network
+     --subnetwork=test-network --preserve_external_ip=False
+     --region=us-central1
 
 """
 import warnings
@@ -40,7 +41,9 @@ import warnings
 import argparse
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
+from vm_network_migration.errors import *
+
 
 if __name__ == '__main__':
     # google credential setup
@@ -50,30 +53,29 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--project_id',
-                        help='The project ID of the original VM.')
-    parser.add_argument('--zone', help='The zone name of the original VM.')
-    parser.add_argument('--original_instance_name',
-                        help='The name of the original VM')
-    parser.add_argument('--network', help='The name of the new network')
+    parser.add_argument('--selfLink',
+                        help='The selfLink of the target resource.')
+
+    parser.add_argument('--network', help='The name of the target network.')
     parser.add_argument(
         '--subnetwork',
         default=None,
-        help='The name of the subnetwork. For auto mode networks,'
+        help='The name of target subnetwork. For auto mode networks,'
              ' this field is optional')
     parser.add_argument(
-        '--preserve_external_ip',
+        '--preserve_instance_external_ip',
         default=False,
-        help='Preserve the external IP address')
+        help='Preserve the external IP addresses of the instances serving this forwarding rule')
 
     args = parser.parse_args()
 
-    if args.preserve_external_ip == 'True':
-        args.preserve_external_ip = True
+    if args.preserve_instance_external_ip == 'True':
+        args.preserve_instance_external_ip = True
     else:
-        args.preserve_external_ip = False
+        args.preserve_instance_external_ip = False
 
-    if args.preserve_external_ip:
+    if args.preserve_instance_external_ip:
+
         warnings.warn(
             'You choose to preserve the external IP. If the original instance '
             'has an ephemeral IP, it will be reserved as a static external IP after the '
@@ -82,12 +84,11 @@ if __name__ == '__main__':
         continue_execution = input(
             'Do you still want to preserve the external IP? y/n: ')
         if continue_execution == 'n':
-            args.preserve_external_ip = False
-
-    instance_migration = InstanceNetworkMigration(compute, args.project_id,
-                                                  args.zone,
-                                                  args.original_instance_name,
-                                                  args.network,
-                                                  args.subnetwork,
-                                                  args.preserve_external_ip)
-    instance_migration.network_migration()
+            args.preserve_instance_external_ip = False
+    selfLink_executor = SelfLinkExecutor(compute, args.selfLink, args.network,
+                                         args.subnetwork,
+                                         args.preserve_instance_external_ip)
+    migration_handler = selfLink_executor.build_migration_handler()
+    if migration_handler == None:
+        raise InvalidSelfLink('Unable to parse the selfLink.')
+    migration_handler.network_migration()
