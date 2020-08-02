@@ -124,8 +124,6 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         The instances belonging to this instance group will
         be migrated one by one.
         """
-        if self.region == None:
-            self.region = self.get_region()
 
         print(
             'Migrating all the instances in the instance group to the new network.')
