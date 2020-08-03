@@ -23,6 +23,7 @@ from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 from googleapiclient.errors import HttpError
 
+
 class TargetPoolMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, target_pool_name, network, subnetwork,
@@ -62,7 +63,8 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                                         self.preserve_instance_external_ip)
             try:
                 instance_migration_handler = executor.build_instance_migration_handler()
-                self.instance_migration_handlers.append(instance_migration_handler)
+                self.instance_migration_handlers.append(
+                    instance_migration_handler)
             except HttpError as e:
                 if 'not found' in e._get_reason():
                     continue
@@ -83,8 +85,9 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                                         self.preserve_instance_external_ip)
             try:
                 instance_group_migration_handler = executor.build_instance_group_migration_handler()
-                self.instance_group_migration_handlers.append(
-                    instance_group_migration_handler)
+                if instance_group_migration_handler != None:
+                    self.instance_group_migration_handlers.append(
+                        instance_group_migration_handler)
             except HttpError as e:
                 if 'not found' in e._get_reason():
                     continue
@@ -144,5 +147,6 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                   instance_group_migration_handler.instance_group_name)
             instance_group_migration_handler.rollback()
             print('Reattaching the instance group to the target pool')
-            instance_group_migration_handler.instance_group.set_target_pool(
-                self.target_pool.selfLink)
+            if instance_group_migration_handler.instance_group != None:
+                instance_group_migration_handler.instance_group.set_target_pool(
+                    self.target_pool.selfLink)
