@@ -186,7 +186,7 @@ class Instance(object):
         for diskInfo in disks:
             self.detach_disk(diskInfo['deviceName'])
 
-    def attach_disk(self, disk):
+    def attach_disk(self, diskInfo):
         """Attach a disk to the instance
 
         Args:
@@ -198,12 +198,13 @@ class Instance(object):
         Raises:
             googleapiclient.errors.HttpError: invalid request
         """
+        print('debugging',diskInfo)
         attach_disk_operation = self.compute.instances().attachDisk(
             project=self.project,
             zone=self.zone,
             instance=self.name,
             forceAttach=True,
-            body=disk).execute()
+            body=diskInfo).execute()
         self.operations.wait_for_zone_operation(attach_disk_operation['name'])
         return attach_disk_operation
 
@@ -214,7 +215,7 @@ class Instance(object):
         """
         disks = self.get_disks_info_from_instance_configs()
         for diskInfo in disks:
-            self.attach_disk(diskInfo['deviceName'])
+            self.attach_disk(diskInfo)
 
     def modify_instance_configs_with_new_network(self, new_network_link,
                                                  new_subnetwork_link,

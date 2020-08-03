@@ -82,12 +82,12 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         Returns: None
 
         """
-        referrer_links = self.instance.get_referrer_selfLinks()
-        if len(referrer_links) > 0:
-            raise AmbiguousTargetResource(
-                'The instance %s is a member of %s, please detach the instance from its referrer and try again. '
-                'Or you can try to migrate its referrer directly.' % (
-                    self.original_instance_name, ','.join(referrer_links)))
+        # referrer_links = self.instance.get_referrer_selfLinks()
+        # if len(referrer_links) > 0:
+        #     raise AmbiguousTargetResource(
+        #         'The instance %s is a member of %s, please detach the instance from its referrer and try again. '
+        #         'Or you can try to migrate its referrer directly.' % (
+        #             self.original_instance_name, ','.join(referrer_links)))
 
         try:
             print('Checking the external IP address of the VM %s.' % (
@@ -142,8 +142,8 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             print(
                 'Cannot get the instance\'s resource. Please check the parameters and try again.')
             return
-        instance_status = self.instance.get_instance_status()
 
+        instance_status = self.instance.get_instance_status()
         if instance_status == InstanceStatus.RUNNING:
             if self.instance.migrated:
                 # The migration has been finished, but force to rollback
@@ -180,31 +180,26 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         else:
             print('Attaching disks back to the original VM %s.' % (
                 self.original_instance_name))
-            print('attach_disk_operation is running')
-            self.instance.attach_disks()
+            try:
+                self.instance.attach_disks()
+            except HttpError as e:
+                if 'already has a boot disk' in e._get_reason():
+                    pass
+                else:
+                    raise e
+
+        if self.instance.original_status == InstanceStatus.TERMINATED:
+            print('Since the original instance %s was terminated, '
+                  'the new instance is going to be terminated.' % (
+                      self.original_instance_name))
+            try:
+                self.instance.stop_instance()
+            except:
+                print('Unable to terminate the new instance, but the migration'
+                      'has been finished.')
+        else:
             print(
                 'Restarting the original VM %s' % (self.original_instance_name))
-            print('start_instance_operation is running')
             self.instance.start_instance()
-        self.instance.migrated = False
 
-    # def rollback_failure_protection(self) -> bool:
-    #     """Try to rollback to the original VM. If the rollback procedure also fails,
-    #     then print out the original VM's instance configs in the console
-    #
-    #         Returns: True/False for successful/failed rollback
-    #         Raises: RollbackError
-    #     """
-    #     try:
-    #         self.rollback_original_instance()
-    #     except Exception as e:
-    #         warnings.warn('Rollback failed.', Warning)
-    #         print(e)
-    #         print(
-    #             'The original VM may have been deleted. '
-    #             'The instance configs of the original VM is: ')
-    #         print(self.instance.original_instance_configs)
-    #         raise RollbackError('Rollback to the original VM is failed.')
-    #
-    #     print('Rollback finished. The original VM is running.')
-    #     return True
+        self.instance.migrated = False
