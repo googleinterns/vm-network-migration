@@ -82,12 +82,12 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         Returns: None
 
         """
-        # referrer_links = self.instance.get_referrer_selfLinks()
-        # if len(referrer_links) > 0:
-        #     raise AmbiguousTargetResource(
-        #         'The instance %s is a member of %s, please detach the instance from its referrer and try again. '
-        #         'Or you can try to migrate its referrer directly.' % (
-        #             self.original_instance_name, ','.join(referrer_links)))
+        referrer_links = self.instance.get_referrer_selfLinks()
+        if len(referrer_links) > 0:
+            raise AmbiguousTargetResource(
+                'The instance %s is a member of %s, please detach the instance from its referrer and try again. '
+                'Or you can try to migrate its referrer directly.' % (
+                    self.original_instance_name, ','.join(referrer_links)))
 
         try:
             print('Checking the external IP address of the VM %s.' % (

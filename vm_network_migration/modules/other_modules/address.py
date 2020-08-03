@@ -100,7 +100,9 @@ class Address:
                 error_reason = e._get_reason()
                 # The external IP is already preserved as a static IP,
                 # or the current name of the external IP already exists
-                if 'already' in error_reason:
+                if 'already reserved' in error_reason:
+                    pass
+                elif 'exists' in error_reason:
                     warnings.warn(error_reason, Warning)
                 else:
                     warnings.warn(

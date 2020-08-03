@@ -177,6 +177,34 @@ class UnmanagedInstanceGroup(InstanceGroup):
             else:
                 raise e
 
+    def remove_an_instance(self, instance_selfLink):
+        """ Remove an instance from the instance group
+
+         Args:
+             instance_selflink: the instance's selfLink
+
+         Returns: a deserialized object of the response
+         Raises: HttpError
+
+         """
+        try:
+            add_instance_operation = self.compute.instanceGroups().removeInstances(
+                project=self.project,
+                zone=self.zone,
+                instanceGroup=self.instance_group_name,
+                body={
+                    'instances': [{
+                        'instance': instance_selfLink}]}).execute()
+            self.operation.wait_for_zone_operation(
+                add_instance_operation['name'])
+            return add_instance_operation
+        except HttpError as e:
+            error_reason = e._get_reason()
+            if 'is not a member of' in error_reason:
+                warnings.warn(error_reason, Warning)
+            else:
+                raise e
+
     def add_all_instances(self):
         """ Add all the instances in self.instances to the current instance group
         Returns:

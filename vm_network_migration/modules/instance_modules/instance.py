@@ -198,7 +198,6 @@ class Instance(object):
         Raises:
             googleapiclient.errors.HttpError: invalid request
         """
-        print('debugging',diskInfo)
         attach_disk_operation = self.compute.instances().attachDisk(
             project=self.project,
             zone=self.zone,

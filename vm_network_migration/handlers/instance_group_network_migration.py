@@ -136,8 +136,10 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             instance_migration_handler = selfLink_executor.build_migration_handler()
             if instance_migration_handler != None:
                 self.instance_migration_handlers.append(instance_migration_handler)
-        for instance_migration_handler in self.instance_migration_handlers:
-            instance_migration_handler.network_migration()
+                print('Detaching the instance %s.' %(instance_selfLink))
+                self.instance_group.remove_an_instance(instance_selfLink)
+                print('Migrating the instance %s.' %(instance_selfLink))
+                instance_migration_handler.network_migration()
 
         print('Deleting the original instance group %s.' % (
             self.instance_group_name))
