@@ -102,21 +102,18 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
         try:
             print('Migrating single instance backends')
             for instance_migration_handler in self.instance_migration_handlers:
-                print('Migrating: ',
-                      instance_migration_handler.original_instance_name)
+                print('Migrating: %s.'
+                      %(instance_migration_handler.original_instance_name))
                 instance_migration_handler.network_migration()
                 print('Reattaching the instance to the target pool')
                 self.target_pool.add_instance(
                     instance_migration_handler.get_instance_selfLink())
 
-            print('Migrating managed instance group backends')
+            print('Migrating backends of %s.' %(self.target_pool_name))
             for instance_group_migration_handler in self.instance_group_migration_handlers:
-                print('Migrating:',
-                      instance_group_migration_handler.instance_group_name)
+                print('Migrating: %s.'
+                      %(instance_group_migration_handler.instance_group_name))
                 instance_group_migration_handler.network_migration()
-                print('Reattaching the instance group to the target pool')
-                instance_group_migration_handler.instance_group.set_target_pool(
-                    self.target_pool.selfLink)
 
         except Exception as e:
             warnings.warn(e, Warning)
