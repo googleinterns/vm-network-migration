@@ -91,3 +91,7 @@ class AmbiguousTargetResource(Exception):
 class MultipleTargetPools(Exception):
     """The instance group is serving mutliple target pools at the same time"""
     pass
+
+class SubnetworkNotExists(Exception):
+    """The subnetwork doens't exist in the network"""
+    pass
