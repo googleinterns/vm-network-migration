@@ -100,7 +100,7 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
 
         """
         try:
-            print('Migrating single instance backends')
+
             for instance_migration_handler in self.instance_migration_handlers:
                 print('Migrating: %s.'
                       %(instance_migration_handler.original_instance_name))
