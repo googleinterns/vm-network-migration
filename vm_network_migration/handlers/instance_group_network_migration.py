@@ -193,7 +193,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         self.instance_group.modify_instance_group_configs_with_instance_template(
             self.instance_group.new_instance_group_configs,
             new_instance_template_link)
-        print(self.instance_group.new_instance_group_configs)
+        # print(self.instance_group.new_instance_group_configs)
         print('Deleting the original instance group: %s.' % (
             self.instance_group_name))
         self.instance_group.delete_instance_group()

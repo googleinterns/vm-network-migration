@@ -50,7 +50,6 @@ class InstanceGroupHelper:
         else:
             if 'Instance Group Manager' not in instance_group_configs[
                 'description']:
-                print('Migrating an unmanaged instance group.')
                 return UnmanagedInstanceGroup(self.compute, self.project,
                                               self.instance_group_name,
                                               self.network,
@@ -58,7 +57,6 @@ class InstanceGroupHelper:
                                               self.preserve_instance_ip,
                                               self.zone)
             else:
-                print('Migrating a single-zone managed instance group.')
                 return ZonalManagedInstanceGroup(self.compute,
                                                  self.project,
                                                  self.instance_group_name,
@@ -71,7 +69,6 @@ class InstanceGroupHelper:
         except Exception as e:
             raise e
         else:
-            print('Migrating a regional managed instance group.')
             return RegionalManagedInstanceGroup(self.compute, self.project,
                                                 self.instance_group_name,
                                                 self.network,
