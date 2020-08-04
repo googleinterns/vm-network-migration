@@ -91,7 +91,7 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
             print(
                 'The backend service migration was failed. Rolling back all the backends to its original network.')
             self.rollback()
-            raise MigrationFailed('Rollback has been finished.')
+            raise MigrationFailed('Rollback finished.')
 
     def rollback(self):
         """ Rollback

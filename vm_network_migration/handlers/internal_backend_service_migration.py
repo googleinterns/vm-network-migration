@@ -87,11 +87,11 @@ class InternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
             print(
                 'The backend service is in use by two or more forwarding rules. It cannot be migrated. Terminating.')
         else:
-            print('Deleting the backend service.')
+            print('Deleting the backend service: %s.' %(self.backend_service_name))
             self.backend_service.delete_backend_service()
-            print('Migrating the backends one by one.')
+            print('Migrating the backends of %s one by one.' %(self.backend_service_name))
             self.migrate_backends()
-            print('Creating the backend service in the target subnet')
+            print('Creating the backend service (%s) in the target network' %(self.backend_service_name))
             self.backend_service.insert_backend_service(
                 self.backend_service.new_backend_service_configs)
 
@@ -102,19 +102,19 @@ class InternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
 
         """
         if self.backend_service == None:
-            print('Unable to fetch the backend service.')
+            print('Unable to fetch the backend service: %s.' %(self.backend_service_name))
             return
         if self.backend_service.check_backend_service_exists():
             if self.backend_service.migrated:
-                print('Deleting the new backend service')
+                print('Deleting the backend service from the target network.')
                 self.backend_service.delete_backend_service()
             else:
                 # The original backend service wasn't deleted.
                 # Therefore, the migration never started.
                 return
-        print('Rolling back the backends to the original network ')
+        print('Rolling back the backends of %s to the original network.' %(self.backend_service_name))
         for backend_migration_handler in self.backend_migration_handlers:
             backend_migration_handler.rollback()
-        print('Recreating the backend service with the original configuration')
+        print('Recreating the backend service in the original network')
         self.backend_service.insert_backend_service(
             self.backend_service.backend_service_configs)

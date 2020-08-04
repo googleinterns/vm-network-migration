@@ -83,7 +83,7 @@ class ExternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
     def network_migration(self):
         """ Migrate the network of an external backend service.
         """
-        print('Migrating an external backend service %s' %(self.backend_service.backend_service_name))
+        print('Migrating an external backend service: %s' %(self.backend_service.backend_service_name))
         self.migrate_backends()
         self.backend_service.migrated = True
 
