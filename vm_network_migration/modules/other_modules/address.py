@@ -111,6 +111,14 @@ class Address:
                     print(e._get_reason())
                     print('An ephemeral external IP address will be assigned.')
                     self.external_ip = None
+            except Exception as e:
+                warnings.warn(
+                    'Failed to preserve the external IP address as a static IP.',
+                    Warning)
+                print(e)
+                print('An ephemeral external IP address will be assigned.')
+                self.external_ip = None
+
             else:
                 print(
                     'The external IP address is reserved as a static IP address.')
