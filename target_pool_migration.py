@@ -35,6 +35,7 @@ Run the script by terminal, for example:
 
 """
 import warnings
+import os
 import google.auth
 from googleapiclient import discovery
 import argparse
@@ -44,6 +45,8 @@ if __name__ == '__main__':
     # google credentrial setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
+    if os.path.exists('./backup.log'):
+        os.remove('./backup.log')
 
     parser = argparse.ArgumentParser(
         description=__doc__,

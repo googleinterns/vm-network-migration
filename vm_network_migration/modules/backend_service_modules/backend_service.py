@@ -15,6 +15,7 @@
 """ BackendService class: describe a backend service.
 """
 from vm_network_migration.utils import initializer
+import logging
 
 
 class BackendService(object):
@@ -34,6 +35,13 @@ class BackendService(object):
         self.operations = None
         self.migrated = False
 
+    def log(self):
+        logging.basicConfig(filename='backup.log', level=logging.INFO)
+        logging.info(
+            '-------Backend Service: %s-----' % (self.backend_service_name))
+        logging.info(self.backend_service_configs)
+        logging.info('--------------------------')
+        
     def get_backend_service_configs(self):
         pass
 

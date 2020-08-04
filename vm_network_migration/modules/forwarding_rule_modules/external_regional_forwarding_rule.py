@@ -26,6 +26,7 @@ class ExternalRegionalForwardingRule(RegionalForwardingRule):
                                                              network,
                                                              subnetwork, region)
         self.target_pool_selfLink = self.get_target_pool_selfLink()
+        self.log()
 
     def get_target_pool_selfLink(self):
         """ Get the target pool serving the forwarding rule

@@ -23,11 +23,12 @@ from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetw
 from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroup
 from vm_network_migration.modules.instance_modules.instance import Instance
 from vm_network_migration.modules.other_modules.operations import Operations
+import logging
 
 
 class UnmanagedInstanceGroup(InstanceGroup):
     def __init__(self, compute, project, instance_group_name, network_name,
-                 subnetwork_name, preserve_instance_ip,zone):
+                 subnetwork_name, preserve_instance_ip, zone):
         """ Initialize an unmanaged instance group object
 
         Args:
@@ -39,7 +40,8 @@ class UnmanagedInstanceGroup(InstanceGroup):
         """
         super(UnmanagedInstanceGroup, self).__init__(compute, project,
                                                      instance_group_name,
-                                                     network_name, subnetwork_name,
+                                                     network_name,
+                                                     subnetwork_name,
                                                      preserve_instance_ip)
         self.zone = zone
         self.region = self.get_region()
@@ -48,10 +50,12 @@ class UnmanagedInstanceGroup(InstanceGroup):
         self.retrieve_instances()
         self.network = self.get_network()
         self.original_instance_group_configs = self.get_instance_group_configs()
-        self.new_instance_group_configs = self.get_new_instance_group_configs_using_new_network(self.original_instance_group_configs )
+        self.new_instance_group_configs = self.get_new_instance_group_configs_using_new_network(
+            self.original_instance_group_configs)
         self.status = self.get_status()
         self.operation = Operations(self.compute, self.project, self.zone, None)
         self.selfLink = self.get_selfLink(self.original_instance_group_configs)
+        self.log()
 
     def get_region(self) -> dict:
         """ Get region information

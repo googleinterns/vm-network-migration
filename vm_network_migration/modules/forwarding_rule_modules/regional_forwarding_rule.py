@@ -43,6 +43,7 @@ class RegionalForwardingRule(ForwardingRule):
         self.forwarding_rule_configs = self.get_forwarding_rule_configs()
         self.operations = Operations(self.compute, self.project, None,
                                      self.region)
+        self.log()
 
     def get_forwarding_rule_configs(self):
         """ Get the configs of the forwarding rule

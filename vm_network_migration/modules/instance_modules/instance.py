@@ -16,7 +16,7 @@
 """
 from copy import deepcopy
 from enum import Enum
-
+import logging
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.module_helpers.address_helper import AddressHelper
@@ -53,6 +53,14 @@ class Instance(object):
         self.selfLink = self.get_selfLink(self.original_instance_configs)
         # the instance has been migrated to a new network or not
         self.migrated = False
+        self.log()
+
+
+    def log(self):
+        logging.basicConfig(filename='backup.log', level=logging.INFO)
+        logging.info('-------Instance: %s-----' % (self.name))
+        logging.info(self.original_instance_configs)
+        logging.info('--------------------------')
 
     def retrieve_instance_configs(self) -> dict:
         """ Get the instance template from an instance.

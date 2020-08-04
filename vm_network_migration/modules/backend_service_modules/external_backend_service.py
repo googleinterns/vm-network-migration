@@ -45,6 +45,7 @@ class ExternalBackendService(BackendService):
         self.backend_service_configs = self.get_backend_service_configs()
         self.operations = Operations(self.compute, self.project)
         self.preserve_instance_external_ip = preserve_instance_external_ip
+        self.log()
 
     def get_backend_service_configs(self):
         args = {
@@ -67,8 +68,9 @@ class ExternalBackendService(BackendService):
         updated_backend_service['backends'] = [v for v in
                                                updated_backend_service[
                                                    'backends'] if
-                                               not is_equal_or_contians(v['group'],
-                                                                    backend_selfLink)]
+                                               not is_equal_or_contians(
+                                                   v['group'],
+                                                   backend_selfLink)]
         args = {
             'project': self.project,
             'backendService': self.backend_service_name,

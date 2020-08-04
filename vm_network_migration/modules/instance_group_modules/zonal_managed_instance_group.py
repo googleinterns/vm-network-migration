@@ -46,3 +46,4 @@ class ZonalManagedInstanceGroup(ManagedInstanceGroup):
         self.autoscaler = self.get_autoscaler()
         self.autoscaler_configs = self.get_autoscaler_configs()
         self.selfLink = self.get_selfLink(self.original_instance_group_configs)
+        self.log()
