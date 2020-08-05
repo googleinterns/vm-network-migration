@@ -165,6 +165,12 @@ class ForwardingRule(object):
         return []
 
     def get_backends_selfLinks(self) -> list:
+        """ Get all backends of this forwarding rule. The backends list can
+        contain backend service, or a target pool, or a target instance
+
+        Returns: a list of GCE resource selfLinks
+
+        """
         if self.forwarding_rule_configs != None and 'target' in self.forwarding_rule_configs:
             target_selfLink = self.forwarding_rule_configs['target']
             print(target_selfLink)
