@@ -97,6 +97,8 @@ class InstanceGroup(object):
         """
         pass
 
+    def compare_original_network_and_target_network(self):
+        return False
 
 class InstanceGroupStatus(Enum):
     """

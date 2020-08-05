@@ -61,3 +61,6 @@ class BackendService(object):
 
         """
         return len(self.get_connecting_forwarding_rule_list())
+
+    def compare_original_network_and_target_network(self):
+        return False

@@ -16,11 +16,6 @@ TCP/UDP external load balancer or an HTTP external load balancer.
 It is always a global compute engine resource.
 
 """
-from copy import deepcopy
-
-from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
-from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.utils import is_equal_or_contians
 from vm_network_migration.modules.backend_service_modules.global_backend_service import GlobalBackendService
 
 

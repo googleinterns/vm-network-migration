@@ -24,6 +24,7 @@ from vm_network_migration.modules.instance_group_modules.instance_group import I
 from vm_network_migration.modules.instance_modules.instance import Instance
 from vm_network_migration.modules.other_modules.operations import Operations
 import logging
+from vm_network_migration.utils import is_equal_or_contians
 
 
 class UnmanagedInstanceGroup(InstanceGroup):
@@ -235,3 +236,16 @@ class UnmanagedInstanceGroup(InstanceGroup):
         new_instance_group_configs['network'] = self.network.network_link
         new_instance_group_configs['subnetwork'] = self.network.subnetwork_link
         return new_instance_group_configs
+
+    def compare_original_network_and_target_network(self):
+        """ Abstract method: check if the original network is the
+        same as the target subnet
+        """
+        if 'subnetwork' not in self.original_instance_group_configs:
+            return False
+        elif is_equal_or_contians(
+                self.original_instance_group_configs['subnetwork'],
+                self.network.subnetwork_link):
+            return True
+        else:
+            return False
