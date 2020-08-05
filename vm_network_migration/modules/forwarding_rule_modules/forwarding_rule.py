@@ -171,6 +171,7 @@ class ForwardingRule(object):
         Returns: a list of GCE resource selfLinks
 
         """
+        backends_selfLinks = []
         if self.forwarding_rule_configs != None and 'target' in self.forwarding_rule_configs:
             target_selfLink = self.forwarding_rule_configs['target']
             print(target_selfLink)
@@ -178,7 +179,7 @@ class ForwardingRule(object):
                                                   self.network, self.subnetwork)
             # it can be a target instance, target pool or a backend service
             if self_link_executor.is_a_supported_resource():
-                return [target_selfLink]
+                backends_selfLinks.append(target_selfLink)
             # it is a target proxy
             else:
                 target_proxy_type = self.get_target_proxy_type()
@@ -186,6 +187,8 @@ class ForwardingRule(object):
                 target_proxy_configs = self.get_target_proxy_configs(
                     target_proxy_type, target_proxy_name,
                     self_link_executor.region)
-                return self.get_backend_service_selfLinks_from_target_proxy_configs(
-                    target_proxy_configs)
-        return []
+                backends_selfLinks.extend(self.get_backend_service_selfLinks_from_target_proxy_configs(
+                    target_proxy_configs))
+        if 'backendService' in self.forwarding_rule_configs:
+            backends_selfLinks.append(self.forwarding_rule_configs['backendService'])
+        return backends_selfLinks
