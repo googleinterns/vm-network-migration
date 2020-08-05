@@ -24,7 +24,7 @@ from vm_network_migration.utils import is_equal_or_contians
 from vm_network_migration.modules.backend_service_modules.global_backend_service import GlobalBackendService
 
 
-class ExternalBackendService(GlobalBackendService):
+class InternalSelfManagedBackendService(GlobalBackendService):
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork, preserve_instance_external_ip):
         """ Initialization
@@ -38,7 +38,7 @@ class ExternalBackendService(GlobalBackendService):
             preserve_instance_external_ip: whether to preserve the external IPs
             of the instances serving the backends
         """
-        super(ExternalBackendService, self).__init__(compute, project,
+        super(InternalSelfManagedBackendService, self).__init__(compute, project,
                                                      backend_service_name,
                                                      network, subnetwork,
                                                      preserve_instance_external_ip)
