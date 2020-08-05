@@ -124,10 +124,9 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
 
         print('Deleting the forwarding rule: %s.' % (self.forwarding_rule_name))
         self.forwarding_rule.delete_forwarding_rule()
-        for backend_service in self.backends_migration_handlers:
-            print('Migrating the backends (%s) of the forwarding rule.' % (
-                backend_service.backend_service_name))
-            backend_service.network_migration()
+        for backends_migration_handler in self.backends_migration_handlers:
+            print('Migrating the backends of the forwarding rule.')
+            backends_migration_handler.network_migration()
         print('Recreating the forwarding rule (%s) in the target subnet.' % (
             self.forwarding_rule_name))
         self.forwarding_rule.insert_forwarding_rule(
@@ -210,7 +209,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
-        print('Migrating a forwarding rule: %s' % (self.forwarding_rule_name))
+        print('Migrating the forwarding rule: %s' % (self.forwarding_rule_name))
         try:
 
             if isinstance(self.forwarding_rule,
