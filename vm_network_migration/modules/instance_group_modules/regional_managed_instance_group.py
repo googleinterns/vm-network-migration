@@ -17,7 +17,7 @@ from copy import deepcopy
 
 from vm_network_migration.modules.instance_group_modules.managed_instance_group import ManagedInstanceGroup
 from vm_network_migration.modules.other_modules.operations import Operations
-
+import logging
 
 class RegionalManagedInstanceGroup(ManagedInstanceGroup):
     def __init__(self, compute, project, instance_group_name, network_name,
@@ -45,3 +45,4 @@ class RegionalManagedInstanceGroup(ManagedInstanceGroup):
         self.autoscaler = self.get_autoscaler()
         self.autoscaler_configs = self.get_autoscaler_configs()
         self.selfLink = self.get_selfLink(self.original_instance_group_configs)
+        self.log()

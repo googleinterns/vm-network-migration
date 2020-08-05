@@ -34,6 +34,7 @@ class InternalRegionalForwardingRule(RegionalForwardingRule):
         self.network_object = self.build_network_object()
         self.new_forwarding_rule_configs = self.get_new_forwarding_rule_with_new_network_info(
             self.forwarding_rule_configs)
+        self.log()
 
     def build_network_object(self):
         """ Create a SubnetNetwork object using the target subnet info

@@ -37,19 +37,20 @@ Run the script by terminal, for example:
 
 """
 import warnings
-
+import os
 import argparse
 import google.auth
 from googleapiclient import discovery
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.errors import *
 
-
 if __name__ == '__main__':
     # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
-
+    if os.path.exists('./backup.log'):
+        os.remove('./backup.log')
+        
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)

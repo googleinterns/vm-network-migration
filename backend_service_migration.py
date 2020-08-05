@@ -34,6 +34,7 @@ Run the script by terminal, for example:
      --region=us-central1
 
 """
+import os
 import warnings
 import google.auth
 from googleapiclient import discovery
@@ -41,6 +42,8 @@ import argparse
 from vm_network_migration.handlers.backend_service_migration import BackendServiceMigration
 
 if __name__ == '__main__':
+    if os.path.exists('./backup.log'):
+        os.remove('./backup.log')
     # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)

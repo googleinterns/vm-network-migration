@@ -21,6 +21,7 @@ from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecut
 from vm_network_migration.modules.target_pool_modules.target_pool import TargetPool
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
+from googleapiclient.errors import HttpError
 
 
 class TargetPoolMigration(ComputeEngineResourceMigration):
@@ -60,9 +61,15 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                                         self.network,
                                         self.subnetwork,
                                         self.preserve_instance_external_ip)
-
-            instance_migration_handler = executor.build_instance_migration_handler()
-            self.instance_migration_handlers.append(instance_migration_handler)
+            try:
+                instance_migration_handler = executor.build_instance_migration_handler()
+                self.instance_migration_handlers.append(
+                    instance_migration_handler)
+            except HttpError as e:
+                if 'not found' in e._get_reason():
+                    continue
+                else:
+                    raise e
 
     def build_instance_group_migration_handlers(self):
         """ Use instance group's selfLinks to create a list of
@@ -76,42 +83,45 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                                         self.network,
                                         self.subnetwork,
                                         self.preserve_instance_external_ip)
-
-            instance_group_migration_handler = executor.build_instance_group_migration_handler()
-            self.instance_group_migration_handlers.append(
-                instance_group_migration_handler)
+            try:
+                instance_group_migration_handler = executor.build_instance_group_migration_handler()
+                if instance_group_migration_handler != None:
+                    self.instance_group_migration_handlers.append(
+                        instance_group_migration_handler)
+            except HttpError as e:
+                if 'not found' in e._get_reason():
+                    continue
+                else:
+                    raise e
 
     def network_migration(self):
         """ Migrate the backends of the target pool one by one from a legacy
             network to the target subnet.
 
         """
+        print('Migrating a target pool: %s' % (self.target_pool_name))
         try:
-            print('Migrating single instance backends')
+
             for instance_migration_handler in self.instance_migration_handlers:
-                print('Migrating: ',
-                      instance_migration_handler.original_instance_name)
+                print('Migrating an instance backend: %s.'
+                      % (instance_migration_handler.original_instance_name))
                 instance_migration_handler.network_migration()
                 print('Reattaching the instance to the target pool')
                 self.target_pool.add_instance(
                     instance_migration_handler.get_instance_selfLink())
 
-            print('Migrating managed instance group backends')
             for instance_group_migration_handler in self.instance_group_migration_handlers:
-                print('Migrating:',
-                      instance_group_migration_handler.instance_group_name)
+                print('Migrating an instance group backend: %s.'
+                      % (instance_group_migration_handler.instance_group_name))
                 instance_group_migration_handler.network_migration()
-                print('Reattaching the instance group to the target pool')
-                instance_group_migration_handler.instance_group.set_target_pool(
-                    self.target_pool.selfLink)
 
         except Exception as e:
             warnings.warn(e, Warning)
             print(
-                'The backend service migration was failed. '
-                'Rolling back all the backends to its original network.')
+                'The target pool migration was failed. '
+                'Rolling back to its original network.')
             self.rollback()
-            raise MigrationFailed('Rollback has been finished.')
+            raise MigrationFailed('Rollback finished.')
 
     def rollback(self):
         """ Rollback
@@ -119,20 +129,24 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
-        print('Rolling back the single instance backends')
+        print('Rolling back the single instance backends of %s.' % (
+            self.target_pool_name))
         for instance_migration_handler in self.instance_migration_handlers:
-            print('Target: ',
+            print('Rollback: ',
                   instance_migration_handler.original_instance_name)
             instance_migration_handler.rollback()
             print('Reattaching the instance to the target pool')
             self.target_pool.add_instance(
                 instance_migration_handler.get_instance_selfLink())
 
-        print('Migrating instance group backends')
+        print('Rolling back instance group backends of %s.' % (
+            self.target_pool_name))
         for instance_group_migration_handler in self.instance_group_migration_handlers:
-            print('Target:',
+            print('Rollback:',
                   instance_group_migration_handler.instance_group_name)
             instance_group_migration_handler.rollback()
-            print('Reattaching the instance group to the target pool')
-            instance_group_migration_handler.instance_group.set_target_pool(
-                self.target_pool.selfLink)
+
+            if instance_group_migration_handler.instance_group != None:
+                print('Reattaching the instance group to the target pool')
+                instance_group_migration_handler.instance_group.set_target_pool(
+                    self.target_pool.selfLink)

@@ -15,7 +15,7 @@
 
 """
 from vm_network_migration.utils import initializer
-
+import logging
 
 class ForwardingRule(object):
     @initializer
@@ -35,6 +35,17 @@ class ForwardingRule(object):
         self.operations = None
 
         self.migrated = False
+
+    def log(self):
+        """ Log the configuration
+
+        Returns:
+
+        """
+        logging.basicConfig(filename='backup.log', level=logging.INFO)
+        logging.info('-------Forwarding Rule: %s-----' % (self.forwarding_rule_name))
+        logging.info(self.forwarding_rule_configs)
+        logging.info('--------------------------')
 
     def get_forwarding_rule_configs(self):
         """ Get the configs of a forwarding rule

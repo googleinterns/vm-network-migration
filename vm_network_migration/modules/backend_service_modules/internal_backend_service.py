@@ -22,6 +22,8 @@ from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetw
 from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
 from vm_network_migration.modules.other_modules.operations import Operations
 from googleapiclient.http import HttpError
+import logging
+
 
 class InternalBackendService(BackendService):
     def __init__(self, compute, project, backend_service_name, network,
@@ -48,6 +50,7 @@ class InternalBackendService(BackendService):
         self.network_object = self.build_network_object()
         self.new_backend_service_configs = self.get_new_backend_config_with_new_network_info(
             self.backend_service_configs)
+        self.log()
 
     def get_backend_service_configs(self):
         """ Get the configs of the backend service
@@ -175,4 +178,3 @@ class InternalBackendService(BackendService):
                 previous_request=request,
                 previous_response=response)
         return forwarding_rule_list
-

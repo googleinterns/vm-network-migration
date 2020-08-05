@@ -80,7 +80,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         backends_migration_handler = selfLink_executor.build_migration_handler()
         if backends_migration_handler != None:
             self.backends_migration_handlers.append(backends_migration_handler)
-            print('Migrating the target pool.')
+            print('Migrating the target pool: %s.' %(target_pool_selfLink))
             backends_migration_handler.network_migration()
 
     def migrate_an_internal_regional_forwarding_rule(self):
@@ -116,12 +116,12 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                             'Terminating. ')
                         return
 
-        print('Deleting the forwarding rule %s.' %(self.forwarding_rule_name))
+        print('Deleting the forwarding rule: %s.' %(self.forwarding_rule_name))
         self.forwarding_rule.delete_forwarding_rule()
         for backend_service in self.backends_migration_handlers:
-            print('Migrating the backends of the forwarding rule.')
+            print('Migrating the backends (%s) of the forwarding rule.' %(backend_service.backend_service_name))
             backend_service.network_migration()
-        print('Recreating the forwarding rule in the target subnet.')
+        print('Recreating the forwarding rule (%s) in the target subnet.' %(self.forwarding_rule_name))
         self.forwarding_rule.insert_forwarding_rule(
             self.forwarding_rule.new_forwarding_rule_configs)
 
@@ -137,7 +137,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         """
         backend_service_selfLinks = self.forwarding_rule.backend_service_selfLinks
         if backend_service_selfLinks == []:
-            print('No backends need to be migrated. Terminating the migration.')
+            print('No backend service needs to be migrated. Terminating the migration.')
             return
         for selfLink in backend_service_selfLinks:
             selfLink_executor = SelfLinkExecutor(self.compute, selfLink,
@@ -198,7 +198,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
-        print('Migrating: %s' %(self.forwarding_rule_name))
+        print('Migrating a forwarding rule: %s' %(self.forwarding_rule_name))
         try:
             if isinstance(self.forwarding_rule, ExternalRegionalForwardingRule):
                 self.migrate_an_external_regional_forwarding_rule()
@@ -210,7 +210,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         except Exception as e:
             warnings.warn(e, Warning)
             self.rollback()
-            raise MigrationFailed('Rollback has been finished.')
+            raise MigrationFailed('Rollback finished.')
 
     def rollback(self):
         """ Error happens. Rollback to the original status.
@@ -224,4 +224,4 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
             self.rollback_an_internal_regional_forwarding_rule()
         elif isinstance(self.forwarding_rule, GlobalForwardingRule):
             self.rollback_a_global_forwarding_rule()
-        print('Rollback has been finished.')
+        print('Rollback finished.')

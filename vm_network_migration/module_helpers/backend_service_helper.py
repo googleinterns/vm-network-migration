@@ -76,7 +76,7 @@ class BackendServiceHelper:
                                                   self.region)
                 else:
                     raise UnsupportedBackendService(
-                        'The typeof the backend service is not supported. Migration is terminating.')
+                        'The backend service with a loadBalancingScheme %s is not supported. Migration is terminating.'%(self.backend_config['loadBalancingScheme']))
 
     def get_regional_backend_service_config(self):
         """ Get the regional backend service configuration

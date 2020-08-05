@@ -20,7 +20,7 @@ from vm_network_migration.modules.instance_group_modules.unmanaged_instance_grou
 from vm_network_migration.modules.other_modules.operations import Operations
 from vm_network_migration.utils import initializer
 from vm_network_migration.errors import *
-
+import logging
 
 class TargetPool:
     @initializer
@@ -40,6 +40,7 @@ class TargetPool:
         """
 
         self.target_pool_config = self.get_target_pool_configs()
+        self.log()
         self.selfLink = self.get_selfLink()
         self.operations = Operations(self.compute, self.project, None,
                                      self.region)
@@ -48,6 +49,12 @@ class TargetPool:
         # The instances which belong to one or more unmanaged instance groups
         self.attached_managed_instance_groups_selfLinks = []
         self.get_attached_backends()
+
+    def log(self):
+        logging.basicConfig(filename='backup.log', level=logging.INFO)
+        logging.info('-------Target Pool: %s-----' % (self.target_pool_name))
+        logging.info(self.target_pool_config)
+        logging.info('--------------------------')
 
     def get_target_pool_configs(self):
         """ Get the configs of the target pool

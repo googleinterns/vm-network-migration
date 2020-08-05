@@ -16,7 +16,7 @@
 """
 from copy import deepcopy
 from enum import Enum
-
+import logging
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.module_helpers.address_helper import AddressHelper
@@ -53,6 +53,14 @@ class Instance(object):
         self.selfLink = self.get_selfLink(self.original_instance_configs)
         # the instance has been migrated to a new network or not
         self.migrated = False
+        self.log()
+
+
+    def log(self):
+        logging.basicConfig(filename='backup.log', level=logging.INFO)
+        logging.info('-------Instance: %s-----' % (self.name))
+        logging.info(self.original_instance_configs)
+        logging.info('--------------------------')
 
     def retrieve_instance_configs(self) -> dict:
         """ Get the instance template from an instance.
@@ -186,7 +194,7 @@ class Instance(object):
         for diskInfo in disks:
             self.detach_disk(diskInfo['deviceName'])
 
-    def attach_disk(self, disk):
+    def attach_disk(self, diskInfo):
         """Attach a disk to the instance
 
         Args:
@@ -203,7 +211,7 @@ class Instance(object):
             zone=self.zone,
             instance=self.name,
             forceAttach=True,
-            body=disk).execute()
+            body=diskInfo).execute()
         self.operations.wait_for_zone_operation(attach_disk_operation['name'])
         return attach_disk_operation
 
@@ -214,7 +222,7 @@ class Instance(object):
         """
         disks = self.get_disks_info_from_instance_configs()
         for diskInfo in disks:
-            self.attach_disk(diskInfo['deviceName'])
+            self.attach_disk(diskInfo)
 
     def modify_instance_configs_with_new_network(self, new_network_link,
                                                  new_subnetwork_link,
