@@ -24,6 +24,7 @@ from vm_network_migration.modules.backend_service_modules.global_backend_service
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
+
 class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, backend_service_name, network,
@@ -46,11 +47,11 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
 
         if backend_service == None:
             self.backend_service = GlobalBackendService(self.compute,
-                                                          self.project,
-                                                          self.backend_service_name,
-                                                          self.network,
-                                                          self.subnetwork,
-                                                          self.preserve_instance_external_ip)
+                                                        self.project,
+                                                        self.backend_service_name,
+                                                        self.network,
+                                                        self.subnetwork,
+                                                        self.preserve_instance_external_ip)
 
     def migrate_backends(self):
         """ Migrate the backends of the backend service one by one
@@ -74,17 +75,18 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
             if backend_migration_handler == None:
                 continue
             self.backend_migration_handlers.append(backend_migration_handler)
-            print('Detaching: %s' %(backend['group']))
+            print('Detaching: %s' % (backend['group']))
             self.backend_service.detach_a_backend(backend['group'])
-            print('Migrating: %s' %(backend['group']))
+            print('Migrating: %s' % (backend['group']))
             backend_migration_handler.network_migration()
-            print('Reattaching: %s' %(backend['group']))
+            print('Reattaching: %s' % (backend['group']))
             self.backend_service.reattach_all_backends()
 
     def network_migration(self):
         """ Migrate the network of an external backend service.
         """
-        print('Migrating an global backend service: %s' %(self.backend_service.backend_service_name))
+        print('Migrating an global backend service: %s' % (
+            self.backend_service.backend_service_name))
         self.migrate_backends()
         self.backend_service.migrated = True
 
@@ -99,12 +101,15 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
             return
         # Rollback the instance group backends one by one
         for backend_migration_handler in self.backend_migration_handlers:
-            print('Detaching a backend.')
-            self.backend_service.detach_a_backend(
-                backend_migration_handler.instance_group.selfLink)
-            print('Rolling back the backend.')
-            backend_migration_handler.rollback()
-            print('Reattaching the backend')
-            self.backend_service.reattach_all_backends()
+            if backend_migration_handler != None and backend_migration_handler.instance_group != None:
+                print('Detaching: %s' % (
+                    backend_migration_handler.instance_group.selfLink))
+                self.backend_service.detach_a_backend(
+                    backend_migration_handler.instance_group.selfLink)
+                backend_migration_handler.rollback()
+                print('Reattaching (%s) to (%s)' % (
+                backend_migration_handler.instance_group.selfLink,
+                self.backend_service_name))
+                self.backend_service.reattach_all_backends()
 
         self.backend_service.migrated = False

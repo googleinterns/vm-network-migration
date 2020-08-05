@@ -100,4 +100,5 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
+        warnings.warn('Rolling back: %s.' %(self.backend_service_name), Warning)
         self.backend_service_migration_handler.rollback()

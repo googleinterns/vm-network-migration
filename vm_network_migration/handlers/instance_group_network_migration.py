@@ -31,7 +31,7 @@ from vm_network_migration.modules.instance_group_modules.unmanaged_instance_grou
 from vm_network_migration.modules.other_modules.instance_template import InstanceTemplate
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
-
+import warnings
 
 class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
     @initializer
@@ -88,12 +88,12 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             if self.instance_group == None:
                 self.instance_group = self.build_instance_group()
             if isinstance(self.instance_group, UnmanagedInstanceGroup):
-                print('Migrating an unmanaged instance group: %s.' % (
+                print('Migrating the unmanaged instance group: %s.' % (
                     self.instance_group_name))
                 self.migrate_unmanaged_instance_group()
 
             else:
-                print('Migrating a managed instance group: %s.' % (
+                print('Migrating the managed instance group: %s.' % (
                     self.instance_group_name))
                 if self.preserve_external_ip:
                     warn(
@@ -115,7 +115,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             print(
                 'The migration was failed. Rolling back to the original network.')
             self.rollback()
-            raise MigrationFailed('Rollback has been finished.')
+            raise MigrationFailed('Rollback was finished.')
 
     def migrate_unmanaged_instance_group(self):
         """ Migrate the network of an unmanaged instance group.
@@ -136,14 +136,14 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                 # self.instance_group.remove_an_instance(instance_selfLink)
                 instance_migration_handler.network_migration(force=True)
 
-        print('Deleting the original instance group: %s.' % (
+        print('Deleting: %s.' % (
             self.instance_group_name))
         self.instance_group.delete_instance_group()
         print(
-            'Creating a new instance group using the same configuration in the new network.')
+            'Recreating the instance group using the same configuration in the new network.')
         self.instance_group.create_instance_group(
             self.instance_group.new_instance_group_configs)
-        print('Adding the instances back to the new instance group: %s.' % (
+        print('Adding the instances back to the instance group: %s.' % (
             self.instance_group_name))
         self.instance_group.add_all_instances()
 
@@ -194,10 +194,10 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             self.instance_group.new_instance_group_configs,
             new_instance_template_link)
         # print(self.instance_group.new_instance_group_configs)
-        print('Deleting the original instance group: %s.' % (
+        print('Deleting: %s.' % (
             self.instance_group_name))
         self.instance_group.delete_instance_group()
-        print('Creating the instance group in new network.')
+        print('Creating the instance group in the target subnet.')
         self.instance_group.create_instance_group(
             self.instance_group.new_instance_group_configs)
 
@@ -244,7 +244,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         else:
             # The new instance group has been created
             if self.instance_group.migrated:
-                print('Deleting the instance group: %s.' % (
+                print('Deleting: %s.' % (
                     self.instance_group_name))
                 self.instance_group.delete_instance_group()
                 print(
@@ -269,6 +269,8 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         """ Rollback to the original instance group
 
         """
+        warnings.warn('Rolling back: %s.' %(self.instance_group_name), Warning)
+
         if self.instance_group == None:
             print('Unable to fetch the instance group: %s.' % (
                 self.instance_group_name))

@@ -82,7 +82,7 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         Returns: None
 
         """
-        print('Migrating a VM: %s.' % (self.original_instance_name))
+        print('Migrating the VM: %s.' % (self.original_instance_name))
         referrer_links = self.instance.get_referrer_selfLinks()
         if len(referrer_links) > 1 or (len(referrer_links) > 0 and not force):
             raise AmbiguousTargetResource(
@@ -91,20 +91,20 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
                     self.original_instance_name, ','.join(referrer_links)))
 
         try:
-            print('Checking the external IP address of the VM.')
+            print('Checking the external IP address of %s.' %(self.original_instance_name))
             self.instance.address_object.preserve_ip_addresses_handler(
                 self.preserve_external_ip)
 
-            print('Stopping the VM: %s.' % (self.original_instance_name))
+            print('Stopping: %s.' % (self.original_instance_name))
             self.instance.stop_instance()
 
             print('Detaching the disks.')
             self.instance.detach_disks()
 
-            print('Deleting the old VM: %s.' % (self.original_instance_name))
+            print('Deleting: %s.' % (self.original_instance_name))
             self.instance.delete_instance()
 
-            print('Creating a new VM: %s.' % (self.original_instance_name))
+            print('Creating the new VM in the target subnet: %s.' % (self.original_instance_name))
             # print('Modified instance configuration:',
             #       self.instance.new_instance_configs)
             self.instance.create_instance(self.instance.new_instance_configs)
@@ -132,7 +132,7 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         original instance and restart it.
         """
         warnings.warn(
-            'VM network migration was failed. Rolling back to the original network %s.' % (
+            'Rolling back: %s.' % (
                 self.original_instance_name),
             Warning)
         if self.instance == None or self.instance.original_instance_configs == None:
@@ -146,12 +146,12 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             if self.instance.migrated:
                 # The migration has been finished, but force to rollback
                 print(
-                    'Stopping the instance: %s.' % (
+                    'Stopping: %s.' % (
                         self.original_instance_name))
                 self.instance.stop_instance()
                 print('Detaching the disks.')
                 self.instance.detach_disks()
-                print('Deleting the instance in the target network.')
+                print('Deleting the instance (%s) in the target subnet.'%(self.original_instance_name))
                 self.instance.delete_instance()
             else:
                 return

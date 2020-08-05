@@ -99,11 +99,10 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
             network to the target subnet.
 
         """
-        print('Migrating a target pool: %s' % (self.target_pool_name))
+        print('Migrating the target pool: %s' % (self.target_pool_name))
         try:
-
             for instance_migration_handler in self.instance_migration_handlers:
-                print('Migrating an instance backend: %s.'
+                print('Migrating: %s.'
                       % (instance_migration_handler.original_instance_name))
                 instance_migration_handler.network_migration()
                 print('Reattaching the instance to the target pool')
@@ -111,7 +110,7 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                     instance_migration_handler.get_instance_selfLink())
 
             for instance_group_migration_handler in self.instance_group_migration_handlers:
-                print('Migrating an instance group backend: %s.'
+                print('Migrating: %s.'
                       % (instance_group_migration_handler.instance_group_name))
                 instance_group_migration_handler.network_migration()
 
@@ -129,24 +128,16 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
-        print('Rolling back the single instance backends of %s.' % (
-            self.target_pool_name))
+        warnings.warn('Rolling back: %s.' % (self.target_pool_name), Warning)
         for instance_migration_handler in self.instance_migration_handlers:
-            print('Rollback: ',
-                  instance_migration_handler.original_instance_name)
             instance_migration_handler.rollback()
-            print('Reattaching the instance to the target pool')
+            print('Reattaching the instance (%s) to the target pool' %(instance_migration_handler.original_instance_name))
             self.target_pool.add_instance(
                 instance_migration_handler.get_instance_selfLink())
 
-        print('Rolling back instance group backends of %s.' % (
-            self.target_pool_name))
         for instance_group_migration_handler in self.instance_group_migration_handlers:
-            print('Rollback:',
-                  instance_group_migration_handler.instance_group_name)
             instance_group_migration_handler.rollback()
-
             if instance_group_migration_handler.instance_group != None:
-                print('Reattaching the instance group to the target pool')
+                print('Reattaching the instance group (%s) to the target pool' %(instance_group_migration_handler.instance_group_name))
                 instance_group_migration_handler.instance_group.set_target_pool(
                     self.target_pool.selfLink)

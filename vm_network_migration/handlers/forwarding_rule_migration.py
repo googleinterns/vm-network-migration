@@ -82,7 +82,6 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         backends_migration_handler = selfLink_executor.build_migration_handler()
         if backends_migration_handler != None:
             self.backends_migration_handlers.append(backends_migration_handler)
-            print('Migrating the target pool: %s.' % (target_pool_selfLink))
             backends_migration_handler.network_migration()
 
     def migrate_an_internal_regional_forwarding_rule(self):
@@ -122,7 +121,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                             'Terminating. ')
                         return
 
-        print('Deleting the forwarding rule: %s.' % (self.forwarding_rule_name))
+        print('Deleting: %s.' % (self.forwarding_rule_name))
         self.forwarding_rule.delete_forwarding_rule()
         for backends_migration_handler in self.backends_migration_handlers:
             print('Migrating the backends of the forwarding rule.')
@@ -190,7 +189,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                 self.forwarding_rule.check_forwarding_rule_exists():
             return
         if self.forwarding_rule.migrated:
-            print('Deleting the migrated forwarding rule.')
+            print('Deleting: %s.' %(self.forwarding_rule_name))
             self.forwarding_rule.delete_forwarding_rule()
             for backend_service_migration_handler in self.backends_migration_handlers:
                 backend_service_migration_handler.rollback()
@@ -226,8 +225,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         """ Error happens. Rollback to the original status.
 
         """
-        print(
-            'The migration was failed. Rolling back to the original forwarding rule settings.')
+        warnings.warn('Rolling back: %s.' %(self.forwarding_rule_name), Warning)
 
         if isinstance(self.forwarding_rule, InternalRegionalForwardingRule):
             self.rollback_an_internal_regional_forwarding_rule()
