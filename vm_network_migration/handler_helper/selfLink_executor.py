@@ -22,10 +22,11 @@ from vm_network_migration.errors import *
 from vm_network_migration.utils import initializer
 import warnings
 
+
 class SelfLinkExecutor:
     @initializer
     def __init__(self, compute, selfLink, network, subnetwork,
-                 preserve_instance_external_ip):
+                 preserve_instance_external_ip=False):
         """ Initialization
 
         Args:
@@ -149,6 +150,21 @@ class SelfLinkExecutor:
                                           self.selfLink)
         if target_instance_match != None:
             return target_instance_match[1]
+
+    def is_a_supported_resource(self) -> bool:
+        """ Check if the selfLink is a supported GCE resource
+
+        Returns: True/False
+
+        """
+        if self.instance != None \
+                or self.instance_group != None \
+                or self.backend_service != None \
+                or self.target_pool != None \
+                or self.forwarding_rule != None \
+                or self.target_instance != None:
+            return True
+        return False
 
     def build_migration_handler(self) -> object:
         """ Build a migration handler
@@ -290,7 +306,7 @@ class SelfLinkExecutor:
                                                               self.subnetwork,
                                                               self.preserve_instance_external_ip,
                                                               self.zone)
-            
+
             return target_instance_handler
 
     def build_target_pool_migration_handler(self):

@@ -52,7 +52,8 @@ class ForwardingRuleHelper:
             load_balancing_schema = self.get_load_balancing_schema()
             if load_balancing_schema == 'EXTERNAL':
                 return self.build_an_external_regional_forwarding_rule()
-            elif load_balancing_schema == 'INTERNAL':
+            elif load_balancing_schema == 'INTERNAL' \
+                    or load_balancing_schema == 'INTERNAL_MANAGED':
                 return self.build_an_internal_regional_forwarding_rule()
             else:
 

@@ -30,7 +30,7 @@ class InternalRegionalForwardingRule(RegionalForwardingRule):
                                                              network,
                                                              subnetwork,
                                                              region)
-        self.backend_service_selfLink = self.get_backend_service_selfLink()
+        self.backends_selfLinks = self.get_backends_selfLinks()
         self.network_object = self.build_network_object()
         self.new_forwarding_rule_configs = self.get_new_forwarding_rule_with_new_network_info(
             self.forwarding_rule_configs)

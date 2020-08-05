@@ -27,6 +27,8 @@ from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forw
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 from vm_network_migration.handlers.backend_service_migration import BackendServiceMigration
+
+
 class ForwardingRuleMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, forwarding_rule_name,
@@ -80,7 +82,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         backends_migration_handler = selfLink_executor.build_migration_handler()
         if backends_migration_handler != None:
             self.backends_migration_handlers.append(backends_migration_handler)
-            print('Migrating the target pool: %s.' %(target_pool_selfLink))
+            print('Migrating the target pool: %s.' % (target_pool_selfLink))
             backends_migration_handler.network_migration()
 
     def migrate_an_internal_regional_forwarding_rule(self):
@@ -93,16 +95,20 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
-        backend_service_selfLink = self.forwarding_rule.backend_service_selfLink
-        if backend_service_selfLink != None:
-
+        backends_selfLinks = self.forwarding_rule.backends_selfLinks
+        for backends_selfLink in backends_selfLinks:
             selfLink_executor = SelfLinkExecutor(self.compute,
-                                                 backend_service_selfLink,
+                                                 backends_selfLink,
                                                  self.network_name,
                                                  self.subnetwork_name,
                                                  self.preserve_instance_external_ip)
             # the backends can be a target instance or an internal backend service
-            backends_migration_handler = selfLink_executor.build_migration_handler()
+            try:
+                backends_migration_handler = selfLink_executor.build_migration_handler()
+            except UnsupportedBackendService:
+                warnings.warn('The load balancing scheme of (%s) is not supported. '
+                              'Continue migrating other backends.' %(backends_selfLink))
+                continue
             if backends_migration_handler != None:
                 self.backends_migration_handlers.append(
                     backends_migration_handler)
@@ -116,42 +122,57 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                             'Terminating. ')
                         return
 
-        print('Deleting the forwarding rule: %s.' %(self.forwarding_rule_name))
+        print('Deleting the forwarding rule: %s.' % (self.forwarding_rule_name))
         self.forwarding_rule.delete_forwarding_rule()
         for backend_service in self.backends_migration_handlers:
-            print('Migrating the backends (%s) of the forwarding rule.' %(backend_service.backend_service_name))
+            print('Migrating the backends (%s) of the forwarding rule.' % (
+                backend_service.backend_service_name))
             backend_service.network_migration()
-        print('Recreating the forwarding rule (%s) in the target subnet.' %(self.forwarding_rule_name))
+        print('Recreating the forwarding rule (%s) in the target subnet.' % (
+            self.forwarding_rule_name))
         self.forwarding_rule.insert_forwarding_rule(
             self.forwarding_rule.new_forwarding_rule_configs)
 
-    def migrate_a_global_forwarding_rule(self):
-        """ Network migration for a global forwarding rule. The global
-        forwarding rule points to a target proxy. Through the target proxy,
-        the tool can find the backend services information.
-        The tool will migrate these backends one by one without deleting
-        and recreating.
-
-        Returns:
+    def migrate_an_external_forwarding_rule(self):
+        """ Network migration for a external forwarding rule.
+        The tool will migrate its backend services one by one.
+        The forwarding rule will not be deleted or recreated.
 
         """
-        backend_service_selfLinks = self.forwarding_rule.backend_service_selfLinks
-        if backend_service_selfLinks == []:
-            print('No backend service needs to be migrated. Terminating the migration.')
+        backends_selfLinks = self.forwarding_rule.backends_selfLinks
+        if backends_selfLinks == []:
+            print(
+                'No backend service needs to be migrated. Terminating the migration.')
             return
-        for selfLink in backend_service_selfLinks:
-            selfLink_executor = SelfLinkExecutor(self.compute, selfLink,
+        for backends_selfLink in backends_selfLinks:
+            selfLink_executor = SelfLinkExecutor(self.compute,
+                                                 backends_selfLink,
                                                  self.network_name,
                                                  self.subnetwork_name,
                                                  self.preserve_instance_external_ip)
-            backend_service_migration_handler = selfLink_executor.build_migration_handler()
-            # Save handlers for rollback purpose
-            if backend_service_migration_handler != None:
+            try:
+                backends_migration_handler = selfLink_executor.build_migration_handler()
+            except UnsupportedBackendService:
+                warnings.warn(
+                    'The load balancing scheme of (%s) is not supported. '
+                    'Continue migrating other backends.' % (backends_selfLink))
+                continue            # Save handlers for rollback purpose
+            if backends_migration_handler != None:
+                if isinstance(backends_migration_handler,
+                              BackendServiceMigration):
+                    backend_service = backends_migration_handler.backend_service
+                    if backend_service != None and backend_service.count_forwarding_rules() > 1:
+                        print(
+                            'The backend service is associated with two or more forwarding rules, \n'
+                            'so it can not be migrated. \n'
+                            'Terminating. ')
+                        # this backend service will be ignored and will continue migrate other backend services
+                        continue
                 self.backends_migration_handlers.append(
-                    backend_service_migration_handler)
-                backend_service_migration_handler.network_migration()
+                    backends_migration_handler)
+                backends_migration_handler.network_migration()
 
-    def rollback_a_global_forwarding_rule(self):
+    def rollback_an_external_forwarding_rule(self):
         """ Rollback a global forwarding rule
 
         Returns:
@@ -182,15 +203,6 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
             self.forwarding_rule.insert_forwarding_rule(
                 self.forwarding_rule.forwarding_rule_configs)
 
-    def rollback_an_external_regional_forwarding_rule(self):
-        """ Rollback an external regional forwarding rule
-
-        Returns:
-
-        """
-        for target_pool_migration_handler in self.backends_migration_handlers:
-            target_pool_migration_handler.rollback()
-
     def network_migration(self):
         """ Select correct network migration functions based on the type of the
         forwarding rule.
@@ -198,15 +210,14 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
-        print('Migrating a forwarding rule: %s' %(self.forwarding_rule_name))
+        print('Migrating a forwarding rule: %s' % (self.forwarding_rule_name))
         try:
-            if isinstance(self.forwarding_rule, ExternalRegionalForwardingRule):
-                self.migrate_an_external_regional_forwarding_rule()
-            elif isinstance(self.forwarding_rule,
-                            InternalRegionalForwardingRule):
+
+            if isinstance(self.forwarding_rule,
+                          InternalRegionalForwardingRule):
                 self.migrate_an_internal_regional_forwarding_rule()
-            elif isinstance(self.forwarding_rule, GlobalForwardingRule):
-                self.migrate_a_global_forwarding_rule()
+            else:
+                self.migrate_an_external_forwarding_rule()
         except Exception as e:
             warnings.warn(e, Warning)
             self.rollback()
@@ -218,10 +229,9 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         """
         print(
             'The migration was failed. Rolling back to the original forwarding rule settings.')
-        if isinstance(self.forwarding_rule, ExternalRegionalForwardingRule):
-            self.rollback_an_external_regional_forwarding_rule()
-        elif isinstance(self.forwarding_rule, InternalRegionalForwardingRule):
+
+        if isinstance(self.forwarding_rule, InternalRegionalForwardingRule):
             self.rollback_an_internal_regional_forwarding_rule()
-        elif isinstance(self.forwarding_rule, GlobalForwardingRule):
-            self.rollback_a_global_forwarding_rule()
+        else:
+            self.rollback_an_external_forwarding_rule()
         print('Rollback finished.')
