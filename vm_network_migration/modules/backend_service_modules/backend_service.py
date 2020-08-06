@@ -33,7 +33,6 @@ class BackendService(object):
 
         self.backend_service_configs = None
         self.operations = None
-        self.migrated = False
 
     def log(self):
         logging.basicConfig(filename='backup.log', level=logging.INFO)

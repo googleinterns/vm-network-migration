@@ -88,7 +88,6 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
         print('Migrating an global backend service: %s' % (
             self.backend_service.backend_service_name))
         self.migrate_backends()
-        self.backend_service.migrated = True
 
     def rollback(self):
         """ Rollback
@@ -112,4 +111,4 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
                 self.backend_service_name))
                 self.backend_service.reattach_all_backends()
 
-        self.backend_service.migrated = False
+
