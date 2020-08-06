@@ -35,7 +35,6 @@ class InstanceGroup(object):
         self.new_instance_group_configs = None
         self.status = None
         self.operation = None
-        self.migrated = False
         self.selfLink = None
 
     def log(self):

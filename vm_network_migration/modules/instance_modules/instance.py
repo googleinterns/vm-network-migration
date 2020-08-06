@@ -54,8 +54,6 @@ class Instance(object):
         self.original_status = self.get_instance_status()
         self.status = deepcopy(self.original_status)
         self.selfLink = self.get_selfLink(self.original_instance_configs)
-        # the instance has been migrated to a new network or not
-        self.migrated = False
         self.log()
 
     def log(self):
@@ -343,10 +341,6 @@ class Instance(object):
             body=instance_configs).execute()
         self.operations.wait_for_zone_operation(
             create_instance_operation['name'])
-        if instance_configs == self.original_instance_configs:
-            self.migrated = False
-        elif instance_configs == self.new_instance_configs:
-            self.migrated = True
         return create_instance_operation
 
     def delete_instance(self) -> dict:
