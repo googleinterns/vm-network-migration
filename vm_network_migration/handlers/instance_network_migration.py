@@ -17,16 +17,16 @@ subnetwork mode network.
 
 """
 import warnings
+from enum import IntEnum
 
 from googleapiclient.http import HttpError
 from vm_network_migration.errors import *
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 from vm_network_migration.modules.instance_modules.instance import (
     Instance,
     InstanceStatus,
 )
 from vm_network_migration.utils import initializer
-from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
-from enum import IntEnum
 
 
 class InstanceNetworkMigration(ComputeEngineResourceMigration):
@@ -128,17 +128,6 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             self.rollback()
             raise MigrationFailed('Rollback to the original instance %s.' % (
                 self.original_instance_name))
-        # If the original status is terminated, the tool will try to terminate
-        # the migrated instance
-        if self.instance.original_status == InstanceStatus.TERMINATED:
-            print('Since the original instance %s was terminated, '
-                  'the new instance is going to be terminated.' % (
-                      self.original_instance_name))
-            try:
-                self.instance.stop_instance()
-            except:
-                print('Unable to terminate the new instance, but the migration'
-                      'has been finished.')
 
     def rollback(self):
         """ Rollback to the original VM. Reattach the disks to the
@@ -165,8 +154,12 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             print(
                 'Recreating the original instance (%s) in the legacy network.' % (
                     self.original_instance_name))
-            self.instance.create_instance(
-                self.instance.original_instance_configs)
+            try:
+                self.instance.create_instance(
+                    self.instance.original_instance_configs)
+            except:
+                self.instance.create_instance_with_ephemeral_external_ip(
+                    self.instance.original_instance_configs)
             self.migration_status = MigrationStatus(1)
 
         if self.migration_status == 2 or self.migration_status == 3:
@@ -184,17 +177,21 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
 
         if self.migration_status > 0 \
                 and self.instance.get_instance_status() != self.instance.original_status:
-            if self.instance.original_status == InstanceStatus.TERMINATED:
-                print(
-                    'Restarting the original VM: %s' % (
-                        self.original_instance_name))
-                self.instance.start_instance()
-            else:
-                print(
-                    'Stopping: %s.' % (
-                        self.original_instance_name))
-                self.instance.stop_instance()
-            self.migration_status = MigrationStatus(0)
+            try:
+                if self.instance.original_status == InstanceStatus.TERMINATED:
+                    print(
+                        'Restarting the original VM: %s' % (
+                            self.original_instance_name))
+                    self.instance.start_instance()
+                else:
+                    print(
+                        'Stopping: %s.' % (
+                            self.original_instance_name))
+                    self.instance.stop_instance()
+                self.migration_status = MigrationStatus(0)
+            except:
+                # Unable to set to the original status, but the rollback finished
+                pass
 
 
 class MigrationStatus(IntEnum):

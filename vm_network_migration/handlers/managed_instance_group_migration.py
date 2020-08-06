@@ -19,10 +19,12 @@ Ihe Google API python client module is imported to manage the GCP Compute Engine
  resources.
 """
 
-from warnings import warn
 from enum import IntEnum
+from warnings import warn
+
 from vm_network_migration.errors import *
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
+from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
 from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroupStatus
 from vm_network_migration.modules.other_modules.instance_template import InstanceTemplate
 from vm_network_migration.utils import initializer
@@ -42,8 +44,30 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
             region:
         """
         super(ManagedInstanceGroupMigration, self).__init__()
-        if self.instance_group == None:
-            self.instance_group = self.build_instance_group()
+        self.instance_group = self.build_instance_group()
+        self.original_instance_template = None
+        self.new_instance_template = None
+        self.migration_status = MigrationStatus(0)
+
+    def build_instance_group(self) -> object:
+        """ Create an InstanceGroup object.
+
+        Args:
+            instance_group_name: the name of the instance group
+
+        Returns: an InstanceGroup object
+
+        """
+        instance_group_helper = InstanceGroupHelper(self.compute,
+                                                    self.project,
+                                                    self.instance_group_name,
+                                                    self.region,
+                                                    self.zone,
+                                                    self.network_name,
+                                                    self.subnetwork_name,
+                                                    self.preserve_external_ip)
+        instance_group = instance_group_helper.build_instance_group()
+        return instance_group
 
     def network_migration(self):
         """ Migrate the network of a managed instance group.

@@ -19,11 +19,13 @@ Ihe Google API python client module is imported to manage the GCP Compute Engine
  resources.
 """
 
+from enum import IntEnum
+
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
-from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroupStatus
+from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
 from vm_network_migration.utils import initializer
-from enum import IntEnum
+
 
 class UnmanagedInstanceGroupMigration(ComputeEngineResourceMigration):
     @initializer
@@ -39,9 +41,29 @@ class UnmanagedInstanceGroupMigration(ComputeEngineResourceMigration):
             region:
         """
         super(UnmanagedInstanceGroupMigration, self).__init__()
-        if self.instance_group == None:
-            self.instance_group = self.build_instance_group()
+        self.instance_group = self.build_instance_group()
+        self.instance_migration_handlers = []
         self.migration_status = MigrationStatus(0)
+
+    def build_instance_group(self) -> object:
+        """ Create an InstanceGroup object.
+
+        Args:
+            instance_group_name: the name of the instance group
+
+        Returns: an InstanceGroup object
+
+        """
+        instance_group_helper = InstanceGroupHelper(self.compute,
+                                                    self.project,
+                                                    self.instance_group_name,
+                                                    self.region,
+                                                    self.zone,
+                                                    self.network_name,
+                                                    self.subnetwork_name,
+                                                    self.preserve_external_ip)
+        instance_group = instance_group_helper.build_instance_group()
+        return instance_group
 
     def network_migration(self):
         """ Migrate the network of an unmanaged instance group.
@@ -114,8 +136,9 @@ class UnmanagedInstanceGroupMigration(ComputeEngineResourceMigration):
             self.instance_group.add_all_instances()
             self.migration_status = MigrationStatus(0)
 
+
 class MigrationStatus(IntEnum):
-    NOT_START=0
+    NOT_START = 0
     MIGRATING_INSTANCES = 1
     MIGRATED_ALL_INSTANCES = 2
     ORIGINAL_GROUP_DELETED = 3
