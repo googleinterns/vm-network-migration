@@ -26,6 +26,7 @@ from vm_network_migration.modules.instance_modules.instance import (
 )
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
+from enum import IntEnum
 
 
 class InstanceNetworkMigration(ComputeEngineResourceMigration):
@@ -47,6 +48,7 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
                                  self.zone, self.network_name,
                                  self.subnetwork_name,
                                  preserve_instance_ip=self.preserve_external_ip)
+        self.migration_status = MigrationStatus(0)
 
     def get_region(self) -> dict:
         """ Get region information
@@ -84,7 +86,8 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         """
         print('Migrating the VM: %s.' % (self.original_instance_name))
         if self.instance.compare_original_network_and_target_network():
-            print('The VM %s is currently using the target subnet.' %(self.original_instance_name))
+            print('The VM %s is currently using the target subnet.' % (
+                self.original_instance_name))
             return
 
         referrer_links = self.instance.get_referrer_selfLinks()
@@ -95,24 +98,29 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
                     self.original_instance_name, ','.join(referrer_links)))
 
         try:
-            print('Checking the external IP address of %s.' %(self.original_instance_name))
+            print('Checking the external IP address of %s.' % (
+                self.original_instance_name))
             self.instance.address_object.preserve_ip_addresses_handler(
                 self.preserve_external_ip)
 
             print('Stopping: %s.' % (self.original_instance_name))
             self.instance.stop_instance()
+            self.migration_status += 1
 
             print('Detaching the disks.')
             self.instance.detach_disks()
+            self.migration_status += 1
 
             print('Deleting: %s.' % (self.original_instance_name))
             self.instance.delete_instance()
+            self.migration_status += 1
 
-            print('Creating the new VM in the target subnet: %s.' % (self.original_instance_name))
-            # print('Modified instance configuration:',
-            #       self.instance.new_instance_configs)
+            print('Creating the new VM in the target subnet: %s.' % (
+                self.original_instance_name))
             self.instance.create_instance(self.instance.new_instance_configs)
+            self.migration_status += 1
             print('The VM migration is successful.')
+
 
         except Exception as e:
             warnings.warn(str(e), Warning)
@@ -139,47 +147,30 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             'Rolling back: %s.' % (
                 self.original_instance_name),
             Warning)
-        if self.instance == None or self.instance.original_instance_configs == None:
+        if self.migration_status == MigrationStatus.NEW_CREATED:
+            # The migration has been finished, but force to rollback
             print(
-                'Cannot get the resource (%s). Please check the parameters and try again.' % (
+                'Stopping: %s.' % (
                     self.original_instance_name))
-            return
+            self.instance.stop_instance()
+            print('Detaching the disks.')
+            self.instance.detach_disks()
+            print('Deleting the instance (%s) in the target subnet.' % (
+                self.original_instance_name))
+            self.instance.delete_instance()
+            self.migration_status = MigrationStatus.ORIGINAL_DELETED
 
-        instance_status = self.instance.get_instance_status()
-        if instance_status == InstanceStatus.RUNNING:
-            if self.instance.migrated:
-                # The migration has been finished, but force to rollback
-                print(
-                    'Stopping: %s.' % (
-                        self.original_instance_name))
-                self.instance.stop_instance()
-                print('Detaching the disks.')
-                self.instance.detach_disks()
-                print('Deleting the instance (%s) in the target subnet.'%(self.original_instance_name))
-                self.instance.delete_instance()
-            else:
-                return
+        if self.migration_status == MigrationStatus.ORIGINAL_DELETED:
+            print(
+                'Recreating the original instance (%s) in the legacy network.' % (
+                    self.original_instance_name))
+            self.instance.create_instance(
+                self.instance.original_instance_configs)
+            self.migration_status = MigrationStatus.NOT_START
 
-        instance_status = self.instance.get_instance_status()
-        if instance_status == InstanceStatus.NOTEXISTS:
-            try:
-                print(
-                    'Recreating the original instance (%s) in the legacy network.' % (
-                        self.original_instance_name))
-                self.instance.create_instance(
-                    self.instance.original_instance_configs)
-            except HttpError as e:
-                error_reason = e._get_reason()
-                print(error_reason)
-                if 'not found in region' in error_reason:
-                    # The original external IP can not be preserved.
-                    # A new external IP will be picked.
-                    self.instance.create_instance_with_ephemeral_external_ip(
-                        self.instance.original_instance_configs)
-                else:
-                    raise e
-
-        else:
+        if self.migration_status == MigrationStatus.STOPPED \
+                or self.migration_status == MigrationStatus.DISK_DETACHED:
+            # All or part of the disks have already been detached
             print('Attaching disks back to the original VM: %s.' % (
                 self.original_instance_name))
             try:
@@ -189,20 +180,26 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
                     pass
                 else:
                     raise e
+            self.migration_status = MigrationStatus.STOPPED
 
-        if self.instance.original_status == InstanceStatus.TERMINATED:
-            print('Since the original VM %s was terminated, '
-                  'the new VM is going to be terminated.' % (
-                      self.original_instance_name))
-            try:
+        if self.migration_status <= MigrationStatus.STOPPED \
+                and self.instance.get_instance_status() != self.instance.original_status:
+            if self.instance.original_status == InstanceStatus.TERMINATED:
+                print(
+                    'Restarting the original VM: %s' % (
+                        self.original_instance_name))
+                self.instance.start_instance()
+            else:
+                print(
+                    'Stopping: %s.' % (
+                        self.original_instance_name))
                 self.instance.stop_instance()
-            except:
-                print('Unable to terminate the new instance, but the migration'
-                      'has been finished.')
-        else:
-            print(
-                'Restarting the original VM: %s' % (
-                    self.original_instance_name))
-            self.instance.start_instance()
+            self.migration_status = MigrationStatus.NOT_START
 
-        self.instance.migrated = False
+
+class MigrationStatus(IntEnum):
+    NOT_START = 0
+    STOPPED = 1
+    DISK_DETACHED = 2
+    ORIGINAL_DELETED = 3
+    NEW_CREATED = 4
