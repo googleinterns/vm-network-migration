@@ -406,6 +406,9 @@ class Instance(object):
         """ Check if the original network is the
         same as the target subnet
         """
+        if self.network_object == None or self.network_object.subnetwork_link == None:
+            raise InvalidTargetNetworkError
+
         if 'subnetwork' not in \
                 self.original_instance_configs['networkInterfaces'][0]:
             return False

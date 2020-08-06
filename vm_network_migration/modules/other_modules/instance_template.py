@@ -19,7 +19,7 @@ from copy import deepcopy
 from vm_network_migration.modules.other_modules.operations import Operations
 from vm_network_migration.utils import *
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
-
+from vm_network_migration.errors import *
 
 class InstanceTemplate:
     @initializer
@@ -162,6 +162,9 @@ class InstanceTemplate:
         """ Check if the original network is the
         same as the target subnet
         """
+        if self.network_object == None or self.network_object.subnetwork_link == None:
+            raise InvalidTargetNetworkError
+
         if 'subnetwork' not in \
                 self.instance_template_body['properties']['networkInterfaces'][
                     0]:

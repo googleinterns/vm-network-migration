@@ -45,12 +45,8 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             region:
         """
         super(InstanceGroupNetworkMigration, self).__init__()
-        self.instance_group = None
-        self.instance_migration_handlers = []
-        self.original_instance_template = None
-        self.new_instance_template = None
-        self.instance_group_migration_handler = None
-        self.migration_status = None
+        self.instance_group = self.build_instance_group()
+        self.instance_group_migration_handler = self.build_instance_group_handler()
 
     def build_instance_group(self) -> object:
         """ Create an InstanceGroup object.
@@ -72,19 +68,12 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         instance_group = instance_group_helper.build_instance_group()
         return instance_group
 
-    def network_migration(self):
-        """ The main method of the instance network migration process
+    def build_instance_group_handler(self):
+        """ Build instance group handler based on the type of the instance group
 
-        Args:
-            network_name: target network name
-            subnetwork_name: target subnetwork name
-            preserve_external_ip: preserve the external IP of the instances
-            in an unmanaged instance group
-
-        Returns: None
+        Returns:
 
         """
-
         if self.instance_group == None:
             self.instance_group = self.build_instance_group()
 
@@ -98,8 +87,6 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                 self.region,
                 self.instance_group_name
             )
-
-
         else:
             print('Migrating the managed instance group: %s.' % (
                 self.instance_group_name))
@@ -109,7 +96,25 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                 self.subnetwork_name, self.preserve_external_ip, self.zone,
                 self.region,
                 self.instance_group_name)
+        return self.instance_group_migration_handler
 
+    def network_migration(self):
+        """ The main method of the instance network migration process
+
+        Args:
+            network_name: target network name
+            subnetwork_name: target subnetwork name
+            preserve_external_ip: preserve the external IP of the instances
+            in an unmanaged instance group
+
+        Returns: None
+
+        """
+
+
+        if self.instance_group_migration_handler == None:
+            warnings.warn('Unable to get the instance group resource.')
+            return
         try:
             self.instance_group_migration_handler.network_migration()
 
@@ -126,9 +131,10 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         """
         warnings.warn('Rolling back: %s.' % (self.instance_group_name), Warning)
 
-        if self.instance_group == None:
+        if self.instance_group == None or self.instance_group_migration_handler == None:
             print('Unable to fetch the instance group: %s.' % (
                 self.instance_group_name))
             return
-        self.instance_group_migration_handler.rollback()
-        self.instance_group.migrated = False
+        else:
+            self.instance_group_migration_handler.rollback()
+            self.instance_group.migrated = False
