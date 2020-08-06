@@ -66,18 +66,18 @@ if __name__ == '__main__':
         help='The name of the subnetwork. For auto mode networks,'
              ' this field is optional')
     parser.add_argument(
-        '--preserve_external_ip',
+        '--preserve_instance_external_ip',
         default=False,
         help='Preserve the external IP address')
 
     args = parser.parse_args()
 
-    if args.preserve_external_ip == 'True':
-        args.preserve_external_ip = True
+    if args.preserve_instance_external_ip == 'True':
+        args.preserve_instance_external_ip = True
     else:
-        args.preserve_external_ip = False
+        args.preserve_instance_external_ip = False
 
-    if args.preserve_external_ip:
+    if args.preserve_instance_external_ip:
 
         warnings.warn(
             'You choose to preserve the external IP of the instances in the '
@@ -95,7 +95,7 @@ if __name__ == '__main__':
                                                              args.project_id,
                                                              args.network,
                                                              args.subnetwork,
-                                                             args.preserve_external_ip,
+                                                             args.preserve_instance_external_ip,
                                                              args.zone,
                                                              args.region,
                                                              args.instance_group_name)
