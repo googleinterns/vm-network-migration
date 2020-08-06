@@ -25,13 +25,13 @@ from warnings import warn
 from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.module_helpers.instance_group_helper import InstanceGroupHelper
-from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroupStatus
 from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.other_modules.instance_template import InstanceTemplate
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 import warnings
+
 
 class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
     @initializer
@@ -95,6 +95,10 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             else:
                 print('Migrating the managed instance group: %s.' % (
                     self.instance_group_name))
+                if self.instance_group.compare_original_network_and_target_network():
+                    print('%s is already using the target subnet.' %(self.instance_group_name))
+                    return
+
                 if self.preserve_external_ip:
                     warn(
                         'For a managed instance group, the external IP addresses '
@@ -167,25 +171,21 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         self.original_instance_template = InstanceTemplate(
             self.compute,
             self.project,
-            instance_template_name)
-        self.new_instance_template = InstanceTemplate(
-            self.compute,
-            self.project,
             instance_template_name,
-            deepcopy(self.original_instance_template.instance_template_body))
-        print('Checking the target network information.')
-        subnetwork_helper = SubnetNetworkHelper(self.compute,
-                                                self.project,
-                                                self.zone,
-                                                self.region)
-        subnet_network = subnetwork_helper.generate_network(self.network_name,
-                                                            self.subnetwork_name)
+            self.zone,
+            self.region,
+            None,
+            self.network_name,
+            self.subnetwork_name)
+
         print(
             'Generating a new instance template to use the target network information.')
-        self.new_instance_template.modify_instance_template_with_new_network(
-            subnet_network.network_link, subnet_network.subnetwork_link)
-        self.new_instance_template.random_change_name()
-        print('Inserting the new instance template.')
+        self.new_instance_template = self.original_instance_template.generating_new_instance_template_using_network_info()
+        if self.new_instance_template == None:
+            raise UnableToGenerateNewInstanceTemplate
+
+        print('Inserting the new instance template %s.' % (
+            self.new_instance_template.instance_template_name))
         self.new_instance_template.insert()
         new_instance_template_link = self.new_instance_template.get_selfLink()
         print(
@@ -193,7 +193,6 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         self.instance_group.modify_instance_group_configs_with_instance_template(
             self.instance_group.new_instance_group_configs,
             new_instance_template_link)
-        # print(self.instance_group.new_instance_group_configs)
         print('Deleting: %s.' % (
             self.instance_group_name))
         self.instance_group.delete_instance_group()
@@ -269,7 +268,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         """ Rollback to the original instance group
 
         """
-        warnings.warn('Rolling back: %s.' %(self.instance_group_name), Warning)
+        warnings.warn('Rolling back: %s.' % (self.instance_group_name), Warning)
 
         if self.instance_group == None:
             print('Unable to fetch the instance group: %s.' % (
