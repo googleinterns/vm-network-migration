@@ -39,7 +39,7 @@ class InstanceTemplate:
         if self.instance_template_body == None:
             self.instance_template_body = self.get_instance_template_body()
         self.network_object = None
-        if network != None and subnetwork != None:
+        if network != None:
             self.network_object = self.get_network()
 
     def get_instance_template_body(self) -> dict:

@@ -30,7 +30,7 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork,
                  preserve_instance_external_ip, region, backend_service):
-        """ Initialize a InstanceNetworkMigration object
+        """ Initialization
 
         Args:
             project: project ID
