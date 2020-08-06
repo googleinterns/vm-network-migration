@@ -84,6 +84,7 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         Returns: None
 
         """
+        self.migration_status = MigrationStatus(0)
         print('Migrating the VM: %s.' % (self.original_instance_name))
         if self.instance.compare_original_network_and_target_network():
             print('The VM %s is currently using the target subnet.' % (
@@ -102,23 +103,23 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
                 self.original_instance_name))
             self.instance.address_object.preserve_ip_addresses_handler(
                 self.preserve_external_ip)
-
+            self.migration_status = MigrationStatus(1)
             print('Stopping: %s.' % (self.original_instance_name))
             self.instance.stop_instance()
-            self.migration_status += 1
+            self.migration_status = MigrationStatus(2)
 
             print('Detaching the disks.')
             self.instance.detach_disks()
-            self.migration_status += 1
+            self.migration_status = MigrationStatus(3)
 
             print('Deleting: %s.' % (self.original_instance_name))
             self.instance.delete_instance()
-            self.migration_status += 1
+            self.migration_status = MigrationStatus(4)
 
             print('Creating the new VM in the target subnet: %s.' % (
                 self.original_instance_name))
             self.instance.create_instance(self.instance.new_instance_configs)
-            self.migration_status += 1
+            self.migration_status = MigrationStatus(5)
             print('The VM migration is successful.')
 
 
@@ -147,7 +148,7 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             'Rolling back: %s.' % (
                 self.original_instance_name),
             Warning)
-        if self.migration_status == MigrationStatus.NEW_CREATED:
+        if self.migration_status == 5:
             # The migration has been finished, but force to rollback
             print(
                 'Stopping: %s.' % (
@@ -158,18 +159,17 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             print('Deleting the instance (%s) in the target subnet.' % (
                 self.original_instance_name))
             self.instance.delete_instance()
-            self.migration_status = MigrationStatus.ORIGINAL_DELETED
+            self.migration_status = MigrationStatus(4)
 
-        if self.migration_status == MigrationStatus.ORIGINAL_DELETED:
+        if self.migration_status == 4:
             print(
                 'Recreating the original instance (%s) in the legacy network.' % (
                     self.original_instance_name))
             self.instance.create_instance(
                 self.instance.original_instance_configs)
-            self.migration_status = MigrationStatus.NOT_START
+            self.migration_status = MigrationStatus(1)
 
-        if self.migration_status == MigrationStatus.STOPPED \
-                or self.migration_status == MigrationStatus.DISK_DETACHED:
+        if self.migration_status == 2 or self.migration_status == 3:
             # All or part of the disks have already been detached
             print('Attaching disks back to the original VM: %s.' % (
                 self.original_instance_name))
@@ -180,9 +180,9 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
                     pass
                 else:
                     raise e
-            self.migration_status = MigrationStatus.STOPPED
+            self.migration_status = MigrationStatus(2)
 
-        if self.migration_status <= MigrationStatus.STOPPED \
+        if self.migration_status > 0 \
                 and self.instance.get_instance_status() != self.instance.original_status:
             if self.instance.original_status == InstanceStatus.TERMINATED:
                 print(
@@ -194,12 +194,13 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
                     'Stopping: %s.' % (
                         self.original_instance_name))
                 self.instance.stop_instance()
-            self.migration_status = MigrationStatus.NOT_START
+            self.migration_status = MigrationStatus(0)
 
 
 class MigrationStatus(IntEnum):
     NOT_START = 0
-    STOPPED = 1
-    DISK_DETACHED = 2
-    ORIGINAL_DELETED = 3
-    NEW_CREATED = 4
+    MIGRATING = 1
+    STOPPED = 2
+    DISK_DETACHED = 3
+    ORIGINAL_DELETED = 4
+    NEW_CREATED = 5

@@ -20,7 +20,7 @@ Ihe Google API python client module is imported to manage the GCP Compute Engine
 """
 
 from warnings import warn
-
+from enum import IntEnum
 from vm_network_migration.errors import *
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroupStatus
@@ -57,6 +57,7 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
+        self.migration_status = MigrationStatus(0)
         if self.preserve_external_ip:
             warn(
                 'For a managed instance group, the external IP addresses '
@@ -86,15 +87,17 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
                     self.instance_group_name))
             return
 
+        self.migration_status = MigrationStatus(1)
         print(
             'Generating a new instance template to use the target network information.')
         self.new_instance_template = self.original_instance_template.generating_new_instance_template_using_network_info()
         if self.new_instance_template == None:
             raise UnableToGenerateNewInstanceTemplate
-
         print('Inserting the new instance template %s.' % (
             self.new_instance_template.instance_template_name))
         self.new_instance_template.insert()
+        self.migration_status = MigrationStatus(2)
+
         new_instance_template_link = self.new_instance_template.get_selfLink()
         print(
             'Modifying the instance group configs to use the new instance template')
@@ -104,42 +107,40 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
         print('Deleting: %s.' % (
             self.instance_group_name))
         self.instance_group.delete_instance_group()
+        self.migration_status = MigrationStatus(3)
         print('Creating the instance group in the target subnet.')
         self.instance_group.create_instance_group(
             self.instance_group.new_instance_group_configs)
+        self.migration_status = MigrationStatus(4)
 
     def rollback(self):
         """ Rollback an managed instance group
 
         """
-        instance_group_status = self.instance_group.get_status()
-        # Either original instance group or new instance group doesn't exist
-        if instance_group_status == InstanceGroupStatus.NOTEXISTS:
+        if self.migration_status >= 3:
+            instance_group_status = self.instance_group.get_status()
+            if instance_group_status != InstanceGroupStatus.NOTEXISTS:
+                print('Deleting: %s.' % (self.instance_group_name))
+                self.instance_group.delete_instance_group()
+            self.migration_status = MigrationStatus(3)
+
+        if self.migration_status == 3:
             print('Recreating the instance group: %s.' % (
                 self.instance_group_name))
             self.instance_group.create_instance_group(
                 self.instance_group.original_instance_group_configs
             )
-        else:
-            # The new instance group has been created
-            if self.instance_group.migrated:
-                print('Deleting: %s.' % (
-                    self.instance_group_name))
-                self.instance_group.delete_instance_group()
-                print(
-                    'Recreating the instance group with the original configuration')
-                self.instance_group.create_instance_group(
-                    self.instance_group.original_instance_group_configs
-                )
-            else:
-                # The original autoscaler has been deleted
-                if self.instance_group.autoscaler != None and \
-                        not self.instance_group.autoscaler_exists():
-                    print('Recreating the autoscaler.')
-                    self.instance_group.insert_autoscaler()
+            self.migration_status = MigrationStatus(2)
 
-        if self.new_instance_template != None:
-            try:
-                self.new_instance_template.delete()
-            except:
-                return
+        if self.migration_status == 2:
+            print('Deleting the new instance template.')
+            self.new_instance_template.delete()
+            self.migration_status = 0
+
+
+class MigrationStatus(IntEnum):
+    NOT_START = 0
+    MIGRATING = 1
+    NEW_INSTANCE_TEMPLATE_CREATED = 2
+    ORIGINAL_GROUP_DELETED = 3
+    NEW_GROUP_CREATED = 4

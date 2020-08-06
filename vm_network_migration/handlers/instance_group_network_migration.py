@@ -50,6 +50,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         self.original_instance_template = None
         self.new_instance_template = None
         self.instance_group_migration_handler = None
+        self.migration_status = None
 
     def build_instance_group(self) -> object:
         """ Create an InstanceGroup object.

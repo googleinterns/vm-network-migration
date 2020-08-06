@@ -23,7 +23,7 @@ from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecut
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroupStatus
 from vm_network_migration.utils import initializer
-
+from enum import IntEnum
 
 class UnmanagedInstanceGroupMigration(ComputeEngineResourceMigration):
     @initializer
@@ -41,17 +41,20 @@ class UnmanagedInstanceGroupMigration(ComputeEngineResourceMigration):
         super(UnmanagedInstanceGroupMigration, self).__init__()
         if self.instance_group == None:
             self.instance_group = self.build_instance_group()
+        self.migration_status = MigrationStatus(0)
 
     def network_migration(self):
         """ Migrate the network of an unmanaged instance group.
           The instances belonging to this instance group will
           be migrated one by one.
           """
+        self.migration_status = 0
         if self.instance_group.compare_original_network_and_target_network():
             print(
                 'The instance group %s is already using the target subnet.' % (
                     self.instance_group_name))
             return
+        self.migration_status = 1
         for instance_selfLink in self.instance_group.instance_selfLinks:
             selfLink_executor = SelfLinkExecutor(self.compute,
                                                  instance_selfLink,
@@ -59,48 +62,62 @@ class UnmanagedInstanceGroupMigration(ComputeEngineResourceMigration):
                                                  self.subnetwork_name,
                                                  self.preserve_external_ip)
             instance_migration_handler = selfLink_executor.build_migration_handler()
+
             if instance_migration_handler != None:
                 self.instance_migration_handlers.append(
                     instance_migration_handler)
                 # print('Detaching the instance %s.' %(instance_selfLink))
                 # self.instance_group.remove_an_instance(instance_selfLink)
                 instance_migration_handler.network_migration(force=True)
+        self.migration_status = 2
 
         print('Deleting: %s.' % (
             self.instance_group_name))
         self.instance_group.delete_instance_group()
+        self.migration_status = 3
+
         print(
             'Recreating the instance group using the same configuration in the new network.')
         self.instance_group.create_instance_group(
             self.instance_group.new_instance_group_configs)
+        self.migration_status = 4
         print('Adding the instances back to the instance group: %s.' % (
             self.instance_group_name))
         self.instance_group.add_all_instances()
+        self.migration_status = 5
 
     def rollback(self):
         """ Rollback an unmanaged instance group
 
-                Returns:
+        Returns:
 
-                """
-        # The new instance group has been migrated, but the instances are not
-        # reattached successfully. The new instance group needs to be deleted.
-        # Or just force it to rollback
-        if self.instance_group.migrated:
+        """
+        if self.migration_status >= 4:
+            # New instance group has been created, so it needs to be deleted
             self.instance_group.delete_instance_group()
-        # Some of its instances are running on the new network.
-        # These instances should be moved back to the legacy network,
-        # and should be added back to the instance group.
-        print('Force to rollback all the instances in the group: %s.' % (
-            self.instance_group_name))
-        for instance_migration_handler in self.instance_migration_handlers:
-            instance_migration_handler.rollback()
+            self.migration_status = MigrationStatus(4)
 
-        instance_group_status = self.instance_group.get_status()
-        # The original instance group has been deleted, it needs to be recreated.
-        if instance_group_status == InstanceGroupStatus.NOTEXISTS:
+        if self.migration_status >= 3:
+            # The original instance group has been deleted, it needs to be recreated.
             self.instance_group.create_instance_group(
                 self.instance_group.original_instance_group_configs)
-        print('Adding all instances back to the instance group: %s.' % (
-            self.instance_group_name))
-        self.instance_group.add_all_instances()
+            self.migration_status = MigrationStatus(2)
+
+        if self.migration_status >= 1:
+            # Force to rollback all the instances to the original network
+            print('Force to rollback all the instances in the group: %s.' % (
+                self.instance_group_name))
+            for instance_migration_handler in self.instance_migration_handlers:
+                instance_migration_handler.rollback()
+            print('Adding all instances back to the instance group: %s.' % (
+                self.instance_group_name))
+            self.instance_group.add_all_instances()
+            self.migration_status = MigrationStatus(0)
+
+class MigrationStatus(IntEnum):
+    NOT_START=0
+    MIGRATING_INSTANCES = 1
+    MIGRATED_ALL_INSTANCES = 2
+    ORIGINAL_GROUP_DELETED = 3
+    NEW_GROUP_RECREATED = 4
+    FINISH = 5
