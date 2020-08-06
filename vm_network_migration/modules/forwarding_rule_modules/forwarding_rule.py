@@ -191,7 +191,7 @@ class ForwardingRule(object):
                     target_proxy_configs))
         if 'backendService' in self.forwarding_rule_configs:
             backends_selfLinks.append(self.forwarding_rule_configs['backendService'])
-        return backends_selfLinks
+        return list(set(backends_selfLinks))
 
     def compare_original_network_and_target_network(self):
         return False
