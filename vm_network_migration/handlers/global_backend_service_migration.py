@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This script is used to migrate an external backend service
-from its legacy network to a subnetwork mode network.
+""" This script is used to migrate a global backend service
+(external/internal-self-managed) from its legacy network to
+a subnetwork mode network.
 
 """
 
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.modules.backend_service_modules.external_backend_service import \
-    ExternalBackendService
+from vm_network_migration.modules.backend_service_modules.global_backend_service import \
+    GlobalBackendService
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 
-class ExternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
+class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork,
@@ -40,11 +41,11 @@ class ExternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
             region: region of the internal load balancer
             backend_service: an InternalBackEndService object
         """
-        super(ExternalBackendServiceNetworkMigration, self).__init__()
+        super(GlobalBackendServiceNetworkMigration, self).__init__()
         self.backend_migration_handlers = []
 
         if backend_service == None:
-            self.backend_service = ExternalBackendService(self.compute,
+            self.backend_service = GlobalBackendService(self.compute,
                                                           self.project,
                                                           self.backend_service_name,
                                                           self.network,
@@ -83,7 +84,7 @@ class ExternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
     def network_migration(self):
         """ Migrate the network of an external backend service.
         """
-        print('Migrating an external backend service: %s' %(self.backend_service.backend_service_name))
+        print('Migrating an global backend service: %s' %(self.backend_service.backend_service_name))
         self.migrate_backends()
         self.backend_service.migrated = True
 

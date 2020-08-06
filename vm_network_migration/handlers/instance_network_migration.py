@@ -82,16 +82,16 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         Returns: None
 
         """
-        print('Migrating a VM: %s.' %(self.original_instance_name))
+        print('Migrating a VM: %s.' % (self.original_instance_name))
         referrer_links = self.instance.get_referrer_selfLinks()
-        if len(referrer_links) > 0 and not force:
+        if len(referrer_links) > 1 or (len(referrer_links) > 0 and not force):
             raise AmbiguousTargetResource(
                 'The VM (%s) is a member of (%s), please detach the instance from its referrer and try again. '
                 'Or you can try to migrate its referrer directly.' % (
                     self.original_instance_name, ','.join(referrer_links)))
 
         try:
-            print('Checking the external IP address of the VM.' )
+            print('Checking the external IP address of the VM.')
             self.instance.address_object.preserve_ip_addresses_handler(
                 self.preserve_external_ip)
 
@@ -137,7 +137,8 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             Warning)
         if self.instance == None or self.instance.original_instance_configs == None:
             print(
-                'Cannot get the resource (%s). Please check the parameters and try again.' %(self.original_instance_name))
+                'Cannot get the resource (%s). Please check the parameters and try again.' % (
+                    self.original_instance_name))
             return
 
         instance_status = self.instance.get_instance_status()
@@ -145,7 +146,8 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             if self.instance.migrated:
                 # The migration has been finished, but force to rollback
                 print(
-                    'Stopping the instance: %s.' % (self.original_instance_name))
+                    'Stopping the instance: %s.' % (
+                        self.original_instance_name))
                 self.instance.stop_instance()
                 print('Detaching the disks.')
                 self.instance.detach_disks()
@@ -195,7 +197,8 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
                       'has been finished.')
         else:
             print(
-                'Restarting the original VM: %s' % (self.original_instance_name))
+                'Restarting the original VM: %s' % (
+                    self.original_instance_name))
             self.instance.start_instance()
 
         self.instance.migrated = False
