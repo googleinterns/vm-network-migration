@@ -83,6 +83,10 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
 
         """
         print('Migrating the VM: %s.' % (self.original_instance_name))
+        if self.instance.compare_original_network_and_target_network():
+            print('The VM %s is currently using the target subnet.' %(self.original_instance_name))
+            return
+
         referrer_links = self.instance.get_referrer_selfLinks()
         if len(referrer_links) > 1 or (len(referrer_links) > 0 and not force):
             raise AmbiguousTargetResource(

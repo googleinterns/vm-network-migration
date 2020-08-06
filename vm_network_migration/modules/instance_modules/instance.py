@@ -22,7 +22,10 @@ from vm_network_migration.errors import *
 from vm_network_migration.module_helpers.address_helper import AddressHelper
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.utils import initializer, is_equal_or_contians
+from vm_network_migration.utils import (
+    initializer,
+    is_equal_or_contians,
+)
 
 
 class Instance(object):
@@ -54,7 +57,6 @@ class Instance(object):
         # the instance has been migrated to a new network or not
         self.migrated = False
         self.log()
-
 
     def log(self):
         logging.basicConfig(filename='backup.log', level=logging.INFO)
@@ -401,17 +403,19 @@ class Instance(object):
         return referrer_selfLinks
 
     def compare_original_network_and_target_network(self):
-        """ Abstract method: check if the original network is the
+        """ Check if the original network is the
         same as the target subnet
         """
-        if 'subnetwork' not in self.original_instance_configs:
+        if 'subnetwork' not in \
+                self.original_instance_configs['networkInterfaces'][0]:
             return False
         elif is_equal_or_contians(
-                self.original_instance_configs['subnetwork'],
+                self.original_instance_configs['networkInterfaces'][0]['subnetwork'],
                 self.network_object.subnetwork_link):
             return True
         else:
             return False
+
 
 class InstanceStatus(Enum):
     """

@@ -209,6 +209,11 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
 
         """
         print('Migrating the forwarding rule: %s' % (self.forwarding_rule_name))
+        if self.forwarding_rule.compare_original_network_and_target_network():
+            print('The backend service %s is already using target subnet.' % (
+                self.forwarding_rule_name))
+            return
+
         try:
 
             if isinstance(self.forwarding_rule,

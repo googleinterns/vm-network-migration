@@ -60,7 +60,7 @@ class TargetInstanceMigration(ComputeEngineResourceMigration):
             network to the target subnet.
 
         """
-        warnings.warn('Migrating the target instance: %s' %(self.target_instance_name), Warning)
+        print('Migrating the target instance: %s' %(self.target_instance_name))
         if self.instance_network_migration == None:
             print('The target instance is linking to a non-existing instance.')
             return

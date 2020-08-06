@@ -87,6 +87,10 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         try:
             if self.instance_group == None:
                 self.instance_group = self.build_instance_group()
+            if self.instance_group.compare_original_network_and_target_network():
+                print('The instance group %s is already using the target subnet.' %(self.instance_group_name))
+                return
+
             if isinstance(self.instance_group, UnmanagedInstanceGroup):
                 print('Migrating the unmanaged instance group: %s.' % (
                     self.instance_group_name))
@@ -95,9 +99,6 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             else:
                 print('Migrating the managed instance group: %s.' % (
                     self.instance_group_name))
-                if self.instance_group.compare_original_network_and_target_network():
-                    print('%s is already using the target subnet.' %(self.instance_group_name))
-                    return
 
                 if self.preserve_external_ip:
                     warn(
@@ -177,6 +178,9 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             None,
             self.network_name,
             self.subnetwork_name)
+        if self.original_instance_template.compare_original_network_and_target_network():
+            print('The instance template of %s is already using the target subnet.' %(self.instance_group_name))
+            return
 
         print(
             'Generating a new instance template to use the target network information.')
