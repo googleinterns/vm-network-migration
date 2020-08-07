@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" GlobalForwardingRule class: a global forwarding rule which is in use by a
-Target proxy. The supported target proxies are: targetHttpProxy,
+""" GlobalForwardingRule class: external global forwarding rule
+The supported target proxies are: targetHttpProxy,
 targetHttpsProxy, targetTcpProxy, targetSslProxy.
 
 """
@@ -21,11 +21,11 @@ from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import
 from vm_network_migration.utils import find_all_matching_strings_from_a_dict
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 
-class GlobalForwardingRule(ForwardingRule):
+class ExternalGlobalForwardingRule(ForwardingRule):
 
     def __init__(self, compute, project, forwarding_rule_name, network,
                  subnetwork):
-        super(GlobalForwardingRule, self).__init__(compute, project,
+        super(ExternalGlobalForwardingRule, self).__init__(compute, project,
                                                    forwarding_rule_name,
                                                    network, subnetwork)
         self.forwarding_rule_configs = self.get_forwarding_rule_configs()

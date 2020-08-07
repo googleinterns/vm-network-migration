@@ -33,7 +33,6 @@ class BackendService(object):
 
         self.backend_service_configs = None
         self.operations = None
-        self.migrated = False
 
     def log(self):
         logging.basicConfig(filename='backup.log', level=logging.INFO)
@@ -61,3 +60,6 @@ class BackendService(object):
 
         """
         return len(self.get_connecting_forwarding_rule_list())
+
+    def compare_original_network_and_target_network(self):
+        return False

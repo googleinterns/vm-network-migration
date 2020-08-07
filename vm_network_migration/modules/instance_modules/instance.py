@@ -22,7 +22,10 @@ from vm_network_migration.errors import *
 from vm_network_migration.module_helpers.address_helper import AddressHelper
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.utils import initializer
+from vm_network_migration.utils import (
+    initializer,
+    is_equal_or_contians,
+)
 
 
 class Instance(object):
@@ -51,10 +54,7 @@ class Instance(object):
         self.original_status = self.get_instance_status()
         self.status = deepcopy(self.original_status)
         self.selfLink = self.get_selfLink(self.original_instance_configs)
-        # the instance has been migrated to a new network or not
-        self.migrated = False
         self.log()
-
 
     def log(self):
         logging.basicConfig(filename='backup.log', level=logging.INFO)
@@ -341,10 +341,6 @@ class Instance(object):
             body=instance_configs).execute()
         self.operations.wait_for_zone_operation(
             create_instance_operation['name'])
-        if instance_configs == self.original_instance_configs:
-            self.migrated = False
-        elif instance_configs == self.new_instance_configs:
-            self.migrated = True
         return create_instance_operation
 
     def delete_instance(self) -> dict:
@@ -399,6 +395,23 @@ class Instance(object):
             request = self.compute.instances().listReferrers_next(
                 previous_request=request, previous_response=response)
         return referrer_selfLinks
+
+    def compare_original_network_and_target_network(self):
+        """ Check if the original network is the
+        same as the target subnet
+        """
+        if self.network_object == None or self.network_object.subnetwork_link == None:
+            raise InvalidTargetNetworkError
+
+        if 'subnetwork' not in \
+                self.original_instance_configs['networkInterfaces'][0]:
+            return False
+        elif is_equal_or_contians(
+                self.original_instance_configs['networkInterfaces'][0]['subnetwork'],
+                self.network_object.subnetwork_link):
+            return True
+        else:
+            return False
 
 
 class InstanceStatus(Enum):

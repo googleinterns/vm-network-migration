@@ -18,7 +18,7 @@
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-
+import warnings
 
 class TargetInstanceMigration(ComputeEngineResourceMigration):
     @initializer
@@ -60,7 +60,7 @@ class TargetInstanceMigration(ComputeEngineResourceMigration):
             network to the target subnet.
 
         """
-        print('Migrating a target instance: %s' %(self.target_instance_name))
+        print('Migrating the target instance: %s' %(self.target_instance_name))
         if self.instance_network_migration == None:
             print('The target instance is linking to a non-existing instance.')
             return

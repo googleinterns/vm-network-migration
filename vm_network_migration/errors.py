@@ -95,3 +95,7 @@ class MultipleTargetPools(Exception):
 class SubnetworkNotExists(Exception):
     """The subnetwork doens't exist in the network"""
     pass
+
+class UnableToGenerateNewInstanceTemplate(Exception):
+    """Unable to genereate a new instance template"""
+    pass

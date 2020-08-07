@@ -135,10 +135,6 @@ class InternalBackendService(BackendService):
             body=backend_service_configs).execute()
         self.operations.wait_for_region_operation(
             insert_backend_service_operation['name'])
-        if backend_service_configs == self.new_backend_service_configs:
-            self.migrated = True
-        else:
-            self.migrated = False
         return insert_backend_service_operation
 
     def check_backend_service_exists(self) -> bool:

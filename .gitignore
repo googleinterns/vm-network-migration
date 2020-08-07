@@ -7,3 +7,4 @@ vm_network_migration/__pycache__/
 end_to_end_tests/
 *.txt
 *.log
+env/

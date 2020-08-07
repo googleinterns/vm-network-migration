@@ -67,6 +67,9 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
     def network_migration(self):
         """ Migrate an external backend service's network
         """
+        if self.backend_service.compare_original_network_and_target_network():
+            print('The backend service %s is already using target subnet.' %(self.backend_service_name))
+            return
         if isinstance(self.backend_service, GlobalBackendService):
             self.backend_service_migration_handler = GlobalBackendServiceNetworkMigration(
                 self.compute,
@@ -100,4 +103,5 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
         Returns:
 
         """
+        warnings.warn('Rolling back: %s.' %(self.backend_service_name), Warning)
         self.backend_service_migration_handler.rollback()

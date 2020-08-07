@@ -35,7 +35,6 @@ class InstanceGroup(object):
         self.new_instance_group_configs = None
         self.status = None
         self.operation = None
-        self.migrated = False
         self.selfLink = None
 
     def log(self):
@@ -97,6 +96,8 @@ class InstanceGroup(object):
         """
         pass
 
+    def compare_original_network_and_target_network(self):
+        return False
 
 class InstanceGroupStatus(Enum):
     """
