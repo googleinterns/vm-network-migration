@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" The regional forwarding rule which has an 'INTERNAL' load balancing scheme
+""" The regional forwarding rule which has an 'INTERNAL' or 'INTERNAL_Managed'
+load balancing scheme
 
 """
 from copy import deepcopy

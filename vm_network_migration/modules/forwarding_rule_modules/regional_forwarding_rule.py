@@ -104,18 +104,18 @@ class RegionalForwardingRule(ForwardingRule):
                 warnings.warn('The original IP address of the forwarding rule was an ' \
                     'ephemeral one. After the migration, a new IP address is ' \
                     'assigned to the forwarding rule.', Warning)
-                # Set the IPAddress to ephemeral
-                if 'IPAddress' in forwarding_rule_config:
-                    del forwarding_rule_config['IPAddress']
-                insert_forwarding_rule_operation = self.compute.forwardingRules().insert(
-                    project=self.project,
-                    region=self.region,
-                    body=forwarding_rule_config).execute()
-                self.operations.wait_for_region_operation(
-                    insert_forwarding_rule_operation['name'])
-
             else:
-                raise e
+                warnings.warn(error_reason, Warning)
+                # Set the IPAddress to ephemeral
+            if 'IPAddress' in forwarding_rule_config:
+                del forwarding_rule_config['IPAddress']
+            insert_forwarding_rule_operation = self.compute.forwardingRules().insert(
+                project=self.project,
+                region=self.region,
+                body=forwarding_rule_config).execute()
+            self.operations.wait_for_region_operation(
+                insert_forwarding_rule_operation['name'])
+
         if forwarding_rule_config == self.forwarding_rule_configs:
             self.migrated = False
         else:

@@ -17,7 +17,7 @@
 from vm_network_migration.errors import *
 from vm_network_migration.modules.forwarding_rule_modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
-from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.external_global_forwarding_rule import ExternalGlobalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
 from vm_network_migration.utils import initializer
 
@@ -45,29 +45,32 @@ class ForwardingRuleHelper:
         Returns: a subclass object of ForwardingRule
 
         """
-        if self.region == None:
-            return self.build_a_global_forwarding_rule()
+        load_balancing_schema = self.get_load_balancing_schema()
+        if self.region == None and load_balancing_schema == 'EXTERNAL':
+            # it can be a global external forwarding rule, or
+            # a global internal-self-managed forwarding rule
+            return self.build_an_external_global_forwarding_rule()
 
         else:
-            load_balancing_schema = self.get_load_balancing_schema()
             if load_balancing_schema == 'EXTERNAL':
+                # regional external forwarding rule
                 return self.build_an_external_regional_forwarding_rule()
             elif load_balancing_schema == 'INTERNAL' \
                     or load_balancing_schema == 'INTERNAL_MANAGED':
+                # internal forwarding rule or an internal managed forwarding rule
                 return self.build_an_internal_regional_forwarding_rule()
-            else:
 
-                raise UnsupportedForwardingRule(
-                    'Unsupported type of the forwarding rule. It can not be '
-                    'migrated. Terminating.')
+        raise UnsupportedForwardingRule(
+            'Unsupported type of the forwarding rule. It can not be '
+            'migrated. Terminating.')
 
-    def build_a_global_forwarding_rule(self) -> GlobalForwardingRule:
+    def build_an_external_global_forwarding_rule(self) -> ExternalGlobalForwardingRule:
         """ Build a global forwarding rule
 
         Returns: a GlobalForwardingRule object
 
         """
-        return GlobalForwardingRule(self.compute, self.project,
+        return ExternalGlobalForwardingRule(self.compute, self.project,
                                     self.forwarding_rule_name, self.network,
                                     self.subnetwork)
 
@@ -106,11 +109,25 @@ class ForwardingRuleHelper:
             region=self.region,
             forwardingRule=self.forwarding_rule_name).execute()
 
+    def get_global_forwarding_rule_configs(self):
+        """ Get the configs of the forwarding rule
+
+        Returns: configs
+
+        """
+        return self.compute.globalForwardingRules().get(
+            project=self.project,
+            forwardingRule=self.forwarding_rule_name).execute()
+
     def get_load_balancing_schema(self) -> str:
         """ Decide the load balancing schema is External/Internal
 
         Returns: 'External' or 'Internal'
 
         """
-        configs = self.get_regional_forwarding_rule_configs()
-        return configs['loadBalancingScheme']
+        if self.region == None:
+            return self.get_global_forwarding_rule_configs()['loadBalancingScheme']
+        else:
+            return self.get_regional_forwarding_rule_configs()['loadBalancingScheme']
+
+

@@ -115,7 +115,7 @@ class Address:
 
             else:
                 print(
-                    'The external IP address is reserved as a static IP address.')
+                    '%s is reserved as a static IP address.' %(self.external_ip))
         else:
             self.external_ip = None
 
