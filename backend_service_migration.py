@@ -34,13 +34,16 @@ Run the script by terminal, for example:
      --region=us-central1
 
 """
+import os
 import warnings
 import google.auth
 from googleapiclient import discovery
 import argparse
-from vm_network_migration.handlers.backend_service_migration import BackendServiceMigration
+from vm_network_migration.handlers.backend_service_migration.backend_service_migration import BackendServiceMigration
 
 if __name__ == '__main__':
+    if os.path.exists('./backup.log'):
+        os.remove('./backup.log')
     # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
@@ -61,18 +64,18 @@ if __name__ == '__main__':
         help='The name of the subnetwork. For auto mode networks,'
              ' this field is optional')
     parser.add_argument(
-        '--preserve_external_ip',
+        '--preserve_instance_external_ip',
         default=False,
         help='Preserve the external IP address')
 
     args = parser.parse_args()
 
-    if args.preserve_external_ip == 'True':
-        args.preserve_external_ip = True
+    if args.preserve_instance_external_ip == 'True':
+        args.preserve_instance_external_ip = True
     else:
-        args.preserve_external_ip = False
+        args.preserve_instance_external_ip = False
 
-    if args.preserve_external_ip:
+    if args.preserve_instance_external_ip:
 
         warnings.warn(
             'You choose to preserve the external IPs of the instances serving '
@@ -90,6 +93,6 @@ if __name__ == '__main__':
                                                         args.backend_service_name,
                                                         args.network,
                                                         args.subnetwork,
-                                                        args.preserve_external_ip,
+                                                        args.preserve_instance_external_ip,
                                                         args.region)
     backend_service_migration.network_migration()

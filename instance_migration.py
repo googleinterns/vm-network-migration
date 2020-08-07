@@ -36,13 +36,15 @@ Run the script by terminal, for example:
 
 """
 import warnings
-
+import os
 import argparse
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.handlers.instance_network_migration import InstanceNetworkMigration
+from vm_network_migration.handlers.instance_migration.instance_network_migration import InstanceNetworkMigration
 
 if __name__ == '__main__':
+    if os.path.exists('./backup.log'):
+        os.remove('./backup.log')
     # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
@@ -53,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('--project_id',
                         help='The project ID of the original VM.')
     parser.add_argument('--zone', help='The zone name of the original VM.')
-    parser.add_argument('--original_instance_name',
+    parser.add_argument('--instance_name',
                         help='The name of the original VM')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
@@ -62,18 +64,18 @@ if __name__ == '__main__':
         help='The name of the subnetwork. For auto mode networks,'
              ' this field is optional')
     parser.add_argument(
-        '--preserve_external_ip',
+        '--preserve_instance_external_ip',
         default=False,
         help='Preserve the external IP address')
 
     args = parser.parse_args()
 
-    if args.preserve_external_ip == 'True':
-        args.preserve_external_ip = True
+    if args.preserve_instance_external_ip == 'True':
+        args.preserve_instance_external_ip = True
     else:
-        args.preserve_external_ip = False
+        args.preserve_instance_external_ip = False
 
-    if args.preserve_external_ip:
+    if args.preserve_instance_external_ip:
         warnings.warn(
             'You choose to preserve the external IP. If the original instance '
             'has an ephemeral IP, it will be reserved as a static external IP after the '
@@ -86,8 +88,8 @@ if __name__ == '__main__':
 
     instance_migration = InstanceNetworkMigration(compute, args.project_id,
                                                   args.zone,
-                                                  args.original_instance_name,
+                                                  args.instance_name,
                                                   args.network,
                                                   args.subnetwork,
-                                                  args.preserve_external_ip)
+                                                  args.preserve_instance_external_ip)
     instance_migration.network_migration()

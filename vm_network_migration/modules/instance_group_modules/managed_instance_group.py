@@ -82,10 +82,6 @@ class ManagedInstanceGroup(InstanceGroup):
         else:
             self.operation.wait_for_zone_operation(
                 create_instance_group_operation['name'])
-        if configs == self.original_instance_group_configs:
-            self.migrated = False
-        elif configs == self.new_instance_group_configs:
-            self.migrated = True
         # If an autoscaler serves the original instance group,
         # it should be recreated
         if self.autoscaler != None and not self.autoscaler_exists():

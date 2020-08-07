@@ -18,7 +18,7 @@ from enum import Enum
 
 from googleapiclient.http import HttpError
 from vm_network_migration.utils import initializer
-
+import logging
 
 class InstanceGroup(object):
     @initializer
@@ -35,8 +35,18 @@ class InstanceGroup(object):
         self.new_instance_group_configs = None
         self.status = None
         self.operation = None
-        self.migrated = False
         self.selfLink = None
+
+    def log(self):
+        """ Log the original configs
+
+        Returns:
+
+        """
+        logging.basicConfig(filename='backup.log', level=logging.INFO)
+        logging.info('-------Instance Group: %s-----' % (self.instance_group_name))
+        logging.info(self.original_instance_group_configs)
+        logging.info('--------------------------')
 
     def get_status(self):
         """ Get the current status of the instance group
@@ -86,6 +96,8 @@ class InstanceGroup(object):
         """
         pass
 
+    def compare_original_network_and_target_network(self):
+        return False
 
 class InstanceGroupStatus(Enum):
     """

@@ -32,7 +32,8 @@ class RegionalManagedInstanceGroup(ManagedInstanceGroup):
         """
         super(RegionalManagedInstanceGroup, self).__init__(compute, project,
                                                            instance_group_name,
-                                                           network_name, subnetwork_name,
+                                                           network_name,
+                                                           subnetwork_name,
                                                            preserve_instance_ip)
         self.zone_or_region = region
         self.operation = Operations(self.compute, self.project, None, region)
@@ -45,3 +46,4 @@ class RegionalManagedInstanceGroup(ManagedInstanceGroup):
         self.autoscaler = self.get_autoscaler()
         self.autoscaler_configs = self.get_autoscaler_configs()
         self.selfLink = self.get_selfLink(self.original_instance_group_configs)
+        self.log()

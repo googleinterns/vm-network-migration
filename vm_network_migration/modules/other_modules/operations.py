@@ -44,7 +44,7 @@ class Operations:
                 ZoneOperationsError: if the operation has an error
                 googleapiclient.errors.HttpError: invalid request
         """
-        print('Waiting ...')
+        print('Waiting for %s.' %(operation))
         while True:
             result = self.compute.zoneOperations().get(
                 project=self.project,
@@ -70,7 +70,7 @@ class Operations:
                 RegionOperationsError: if the operation has an error
                 googleapiclient.errors.HttpError: invalid request
         """
-        print('Waiting ...')
+        print('Waiting for %s.' %(operation))
         while True:
             result = self.compute.regionOperations().get(
                 project=self.project,
@@ -97,7 +97,7 @@ class Operations:
                 RegionOperationsError: if the operation has an error
                 googleapiclient.errors.HttpError: invalid request
         """
-        print('Waiting ...')
+        print('Waiting for %s.' % (operation))
         while True:
             result = self.compute.globalOperations().get(
                 project=self.project,

@@ -35,13 +35,15 @@ Run the script by terminal, for example:
 
 """
 import warnings
-
+import os
 import argparse
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.handlers.forwarding_rule_migration import ForwardingRuleMigration
+from vm_network_migration.handlers.forwarding_rule_migration.forwarding_rule_migration import ForwardingRuleMigration
 
 if __name__ == '__main__':
+    if os.path.exists('./backup.log'):
+        os.remove('./backup.log')
     # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)

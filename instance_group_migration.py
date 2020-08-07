@@ -38,9 +38,12 @@ import warnings
 import argparse
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.handlers.instance_group_network_migration import InstanceGroupNetworkMigration
+from vm_network_migration.handlers.instance_group_migration.instance_group_network_migration import InstanceGroupNetworkMigration
+import os
 
 if __name__ == '__main__':
+    if os.path.exists('./backup.log'):
+        os.remove('./backup.log')
     # google credential setup
     credentials, default_project = google.auth.default()
     compute = discovery.build('compute', 'v1', credentials=credentials)
@@ -63,18 +66,18 @@ if __name__ == '__main__':
         help='The name of the subnetwork. For auto mode networks,'
              ' this field is optional')
     parser.add_argument(
-        '--preserve_external_ip',
+        '--preserve_instance_external_ip',
         default=False,
         help='Preserve the external IP address')
 
     args = parser.parse_args()
 
-    if args.preserve_external_ip == 'True':
-        args.preserve_external_ip = True
+    if args.preserve_instance_external_ip == 'True':
+        args.preserve_instance_external_ip = True
     else:
-        args.preserve_external_ip = False
+        args.preserve_instance_external_ip = False
 
-    if args.preserve_external_ip:
+    if args.preserve_instance_external_ip:
 
         warnings.warn(
             'You choose to preserve the external IP of the instances in the '
@@ -92,7 +95,7 @@ if __name__ == '__main__':
                                                              args.project_id,
                                                              args.network,
                                                              args.subnetwork,
-                                                             args.preserve_external_ip,
+                                                             args.preserve_instance_external_ip,
                                                              args.zone,
                                                              args.region,
                                                              args.instance_group_name)
