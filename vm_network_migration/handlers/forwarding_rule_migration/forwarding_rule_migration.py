@@ -20,20 +20,21 @@ import warnings
 
 from vm_network_migration.errors import *
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
-from vm_network_migration.module_helpers.forwarding_rule_helper import ForwardingRuleHelper
-from vm_network_migration.modules.forwarding_rule_modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
-from vm_network_migration.modules.forwarding_rule_modules.external_global_forwarding_rule import ExternalGlobalForwardingRule
-from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
-from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.forwarding_rule_migration.external_forwarding_rule_migration import ExternalForwardingRuleMigration
 from vm_network_migration.handlers.forwarding_rule_migration.internal_forwarding_rule_migration import InternalForwardingRuleMigration
+from vm_network_migration.module_helpers.forwarding_rule_helper import ForwardingRuleHelper
+from vm_network_migration.modules.forwarding_rule_modules.external_global_forwarding_rule import ExternalGlobalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.internal_global_forwarding_rule import InternalGlobalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
+from vm_network_migration.utils import initializer
 
 
 class ForwardingRuleMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, forwarding_rule_name,
                  network_name, subnetwork_name,
-                 preserve_instance_external_ip, region=None):
+                 preserve_instance_external_ip, region=None, subnetwork_region=None):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
@@ -60,7 +61,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                                                       self.forwarding_rule_name,
                                                       self.network_name,
                                                       self.subnetwork_name,
-                                                      self.region)
+                                                      self.region, self.subnetwork_region)
         return forwarding_rule_helper.build_a_forwarding_rule()
 
     def build_forwarding_rule_migration_handler(self):
@@ -70,11 +71,13 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
 
         """
         if isinstance(self.forwarding_rule,
-                      InternalRegionalForwardingRule):
+                      InternalRegionalForwardingRule) or isinstance(
+            self.forwarding_rule, InternalGlobalForwardingRule):
             self.forwarding_rule_migration_handler = InternalForwardingRuleMigration(
                 self.compute, self.project, self.forwarding_rule_name,
                 self.network_name, self.subnetwork_name,
-                self.preserve_instance_external_ip, self.region)
+                self.preserve_instance_external_ip, self.region,
+                self.forwarding_rule)
 
         elif isinstance(self.forwarding_rule, ExternalGlobalForwardingRule) \
                 or isinstance(self.forwarding_rule,
@@ -82,7 +85,8 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
             self.forwarding_rule_migration_handler = ExternalForwardingRuleMigration(
                 self.compute, self.project, self.forwarding_rule_name,
                 self.network_name, self.subnetwork_name,
-                self.preserve_instance_external_ip, self.region)
+                self.preserve_instance_external_ip, self.region,
+                self.forwarding_rule)
         else:
             raise UnsupportedForwardingRule
 

@@ -30,7 +30,7 @@ class ExternalForwardingRuleMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, forwarding_rule_name,
                  network_name, subnetwork_name,
-                 preserve_instance_external_ip, region=None):
+                 preserve_instance_external_ip, region=None, forwarding_rule=None):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
@@ -43,7 +43,8 @@ class ExternalForwardingRuleMigration(ComputeEngineResourceMigration):
             region: region of the internal load balancer
         """
         super(ExternalForwardingRuleMigration, self).__init__()
-        self.forwarding_rule = self.build_forwarding_rule()
+        if self.forwarding_rule==None:
+            self.forwarding_rule = self.build_forwarding_rule()
         self.backends_migration_handlers = []
 
     def build_forwarding_rule(self):

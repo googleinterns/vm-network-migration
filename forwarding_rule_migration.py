@@ -69,6 +69,11 @@ if __name__ == '__main__':
         default=False,
         help='Preserve the external IP addresses of the instances serving this forwarding rule')
 
+    parser.add_argument(
+        '--subnetwork_region',
+        default=None,
+        help='The region of the subnetwork. It is only necessary for an INTERNAL_SELF_MANAGED forwarding rule.')
+
     args = parser.parse_args()
 
     if args.preserve_instance_external_ip == 'True':
@@ -96,5 +101,5 @@ if __name__ == '__main__':
                                                         args.network,
                                                         args.subnetwork,
                                                         args.preserve_instance_external_ip,
-                                                        args.region)
+                                                        args.region, args.subnetwork_region)
     forwarding_rule_migration.network_migration()

@@ -68,6 +68,11 @@ if __name__ == '__main__':
         default=False,
         help='Preserve the external IP addresses of the instances serving this forwarding rule')
 
+    parser.add_argument(
+        '--subnetwork_region',
+        default=None,
+        help='The region of the subnetwork. It is only necessary for an INTERNAL_SELF_MANAGED forwarding rule.')
+
     args = parser.parse_args()
 
     if args.preserve_instance_external_ip == 'True':
@@ -88,7 +93,7 @@ if __name__ == '__main__':
             args.preserve_instance_external_ip = False
     selfLink_executor = SelfLinkExecutor(compute, args.selfLink, args.network,
                                          args.subnetwork,
-                                         args.preserve_instance_external_ip)
+                                         args.preserve_instance_external_ip, args.subnetwork_region)
     migration_handler = selfLink_executor.build_migration_handler()
     if migration_handler == None:
         raise InvalidSelfLink('Unable to parse the selfLink.')
