@@ -78,8 +78,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             self.instance_group = self.build_instance_group()
 
         if isinstance(self.instance_group, UnmanagedInstanceGroup):
-            print('Migrating the unmanaged instance group: %s.' % (
-                self.instance_group_name))
+
             self.instance_group_migration_handler = UnmanagedInstanceGroupMigration(
                 self.compute, self.project,
                 self.network_name,
@@ -88,8 +87,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                 self.instance_group_name
             )
         else:
-            print('Migrating the managed instance group: %s.' % (
-                self.instance_group_name))
+
             self.instance_group_migration_handler = ManagedInstanceGroupMigration(
                 self.compute, self.project,
                 self.network_name,

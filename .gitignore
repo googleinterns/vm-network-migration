@@ -8,3 +8,4 @@ end_to_end_tests/
 *.txt
 *.log
 env/
+*.json
