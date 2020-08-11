@@ -38,9 +38,9 @@ class GlobalBackendService(BackendService):
             of the instances serving the backends
         """
         super(GlobalBackendService, self).__init__(compute, project,
-                                                     backend_service_name,
-                                                     network, subnetwork,
-                                                     preserve_instance_external_ip)
+                                                   backend_service_name,
+                                                   network, subnetwork,
+                                                   preserve_instance_external_ip)
         self.backend_service_configs = self.get_backend_service_configs()
         self.operations = Operations(self.compute, self.project)
         self.preserve_instance_external_ip = preserve_instance_external_ip
@@ -138,3 +138,24 @@ class GlobalBackendService(BackendService):
                 previous_request=request,
                 previous_response=response)
         return forwarding_rule_list
+
+    def check_backend_health(self, backend_selfLink) -> bool:
+        """ Check if the backends is healthy
+
+        Args:
+            backends_selfLink: url selfLink of the backends (just an instance group)
+
+        Returns:
+
+        """
+        operation = self.compute.backendServices().getHealth(
+            project=self.project,
+            backendService=self.backend_service_name,
+            body={
+                "group": backend_selfLink
+            }).execute()
+        if 'healthStatus' not in operation or operation[
+            'healthStatus'] != 'HEALTHY':
+            return False
+
+        return True
