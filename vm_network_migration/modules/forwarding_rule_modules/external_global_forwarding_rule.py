@@ -16,12 +16,10 @@ The supported target proxies are: targetHttpProxy,
 targetHttpsProxy, targetTcpProxy, targetSslProxy.
 
 """
-from vm_network_migration.errors import *
-from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
-from vm_network_migration.utils import find_all_matching_strings_from_a_dict
-from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
+from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
 
-class ExternalGlobalForwardingRule(ForwardingRule):
+
+class ExternalGlobalForwardingRule(GlobalForwardingRule):
 
     def __init__(self, compute, project, forwarding_rule_name, network,
                  subnetwork):
@@ -31,15 +29,5 @@ class ExternalGlobalForwardingRule(ForwardingRule):
         self.forwarding_rule_configs = self.get_forwarding_rule_configs()
         self.backends_selfLinks = self.get_backends_selfLinks()
         self.log()
-
-    def get_forwarding_rule_configs(self):
-        """ Get configuration of the forwarding rule.
-
-        Returns:
-
-        """
-        return self.compute.globalForwardingRules().get(
-            project=self.project,
-            forwardingRule=self.forwarding_rule_name).execute()
 
 

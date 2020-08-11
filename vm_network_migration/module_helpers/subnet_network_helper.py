@@ -19,7 +19,7 @@ from vm_network_migration.utils import initializer
 
 class SubnetNetworkHelper:
     @initializer
-    def __init__(self, compute, project, zone, region):
+    def __init__(self, compute, project, zone, region, only_check_network_info=False):
         """ Initialization
 
         Args:
@@ -27,8 +27,9 @@ class SubnetNetworkHelper:
             project: project ID
             zone: zone of the network
             region: region of the network
+            only_check_network_info: only check network information, subnetwork is ignored
         """
-        if self.region == None:
+        if self.region == None and not self.only_check_network_info:
             self.region = self.get_region()
 
     def generate_network(self, network, subnetwork):
@@ -42,8 +43,8 @@ class SubnetNetworkHelper:
 
         """
         network = SubnetNetwork(self.compute, self.project, self.zone,
-                                self.region, network, subnetwork)
-        network.check_subnetwork_validation()
+                                self.region, network, subnetwork, self.only_check_network_info)
+        network.subnetwork_validation()
         network.generate_new_network_info()
 
         return network
