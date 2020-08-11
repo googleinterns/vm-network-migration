@@ -27,7 +27,7 @@ class ForwardingRuleHelper:
     @initializer
     def __init__(self, compute, project, forwarding_rule_name, network,
                  subnetwork,
-                 region=None, subnetwork_region=None):
+                 region=None):
         """ Initialization
 
         Args:
@@ -46,14 +46,12 @@ class ForwardingRuleHelper:
         Returns: a subclass object of ForwardingRule
 
         """
-        if self.subnetwork_region != None and self.region == None:
-            # INTERNAL_SELF_MANAGED forwarding rule
-            return self.build_an_internal_global_forwarding_rule()
-
         load_balancing_schema = self.get_load_balancing_schema()
         if self.region == None:
             if load_balancing_schema == 'EXTERNAL':
                 return self.build_an_external_global_forwarding_rule()
+            elif load_balancing_schema == 'INTERNAL_SELF_MANAGED':
+                return self.build_an_internal_global_forwarding_rule()
         else:
             if load_balancing_schema == 'EXTERNAL':
                 return self.build_an_external_regional_forwarding_rule()
@@ -106,7 +104,7 @@ class ForwardingRuleHelper:
         """
         return InternalGlobalForwardingRule(self.compute, self.project,
                                     self.forwarding_rule_name, self.network,
-                                    self.subnetwork, self.subnetwork_region)
+                                    self.subnetwork)
 
     def get_regional_forwarding_rule_configs(self):
         """ Get the configs of the forwarding rule

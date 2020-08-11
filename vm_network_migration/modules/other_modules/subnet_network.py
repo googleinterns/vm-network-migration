@@ -18,10 +18,10 @@ from vm_network_migration.errors import *
 from vm_network_migration.utils import initializer
 
 
-class SubnetNetwork():
+class SubnetNetwork(object):
     @initializer
     def __init__(self, compute, project, zone, region, network,
-                 subnetwork=None):
+                 subnetwork=None, only_check_network_info=False):
         """ Initialize a SubnetNetwork object.
             If the network is auto, then the subnetwork name is optional;
             otherwise, it should be specified
@@ -36,14 +36,15 @@ class SubnetNetwork():
         self.network_link = None
         self.subnetwork_link = None
 
-    def check_subnetwork_validation(self):
+    def subnetwork_validation(self):
         """ Check if the current subnetwork is a potential valid subnetwork
 
         Raises:
             MissingSubnetworkError: The subnetwork is not specified and
             the network is in a custom mode.
         """
-
+        if self.only_check_network_info:
+            pass
         if self.subnetwork != None:
             pass
         automode_status = self.check_network_auto_mode()
@@ -71,6 +72,8 @@ class SubnetNetwork():
     def generate_new_network_info(self):
         network_parameters = self.get_network()
         self.network_link = network_parameters['selfLink']
+        if self.only_check_network_info:
+            return
         subnetwork_link = 'regions/' + self.region + '/subnetworks/' + self.subnetwork
         if 'subnetworks' not in network_parameters:
             self.subnetwork_link = None
@@ -79,6 +82,7 @@ class SubnetNetwork():
             if subnetwork_link in subnetwork:
                 self.subnetwork_link = subnetwork_link
                 return
+
         raise SubnetworkNotExists('Invalid target subnetwork.')
 
     def check_network_auto_mode(self) -> bool:

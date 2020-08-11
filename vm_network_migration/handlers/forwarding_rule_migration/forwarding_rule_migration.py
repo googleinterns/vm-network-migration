@@ -34,7 +34,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, forwarding_rule_name,
                  network_name, subnetwork_name,
-                 preserve_instance_external_ip, region=None, subnetwork_region=None):
+                 preserve_instance_external_ip, region=None):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
@@ -61,7 +61,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
                                                       self.forwarding_rule_name,
                                                       self.network_name,
                                                       self.subnetwork_name,
-                                                      self.region, self.subnetwork_region)
+                                                      self.region)
         return forwarding_rule_helper.build_a_forwarding_rule()
 
     def build_forwarding_rule_migration_handler(self):

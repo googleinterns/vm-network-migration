@@ -25,7 +25,7 @@ from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule
 class InternalGlobalForwardingRule(GlobalForwardingRule):
 
     def __init__(self, compute, project, forwarding_rule_name, network,
-                 subnetwork, region):
+                 subnetwork):
         """
 
         Args:
@@ -41,7 +41,6 @@ class InternalGlobalForwardingRule(GlobalForwardingRule):
                                                              forwarding_rule_name,
                                                              network,
                                                              subnetwork)
-        self.region = region
         self.backends_selfLinks = self.get_backends_selfLinks()
         self.network_object = self.build_network_object()
         self.new_forwarding_rule_configs = self.get_new_forwarding_rule_with_new_network_info(
@@ -55,7 +54,7 @@ class InternalGlobalForwardingRule(GlobalForwardingRule):
 
         """
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                 None, self.region)
+                                                 None, None, True)
         network_object = subnetwork_factory.generate_network(
             self.network,
             self.subnetwork)
@@ -93,13 +92,13 @@ class InternalGlobalForwardingRule(GlobalForwardingRule):
         Returns: True/False
 
         """
-        if self.network_object == None or self.network_object.subnetwork_link == None:
+        if self.network_object == None or self.network_object.network_link == None:
             raise InvalidTargetNetworkError
-        if 'subnetwork' not in self.forwarding_rule_configs:
+        if 'network' not in self.forwarding_rule_configs:
             return False
         elif is_equal_or_contians(
-                self.forwarding_rule_configs['subnetwork'],
-                self.network_object.subnetwork_link):
+                self.forwarding_rule_configs['network'],
+                self.network_object.network_link):
             return True
         else:
             return False

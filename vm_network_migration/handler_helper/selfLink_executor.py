@@ -24,7 +24,7 @@ from vm_network_migration.utils import initializer
 class SelfLinkExecutor:
     @initializer
     def __init__(self, compute, selfLink, network, subnetwork,
-                 preserve_instance_external_ip=False, subnetwork_region=None):
+                 preserve_instance_external_ip=False):
         """ Initialization
 
         Args:
@@ -254,7 +254,7 @@ class SelfLinkExecutor:
                 self.compute,
                 self.project, self.forwarding_rule,
                 self.network, self.subnetwork,
-                self.preserve_instance_external_ip, self.region, self.subnetwork_region)
+                self.preserve_instance_external_ip, self.region)
             return forwarding_rule_migration_handler
 
     def build_an_instance(self):

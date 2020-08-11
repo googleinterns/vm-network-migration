@@ -101,5 +101,5 @@ if __name__ == '__main__':
                                                         args.network,
                                                         args.subnetwork,
                                                         args.preserve_instance_external_ip,
-                                                        args.region, args.subnetwork_region)
+                                                        args.region)
     forwarding_rule_migration.network_migration()
