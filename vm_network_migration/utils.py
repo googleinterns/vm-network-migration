@@ -86,3 +86,17 @@ def is_equal_or_contians(url1, url2):
 
     """
     return url1 == url2 or url1 in url2 or url2 in url1
+
+def instance_group_links_is_equal(url1, url2) -> bool:
+    """ Compare two instance group selfLinks
+
+    Args:
+        url1: selfLink of group1
+        url2: selfLink of group2
+
+    Returns:
+
+    """
+    url1 = url1.replace('/instanceGroupManagers/','/instanceGroups/' )
+    url2 = url2.replace('/instanceGroupManagers/','/instanceGroups/' )
+    return is_equal_or_contians(url1, url2)

@@ -14,8 +14,10 @@
 
 """ BackendService class: describe a backend service.
 """
-from vm_network_migration.utils import initializer
 import logging
+from datetime import datetime
+import time
+from vm_network_migration.utils import initializer
 
 
 class BackendService(object):
@@ -40,7 +42,7 @@ class BackendService(object):
             '-------Backend Service: %s-----' % (self.backend_service_name))
         logging.info(self.backend_service_configs)
         logging.info('--------------------------')
-        
+
     def get_backend_service_configs(self):
         pass
 
@@ -63,3 +65,33 @@ class BackendService(object):
 
     def compare_original_network_and_target_network(self):
         return False
+
+    def check_backend_health(self, backend_selfLink):
+        """ Check if the backends is healthy
+
+        Args:
+            backends_selfLink: url selfLink of the backends (just an instance group)
+
+        Returns:
+
+        """
+        pass
+
+    def wait_for_backend_become_healthy(self, backend_selfLink, TIME_OUT = 600):
+        """ Wait for backend being healthy
+
+        Args:
+            backend_selfLink: url selfLink of the backends (just an instance group)
+
+        Returns:
+
+        """
+        start = datetime.now()
+        print('Waiting for %s being healthy with time out %s seconds.' %(backend_selfLink, TIME_OUT))
+        while not self.check_backend_health(backend_selfLink):
+            time.sleep(3)
+            current_time = datetime.now()
+            if (current_time-start).seconds > TIME_OUT:
+                print('Health waiting operation is timed out.')
+                return
+        print('At least one of the instances in %s is healthy.' %(backend_selfLink))

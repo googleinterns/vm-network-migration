@@ -20,7 +20,7 @@ from copy import deepcopy
 
 from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
 from vm_network_migration.modules.other_modules.operations import Operations
-from vm_network_migration.utils import is_equal_or_contians
+from vm_network_migration.utils import instance_group_links_is_equal
 
 
 class GlobalBackendService(BackendService):
@@ -38,9 +38,9 @@ class GlobalBackendService(BackendService):
             of the instances serving the backends
         """
         super(GlobalBackendService, self).__init__(compute, project,
-                                                     backend_service_name,
-                                                     network, subnetwork,
-                                                     preserve_instance_external_ip)
+                                                   backend_service_name,
+                                                   network, subnetwork,
+                                                   preserve_instance_external_ip)
         self.backend_service_configs = self.get_backend_service_configs()
         self.operations = Operations(self.compute, self.project)
         self.preserve_instance_external_ip = preserve_instance_external_ip
@@ -67,7 +67,7 @@ class GlobalBackendService(BackendService):
         updated_backend_service['backends'] = [v for v in
                                                updated_backend_service[
                                                    'backends'] if
-                                               not is_equal_or_contians(
+                                               not instance_group_links_is_equal(
                                                    v['group'],
                                                    backend_selfLink)]
         args = {
@@ -138,3 +138,29 @@ class GlobalBackendService(BackendService):
                 previous_request=request,
                 previous_response=response)
         return forwarding_rule_list
+
+    def check_backend_health(self, backend_selfLink) -> bool:
+        """ Check if the backends is healthy
+
+        Args:
+            backends_selfLink: url selfLink of the backends (just an instance group)
+
+        Returns:
+
+        """
+        operation = self.compute.backendServices().getHealth(
+            project=self.project,
+            backendService=self.backend_service_name,
+            body={
+                "group": backend_selfLink
+            }).execute()
+        if 'healthStatus' not in operation:
+            return False
+        else:
+            for instance_health_status in operation['healthStatus']:
+                # If any instance in this backend becomes healthy,
+                # this backend will start serving the backend service
+                if 'healthState' in instance_health_status and \
+                        instance_health_status['healthState'] == 'HEALTHY':
+                    return True
+        return True
