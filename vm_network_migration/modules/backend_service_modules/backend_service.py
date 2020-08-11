@@ -88,7 +88,7 @@ class BackendService(object):
         """
         start = datetime.now()
         print('Waiting for %s being healthy with time out %s seconds.' %(backend_selfLink, TIME_OUT))
-        while not self.check_backend_health(self, backend_selfLink):
+        while not self.check_backend_health(backend_selfLink):
             time.sleep(3)
             current_time = datetime.now()
             if (current_time-start).seconds > TIME_OUT:
