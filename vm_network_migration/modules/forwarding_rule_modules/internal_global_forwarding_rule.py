@@ -19,7 +19,6 @@ from copy import deepcopy
 
 from vm_network_migration.errors import *
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
-from vm_network_migration.modules.forwarding_rule_modules.regional_forwarding_rule import RegionalForwardingRule
 from vm_network_migration.utils import is_equal_or_contians
 from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
 
@@ -89,6 +88,11 @@ class InternalGlobalForwardingRule(GlobalForwardingRule):
         return new_forwarding_rule_configs
 
     def compare_original_network_and_target_network(self):
+        """ Check if the original network is already the target network
+
+        Returns: True/False
+
+        """
         if self.network_object == None or self.network_object.subnetwork_link == None:
             raise InvalidTargetNetworkError
         if 'subnetwork' not in self.forwarding_rule_configs:
