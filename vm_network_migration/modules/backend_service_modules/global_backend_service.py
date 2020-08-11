@@ -154,8 +154,13 @@ class GlobalBackendService(BackendService):
             body={
                 "group": backend_selfLink
             }).execute()
-        if 'healthStatus' not in operation or operation[
-            'healthStatus'] != 'HEALTHY':
+        if 'healthStatus' not in operation:
             return False
-
+        else:
+            for instance_health_status in operation['healthStatus']:
+                # If any instance in this backend becomes healthy,
+                # this backend will start serving the backend service
+                if 'healthState' in instance_health_status and \
+                        instance_health_status['healthState'] == 'HEALTHY':
+                    return True
         return True

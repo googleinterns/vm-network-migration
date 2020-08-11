@@ -94,4 +94,4 @@ class BackendService(object):
             if (current_time-start).seconds > TIME_OUT:
                 print('Health waiting operation is timed out.')
                 return
-        print('%s is healthy.' %(backend_selfLink))
+        print('At least one of the instances in %s is healthy.' %(backend_selfLink))
