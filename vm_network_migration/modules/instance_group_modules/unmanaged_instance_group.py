@@ -58,7 +58,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
     def get_network(self):
         print('Checking the target network information.')
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                 self.zone, self.region)
+                                                 self.zone)
         network = subnetwork_factory.generate_network(
             self.network_name,
             self.subnetwork_name)

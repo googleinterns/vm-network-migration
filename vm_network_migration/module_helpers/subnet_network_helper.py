@@ -19,7 +19,7 @@ from vm_network_migration.utils import initializer
 
 class SubnetNetworkHelper:
     @initializer
-    def __init__(self, compute, project, zone, region, only_check_network_info=False):
+    def __init__(self, compute, project, zone, region=None, only_check_network_info=False):
         """ Initialization
 
         Args:
