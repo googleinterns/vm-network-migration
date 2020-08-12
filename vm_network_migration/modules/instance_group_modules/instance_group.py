@@ -20,6 +20,7 @@ from googleapiclient.http import HttpError
 from vm_network_migration.utils import initializer
 import logging
 
+
 class InstanceGroup(object):
     @initializer
     def __init__(self, compute, project, instance_group_name, network_name,
@@ -44,7 +45,8 @@ class InstanceGroup(object):
 
         """
         logging.basicConfig(filename='backup.log', level=logging.INFO)
-        logging.info('-------Instance Group: %s-----' % (self.instance_group_name))
+        logging.info(
+            '-------Instance Group: %s-----' % (self.instance_group_name))
         logging.info(self.original_instance_group_configs)
         logging.info('--------------------------')
 
@@ -65,6 +67,14 @@ class InstanceGroup(object):
             else:
                 raise e
         return InstanceGroupStatus('EXISTS')
+
+    def list_instances(self):
+        """ get a list of instances' selfLinks which are in this group
+
+        Returns: a list of selfLinks
+
+        """
+        pass
 
     def get_selfLink(self, config):
         """ Get the selfLink from config
@@ -98,6 +108,7 @@ class InstanceGroup(object):
 
     def compare_original_network_and_target_network(self):
         return False
+
 
 class InstanceGroupStatus(Enum):
     """

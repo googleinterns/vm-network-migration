@@ -16,12 +16,12 @@
 """
 import warnings
 
+from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
+from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
 from vm_network_migration.modules.target_pool_modules.target_pool import TargetPool
 from vm_network_migration.utils import initializer
-from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
-from googleapiclient.errors import HttpError
 
 
 class TargetPoolMigration(ComputeEngineResourceMigration):
@@ -101,18 +101,31 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
         """
         print('Migrating the target pool: %s' % (self.target_pool_name))
         try:
-            for instance_migration_handler in self.instance_migration_handlers:
+            total_number_of_backend_handlers = len(
+                self.instance_migration_handlers) + len(
+                self.instance_group_migration_handlers)
+            for i in range(len(self.instance_migration_handlers)):
+                instance_migration_handler = self.instance_migration_handlers[i]
                 print('Migrating: %s.'
                       % (instance_migration_handler.original_instance_name))
                 instance_migration_handler.network_migration()
                 print('Reattaching the instance to the target pool')
-                self.target_pool.add_instance(
-                    instance_migration_handler.get_instance_selfLink())
+                instance_selfLink = instance_migration_handler.get_instance_selfLink()
+                self.target_pool.add_instance(instance_selfLink)
+                if i == 0 and total_number_of_backend_handlers > 1:
+                    self.target_pool.wait_for_instance_become_healthy(
+                        instance_selfLink)
 
-            for instance_group_migration_handler in self.instance_group_migration_handlers:
+            for i in range(len(self.instance_group_migration_handlers)):
+                instance_group_migration_handler = \
+                self.instance_group_migration_handlers[i]
                 print('Migrating: %s.'
                       % (instance_group_migration_handler.instance_group_name))
                 instance_group_migration_handler.network_migration()
+                if len(self.instance_migration_handlers) == 0 \
+                        and i == 0 and total_number_of_backend_handlers > 1:
+                    self.target_pool.wait_for_an_instance_group_become_partially_healthy(
+                        instance_group_migration_handler.instance_group)
 
         except Exception as e:
             warnings.warn(e, Warning)
@@ -131,13 +144,16 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
         warnings.warn('Rolling back: %s.' % (self.target_pool_name), Warning)
         for instance_migration_handler in self.instance_migration_handlers:
             instance_migration_handler.rollback()
-            print('Reattaching the instance (%s) to the target pool' %(instance_migration_handler.original_instance_name))
+            print('Reattaching the instance (%s) to the target pool' % (
+                instance_migration_handler.original_instance_name))
             self.target_pool.add_instance(
                 instance_migration_handler.get_instance_selfLink())
 
         for instance_group_migration_handler in self.instance_group_migration_handlers:
             instance_group_migration_handler.rollback()
             if instance_group_migration_handler.instance_group != None:
-                print('Reattaching the instance group (%s) to the target pool' %(instance_group_migration_handler.instance_group_name))
+                print(
+                    'Reattaching the instance group (%s) to the target pool' % (
+                        instance_group_migration_handler.instance_group_name))
                 instance_group_migration_handler.instance_group.set_target_pool(
                     self.target_pool.selfLink)

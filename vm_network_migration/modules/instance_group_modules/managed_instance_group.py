@@ -273,3 +273,24 @@ class ManagedInstanceGroup(InstanceGroup):
     def get_target_pools(self, configs):
         """Get a list of target pools served by the instance group"""
         return configs['targetPools']
+
+    def list_instances(self) -> list:
+        """ List managed instances' selfLinks
+
+        Returns: a list of instances' selfLinks
+
+        """
+        instance_selfLinks = []
+        args = {
+            'project': self.project,
+            'instanceGroupManager': self.instance_group_name,
+
+        }
+        self.add_zone_or_region_into_args(args)
+        list_instances_operation = self.instance_group_manager_api.listManagedInstances(
+            **args).execute()
+
+        for item in list_instances_operation['managedInstances']:
+            if item['instanceStatus'] == 'RUNNING':
+                instance_selfLinks.append(item['instance'])
+        return instance_selfLinks
