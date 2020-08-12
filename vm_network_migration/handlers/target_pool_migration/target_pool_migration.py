@@ -101,13 +101,17 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
         """
         print('Migrating the target pool: %s' % (self.target_pool_name))
         try:
-            for instance_migration_handler in self.instance_migration_handlers:
+            total_number_of_backend_handlers = len(self.instance_migration_handlers) + len(self.instance_group_migration_handlers)
+            for i in range(len(self.instance_migration_handlers)):
+                instance_migration_handler = self.instance_migration_handlers[i]
                 print('Migrating: %s.'
                       % (instance_migration_handler.original_instance_name))
                 instance_migration_handler.network_migration()
                 print('Reattaching the instance to the target pool')
-                self.target_pool.add_instance(
-                    instance_migration_handler.get_instance_selfLink())
+                instance_selfLink = instance_migration_handler.get_instance_selfLink()
+                self.target_pool.add_instance(instance_selfLink)
+                if i == 0 and total_number_of_backend_handlers > 1:
+                    self.target_pool.wait_for_backend_become_healthy(instance_selfLink)
 
             for instance_group_migration_handler in self.instance_group_migration_handlers:
                 print('Migrating: %s.'
@@ -115,12 +119,12 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                 instance_group_migration_handler.network_migration()
 
         except Exception as e:
-            warnings.warn(e, Warning)
-            print(
-                'The target pool migration was failed. '
-                'Rolling back to its original network.')
-            self.rollback()
-            raise MigrationFailed('Rollback finished.')
+                warnings.warn(e, Warning)
+                print(
+                    'The target pool migration was failed. '
+                    'Rolling back to its original network.')
+                self.rollback()
+                raise MigrationFailed('Rollback finished.')
 
     def rollback(self):
         """ Rollback

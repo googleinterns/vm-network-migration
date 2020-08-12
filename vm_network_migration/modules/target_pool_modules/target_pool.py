@@ -14,13 +14,17 @@
 """ TargetPool class: describes a target pool and its API methods
 
 """
+import logging
+import time
+from datetime import datetime
+
 from googleapiclient.http import HttpError
+from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.other_modules.operations import Operations
 from vm_network_migration.utils import initializer
-from vm_network_migration.errors import *
-import logging
+
 
 class TargetPool:
     @initializer
@@ -175,3 +179,51 @@ class TargetPool:
                         " please detach it from the other target pools or \n"
                         "backend services and try again." % (
                             instance_group_selfLink))
+
+    def check_backend_health(self, backend_selfLink):
+        """ Check if the backend is healthy
+
+        Args:
+            backends_selfLink: url selfLink of the backend (just an instance)
+
+        Returns:
+
+        """
+        operation = self.compute.targetPools().getHealth(
+            project=self.project,
+            targetPool=self.target_pool_name,
+            body={
+                "instance": backend_selfLink
+            }).execute()
+        if 'healthStatus' not in operation:
+            return False
+        else:
+            for instance_health_status in operation['healthStatus']:
+                # If any instance in this backend becomes healthy,
+                # this backend will start serving the backend service
+                if 'healthState' in instance_health_status and \
+                        instance_health_status['healthState'] == 'HEALTHY':
+                    return True
+        return False
+
+
+    def wait_for_backend_become_healthy(self, instance_selfLink, TIME_OUT=300):
+        """ Wait for backend being healthy
+
+        Args:
+            backend_selfLink: url selfLink of the backends (just an instance group)
+
+        Returns:
+
+        """
+        start = datetime.now()
+        print('Waiting for %s being healthy with time out %s seconds.' % (
+            instance_selfLink, TIME_OUT))
+        while not self.check_backend_health(instance_selfLink):
+            time.sleep(3)
+            current_time = datetime.now()
+            if (current_time - start).seconds > TIME_OUT:
+                print('Health waiting operation is timed out.')
+                return
+        print('At least one of the instances in %s is healthy.' % (
+            instance_selfLink))

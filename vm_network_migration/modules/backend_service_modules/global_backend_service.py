@@ -163,4 +163,4 @@ class GlobalBackendService(BackendService):
                 if 'healthState' in instance_health_status and \
                         instance_health_status['healthState'] == 'HEALTHY':
                     return True
-        return True
+        return False
