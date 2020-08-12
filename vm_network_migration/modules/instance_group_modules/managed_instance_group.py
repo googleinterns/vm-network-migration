@@ -287,7 +287,7 @@ class ManagedInstanceGroup(InstanceGroup):
 
         }
         self.add_zone_or_region_into_args(args)
-        list_instances_operation = self.instance_group_manager_api.setTargetPools(
+        list_instances_operation = self.instance_group_manager_api.listManagedInstances(
             **args).execute()
 
         for item in list_instances_operation['managedInstances']:

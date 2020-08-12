@@ -192,6 +192,7 @@ class TargetPool:
         operation = self.compute.targetPools().getHealth(
             project=self.project,
             targetPool=self.target_pool_name,
+            region=self.region,
             body={
                 "instance": backend_selfLink
             }).execute()
@@ -206,8 +207,7 @@ class TargetPool:
                     return True
         return False
 
-
-    def wait_for_backend_become_healthy(self, instance_selfLink, TIME_OUT=300):
+    def wait_for_instance_become_healthy(self, instance_selfLink, TIME_OUT=300):
         """ Wait for backend being healthy
 
         Args:
@@ -225,5 +225,34 @@ class TargetPool:
             if (current_time - start).seconds > TIME_OUT:
                 print('Health waiting operation is timed out.')
                 return
-        print('At least one of the instances in %s is healthy.' % (
-            instance_selfLink))
+        print('At least one of the backend in %s is healthy.' % (
+            self.target_pool_name))
+
+    def wait_for_an_instance_group_become_partially_healthy(self,
+                                                            instance_group,
+                                                            TIME_OUT=300):
+        """ Wait for at least one instance from this instance group become healthy
+
+        Args:
+            instance_group:  a ManagedInstanceGroup object
+            TIME_OUT: maximum waiting time
+
+        Returns:
+
+        """
+        start = datetime.now()
+        print('Waiting for %s being healthy with time out %s seconds.' % (
+            instance_group.selfLink, TIME_OUT))
+        while (datetime.now() - start).seconds < TIME_OUT:
+            instance_selfLinks = instance_group.list_instances()
+            for instance_selfLink in instance_selfLinks:
+                try:
+                    if self.check_backend_health(instance_selfLink):
+                        print(
+                            'At least one of the backend in %s is healthy.' % (
+                                self.target_pool_name))
+                        return
+                except:
+                    # the instance maybe hasn't been attached to the target pool
+                    continue
+            time.sleep(5)

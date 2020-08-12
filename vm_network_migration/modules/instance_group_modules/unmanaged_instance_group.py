@@ -45,7 +45,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
                                                      subnetwork_name,
                                                      preserve_instance_ip)
         self.zone = zone
-        self.instance_selfLinks = self.retrieve_instances()
+        self.instance_selfLinks = self.list_instances()
         self.network = self.get_network()
         self.original_instance_group_configs = self.get_instance_group_configs()
         self.new_instance_group_configs = self.get_new_instance_group_configs_using_new_network(
@@ -74,7 +74,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
                                                  zone=self.zone,
                                                  instanceGroup=self.instance_group_name).execute()
 
-    def retrieve_instances(self):
+    def list_instances(self):
         """Retrieve all the instances in this instance group,
         and save the instances into a list of Instance objects
 
