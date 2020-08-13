@@ -291,6 +291,5 @@ class ManagedInstanceGroup(InstanceGroup):
             **args).execute()
 
         for item in list_instances_operation['managedInstances']:
-            if item['instanceStatus'] == 'RUNNING':
-                instance_selfLinks.append(item['instance'])
+            instance_selfLinks.append(item['instance'])
         return instance_selfLinks
