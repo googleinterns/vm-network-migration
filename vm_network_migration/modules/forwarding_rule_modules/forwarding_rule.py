@@ -99,7 +99,8 @@ class ForwardingRule(object):
             'targetHttpProxies': self.compute.targetHttpProxies(),
             'targetHttpsProxies': self.compute.targetHttpsProxies(),
             'targetTcpProxies': self.compute.targetTcpProxies(),
-            'targetSslProxies': self.compute.targetSslProxies()
+            'targetSslProxies': self.compute.targetSslProxies(),
+            'targetGrpcProxies': self.compute.targetGrpcProxies()
         }
         regional_proxy_type_to_compute_api = {
             'targetHttpProxies': self.compute.regionTargetHttpProxies(),
@@ -109,7 +110,8 @@ class ForwardingRule(object):
             'targetHttpProxies': 'targetHttpProxy',
             'targetHttpsProxies': 'targetHttpsProxy',
             'targetTcpProxies': 'targetTcpProxy',
-            'targetSslProxies': 'targetSslProxy'
+            'targetSslProxies': 'targetSslProxy',
+            'targetGrpcProxies': 'targetGrpcProxy'
         }
 
         if target_proxy_type in proxy_type_to_compute_api:
