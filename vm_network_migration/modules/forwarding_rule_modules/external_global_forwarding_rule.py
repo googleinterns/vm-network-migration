@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" GlobalForwardingRule class: external global forwarding rule
-The supported target proxies are: targetHttpProxy,
-targetHttpsProxy, targetTcpProxy, targetSslProxy.
+""" A subclass of GlobalForwardingRule class.
+
 
 """
 from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule

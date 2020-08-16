@@ -21,7 +21,7 @@ from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetw
 from vm_network_migration.utils import is_equal_or_contians
 from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
 
-class InternalGlobalForwardingRule(GlobalForwardingRule):
+class InternalSelfManagedGlobalForwardingRule(GlobalForwardingRule):
 
     def __init__(self, compute, project, forwarding_rule_name, network,
                  subnetwork):
