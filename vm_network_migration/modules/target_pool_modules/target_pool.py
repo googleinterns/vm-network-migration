@@ -241,7 +241,7 @@ class TargetPool:
 
         """
         start = datetime.now()
-        print('Waiting for %s being healthy with time out %s seconds.' % (
+        print('Waiting for %s being healthy with timeout %s seconds.' % (
             instance_group.selfLink, TIME_OUT))
         while (datetime.now() - start).seconds < TIME_OUT:
             instance_selfLinks = instance_group.list_instances()

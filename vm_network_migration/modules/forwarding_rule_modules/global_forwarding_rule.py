@@ -11,8 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" RegionalForwardingRule: it describes a regional forwarding rule and has
-some google API interface functions.
+""" GlobalForwardingRule: it describes a global forwarding rule and has
+some google API interface functions. A global forwarding rule can have
+an 'EXTERNAL/INTERNAL' loadBalancingSchema.
+
 """
 import warnings
 

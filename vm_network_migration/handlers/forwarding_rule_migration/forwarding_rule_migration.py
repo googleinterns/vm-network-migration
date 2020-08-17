@@ -25,7 +25,7 @@ from vm_network_migration.handlers.forwarding_rule_migration.internal_forwarding
 from vm_network_migration.module_helpers.forwarding_rule_helper import ForwardingRuleHelper
 from vm_network_migration.modules.forwarding_rule_modules.external_global_forwarding_rule import ExternalGlobalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.external_regional_forwarding_rule import ExternalRegionalForwardingRule
-from vm_network_migration.modules.forwarding_rule_modules.internal_global_forwarding_rule import InternalGlobalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.internal_self_managed_global_forwarding_rule import InternalSelfManagedGlobalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
 from vm_network_migration.utils import initializer
 
@@ -72,7 +72,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         """
         if isinstance(self.forwarding_rule,
                       InternalRegionalForwardingRule) or isinstance(
-            self.forwarding_rule, InternalGlobalForwardingRule):
+            self.forwarding_rule, InternalSelfManagedGlobalForwardingRule):
             self.forwarding_rule_migration_handler = InternalForwardingRuleMigration(
                 self.compute, self.project, self.forwarding_rule_name,
                 self.network_name, self.subnetwork_name,

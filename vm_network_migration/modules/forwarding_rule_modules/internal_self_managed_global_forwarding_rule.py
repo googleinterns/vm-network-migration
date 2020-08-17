@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" The regional forwarding rule which has an 'INTERNAL' or 'INTERNAL_Managed'
-load balancing scheme
+""" For INTERNAL_SELF_MANAGED forwarding rule
 
 """
 from copy import deepcopy
@@ -22,7 +21,7 @@ from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetw
 from vm_network_migration.utils import is_equal_or_contians
 from vm_network_migration.modules.forwarding_rule_modules.global_forwarding_rule import GlobalForwardingRule
 
-class InternalGlobalForwardingRule(GlobalForwardingRule):
+class InternalSelfManagedGlobalForwardingRule(GlobalForwardingRule):
 
     def __init__(self, compute, project, forwarding_rule_name, network,
                  subnetwork):

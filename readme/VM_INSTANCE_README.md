@@ -1,12 +1,8 @@
-# Single VM Network Migration
+# VM Network Migration
 ## Limitations:
-1. If the original VM uses a Ephemeral external IP, and the customer chooses to preserve it, it will become a static external IP after the migration.
-2. Support migrating a VM from a legacy network to a subnetwork, or from one VPC network to another. Within a network, a VM can also be migrated from one subnet to another. Migration from any network to a legacy network is not allowed.
-3. The original VM should only have one NIC.
-4. The original VM and the new VM will have the same configuration except for the network interface. Therefore, they are in the same project, same zone, and same region.
-5. The original VM must not be part of any instance group before changing the network it is associated with, since VMs in an instance group have to be in the same network. 
-6. The original VM is assumed to be standalone. Other cases, for example, if the original instance is served as a backend of other services are not considered in the current scope.
-7. There is a possibility that the main flow runs into an error and the rollback procedure also fails. In this case, the customer may lose both the original VM and the new VM. The original VM’s configuration will be printed out as a reference.  
+1. The VM should not be a part of any instance group. Otherwise, the migration will ealy terminate and won’t start.
+2. The user can choose to preserve the external IP. If the original VM uses a Ephemeral external IP, and the user chooses to preserve it, it will become a static external IP after the migration. If the user is running out of quota of the static IP, the tool will pick up an Ephemeral IP and continue the migration.
+3. The original VM will be deleted and recreated using modified network configuration (tags: network, subnetwork, natIP, networkIP). If the user chooses to preserve the external IP, the ‘natIP’ tag won’t change.
 
 ## Examples:
 ### 1. Migrate an instance without preserving the external IP address:

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" ForwardingRuleMigration class: It is the handler to migrate
-a forwarding rule based on the type of it.
+""" Migration handler for EXTERNAL forwarding rule
 
 """
 import warnings

@@ -19,7 +19,7 @@ from vm_network_migration.modules.forwarding_rule_modules.external_regional_forw
 from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.external_global_forwarding_rule import ExternalGlobalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
-from vm_network_migration.modules.forwarding_rule_modules.internal_global_forwarding_rule import InternalGlobalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.internal_self_managed_global_forwarding_rule import InternalSelfManagedGlobalForwardingRule
 from vm_network_migration.utils import initializer
 
 
@@ -102,7 +102,7 @@ class ForwardingRuleHelper:
         Returns: a GlobalForwardingRule object
 
         """
-        return InternalGlobalForwardingRule(self.compute, self.project,
+        return InternalSelfManagedGlobalForwardingRule(self.compute, self.project,
                                     self.forwarding_rule_name, self.network,
                                     self.subnetwork)
 
