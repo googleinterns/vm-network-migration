@@ -1,25 +1,25 @@
-# VM Network Migration
+# Legacy Network Resource Migration
 **This is not an officially supported Google product.**
 ## Description
 
 This Python library is used to migrate GCE resources from its legacy network to a
-subnetwork with downtime. The project uses Google APIs Python client library (Compute Engine APIs) to manage the 
+VPC subnet with downtime. The project uses Google APIs Python client library (Compute Engine APIs) to manage the 
 Compute Engine resources. 
 
-## Supported GCE Resrouces:
+## Supported GCE Resources:
     1. VM instance (with IP preservation)
     2. Instance group
         (1)Unmanaged  (with IP preservation)
         (2)Managed 
     3. Target pool
     4. Backend service
-        (1)Internal
-        (2)External
-        (3)Internal-self-managed
+        (1)INTERNAL
+        (2)EXTERNAL
+        (3)INTERNAL-SELF-MANAGED
     5. Forwarding rule 
-        (1)Internal 
-        (2)External (with IP preservation)
-        (3)Internal-managed 
+        (1)INTERNAL 
+        (2)EXTERNAL (with IP preservation)
+        (3)INTERNA-SELF-MANAGED 
 
 
 ## Requirements:
@@ -35,11 +35,11 @@ Compute Engine resources.
 2. Downtime is required.
 3. The rollback can also fail due to network issue or quota limitation issue. In this scenario, the user can refer to the ‘backup.log’ file to recreate the lost resources by themselves. 
 ### Specific Limitations:
-#### [Limitations of VM migration.](readme/VM_INSTANCE_README.md)
-#### [Limitations of instance group migration.](readme/INSTANCE_GROUP_README.md)
-#### [Limitations of target pool migration.](readme/TARGET_POOL_README.md)
-#### [Limitations of backend service migration.](readme/BACKEND_SERVICE_README.md)
-#### [Limitations of forwarding rule migration.](readme/FORWARDING_RULE_README.md)
+#### [VM migration.](readme/VM_INSTANCE_README.md)
+#### [Instance group migration.](readme/INSTANCE_GROUP_README.md)
+#### [Target pool migration.](readme/TARGET_POOL_README.md)
+#### [Backend service migration.](readme/BACKEND_SERVICE_README.md)
+#### [Forwarding rule migration.](readme/FORWARDING_RULE_README.md)
 
 ## Before Running
     1. If not already done, enable the Compute Engine API
@@ -86,8 +86,8 @@ or 'projects/project/zones/zone/instances/instance'
     --preserve_instance_external_ip=False
 
 #### Backend service migration. [See more examples.](readme/BACKEND_SERVICE_README.md)
-    python3 target_pool_migration.py  --project=my-project \
-    --target_pool_name=my-target-pool --region=us-central1 \
+    python3 backend_service_migration.py  --project=my-project \
+    --backend_service_name=my-backend-service --region=us-central1 \
     --network=my-network  --subnetwork=my-network-subnet \
     --preserve_instance_external_ip=False
     
