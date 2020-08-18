@@ -3,4 +3,4 @@
 1. Supported type: ‘EXTERNAL’, ‘INTERNAL’ and ‘INTERAL_SELF_MANAGED’. The ‘INTERNAL_MANAGED’ is not supported, because it can not use a legacy network.
 2. All the backend service, target pools, or target instances serving the forwarding rule will be migrated to the VPC subnet.
 3. If any of its backends is serving multiple resources, the migration will fail and rollback to the original network.
-4. For an INTERNAL or INTERAL_SELF_MANAGED forwarding rule, it will be deleted and recreated using the new network configuration. For an external forwarding rule, it will not be deleted.
+4. For an INTERNAL or INTERNAL_SELF_MANAGED forwarding rule, it will be deleted and recreated using the new network configuration. For an external forwarding rule, it will not be deleted.

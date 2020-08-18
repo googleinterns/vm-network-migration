@@ -6,4 +6,28 @@
 4. The original instance group will be deleted and recreated using modified network configuration
 
 ## Examples:
+### Unmanaged Instance Group:
+#### 1. Migrate an unmanaged instance group without preserving the external IP address:
+     python3 instance_group_migration.py  --project=my-project \
+        --zone=us-central1-a  --instance_group_name=my-instance-group  \
+        --network=my-network  --subnetwork=my-network-subnet1 \
+        --preserve_external_ip=False
+         
+#### 2. Migrate an an unmanaged instance group with preserving the external IP address:
+Note: No matter whether its external IP address is a static one or a ephemeral one, 
+it will be reserved as a static IP after the migration. The preserving action is not reversible. 
 
+     python3 instance_group_migration.py  --project_id=my-project \
+        --zone=us-central1-a  --instance_group_name=my-instance-group  \
+        --network=my-network  --subnetwork=my-network-subnet1 \
+        --preserve_external_ip=True
+        
+### Managed Instance Group:
+#### 1. Migrate a zonal(single-zone) managed instance group
+     python3 instance_group_migration.py  --project_id=my-project \
+        --zone=us-central1-a  --instance_group_name=my-instance-group  \
+        --network=my-network  --subnetwork=my-network-subnet1
+#### 2. Migrate a regional(multi-zone) managed instance group
+     python3 instance_group_migration.py  --project_id=my-project \
+        --region=us-central1  --instance_group_name=my-instance-group  \
+        --network=my-network  --subnetwork=my-network-subnet1

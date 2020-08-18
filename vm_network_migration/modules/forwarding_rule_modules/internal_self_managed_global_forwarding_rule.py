@@ -35,7 +35,7 @@ class InternalSelfManagedGlobalForwardingRule(GlobalForwardingRule):
             subnetwork:
             region: the region of the subnetwork
         """
-        super(InternalGlobalForwardingRule, self).__init__(compute,
+        super(InternalSelfManagedGlobalForwardingRule, self).__init__(compute,
                                                              project,
                                                              forwarding_rule_name,
                                                              network,
