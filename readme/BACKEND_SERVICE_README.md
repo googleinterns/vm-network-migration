@@ -10,14 +10,15 @@
 ## Examples:
 ### 1. A regional backend service (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
      python3 backend_service_migration.py  --project_id=my-project \
-        --region=us-central1-a  --backend_service=my-backend-service  \
+        --region=us-central1-a  --backend_service_name=my-backend-service  \
         --network=my-network  --subnetwork=my-network-subnet1 \
 
      (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
  
-### 1. A global backend service (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
+### 2. A global backend service (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
     python3 backend_service_migration.py  --project_id=my-project \
-        --backend_service=my-backend-service  \
+        --backend_service_name=my-backend-service  \
         --network=my-network  --subnetwork=my-network-subnet1 \
     
     (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
+ 

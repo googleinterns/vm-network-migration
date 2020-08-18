@@ -4,3 +4,18 @@
 2. All the backend service, target pools, or target instances serving the forwarding rule will be migrated to the VPC subnet.
 3. If any of its backends is serving multiple resources, the migration will fail and rollback to the original network.
 4. For an INTERNAL or INTERNAL_SELF_MANAGED forwarding rule, it will be deleted and recreated using the new network configuration. For an external forwarding rule, it will not be deleted.
+## Examples:
+### 1. A regional forwarding rule (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
+     python3 forwarding_rule_migration.py  --project_id=my-project \
+        --region=us-central1-a  --forwarding_rule_name=my-forwarding-rule  \
+        --network=my-network  --subnetwork=my-network-subnet1 \
+
+     (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
+ 
+### 1. A global forwarding rule (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
+     python3 forwarding_rule_migration.py  --project_id=my-project \
+        --forwarding_rule_name=my-forwarding-rule  \
+        --network=my-network  --subnetwork=my-network-subnet1 \
+    
+    (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
+ 
