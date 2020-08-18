@@ -128,7 +128,7 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                         instance_group_migration_handler.instance_group)
 
         except Exception as e:
-            warnings.warn(e, Warning)
+            warnings.warn(str(e), Warning)
             print(
                 'The target pool migration was failed. '
                 'Rolling back to its original network.')

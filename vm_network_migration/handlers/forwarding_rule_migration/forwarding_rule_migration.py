@@ -111,7 +111,7 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
         try:
             self.forwarding_rule_migration_handler.network_migration()
         except Exception as e:
-            warnings.warn(e, Warning)
+            warnings.warn(str(e), Warning)
             self.rollback()
             raise MigrationFailed('Rollback finished.')
 

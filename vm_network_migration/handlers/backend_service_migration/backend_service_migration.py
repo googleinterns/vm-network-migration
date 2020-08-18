@@ -91,7 +91,7 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
         try:
             self.backend_service_migration_handler.network_migration()
         except Exception as e:
-            warnings.warn(e, Warning)
+            warnings.warn(str(e), Warning)
             print(
                 'The backend service migration was failed. Rolling back all the backends to its original network.')
             self.rollback()
