@@ -105,12 +105,14 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                 self.instance_migration_handlers) + len(
                 self.instance_group_migration_handlers)
             for i in range(len(self.instance_migration_handlers)):
+                instance_selfLink = instance_migration_handler.get_instance_selfLink()
+                print('Detaching: %s' %(instance_migration_handler.original_instance_name))
+                self.target_pool.remove_instance(instance_selfLink)
                 instance_migration_handler = self.instance_migration_handlers[i]
                 print('Migrating: %s.'
                       % (instance_migration_handler.original_instance_name))
                 instance_migration_handler.network_migration()
                 print('Reattaching the instance to the target pool')
-                instance_selfLink = instance_migration_handler.get_instance_selfLink()
                 self.target_pool.add_instance(instance_selfLink)
                 if i == 0 and total_number_of_backend_handlers > 1:
                     self.target_pool.wait_for_instance_become_healthy(
@@ -119,9 +121,14 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
             for i in range(len(self.instance_group_migration_handlers)):
                 instance_group_migration_handler = \
                 self.instance_group_migration_handlers[i]
+                print('Detaching: %s' %(instance_group_migration_handler.instance_group_name))
+                instance_group = instance_group_migration_handler.instance_group
+                instance_group.remove_target_pool(self.target_pool.selfLink)
                 print('Migrating: %s.'
                       % (instance_group_migration_handler.instance_group_name))
                 instance_group_migration_handler.network_migration()
+                print('Reattaching: %s' %(instance_group_migration_handler.instance_group_name))
+                instance_group.set_target_pool(self.target_pool.selfLink)
                 if len(self.instance_migration_handlers) == 0 \
                         and i == 0 and total_number_of_backend_handlers > 1:
                     self.target_pool.wait_for_an_instance_group_become_partially_healthy(
