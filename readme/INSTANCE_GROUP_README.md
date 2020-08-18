@@ -34,8 +34,21 @@ it will be reserved as a static IP after the migration. The preserving action is
         
 ## Special Cases:
 ### Unmanaged Instance Group:
-#### 1. The instance group is serving a target pool
+#### 1. The instance group is serving >= 1 target pool
      The unmanaged instance group serves a target pool, which means the
      instances in this instance group serve the target pool. The migration can
      still succeed. But the instances might be detached from the target pool
      after the migration. Therefore, it is not a recommended user case.
+#### 2. The instance group is serving >= 1 backend service
+     Not supported. The migration will fail and rollback to the legacy network.
+     The user should migrate the backend service directly, or detach the instance
+     group from the backend service.
+### Managed Instance Group
+#### 1. The instance group is serving >= 1 target pool
+    Not supported. The migration will fail and rollback to the legacy network.
+    The user should migrate the backend service directly, or detach the instance
+    group from the target pool.
+#### 2. The instance group is serving >= 1 backend service
+     Not supported. The migration will fail and rollback to the legacy network.
+     The user should migrate the backend service directly, or detach the instance
+     group from the backend service.

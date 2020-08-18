@@ -242,18 +242,18 @@ class Instance(object):
         instance_configs['networkInterfaces'][0][
             'subnetwork'] = new_subnetwork_link
         # For testing
-        if add_network_metadata:
-            if 'items' not in instance_configs['metadata']:
-                instance_configs['metadata']['items'] = []
-
-            for item in instance_configs['metadata']['items']:
-                if item['key'] == 'network':
-                    item['value'] = new_subnetwork_link
-                    return
-
-            instance_configs['metadata']['items'].append({
-                'key': 'network',
-                'value': new_subnetwork_link})
+        # if add_network_metadata:
+        #     if 'items' not in instance_configs['metadata']:
+        #         instance_configs['metadata']['items'] = []
+        #
+        #     for item in instance_configs['metadata']['items']:
+        #         if item['key'] == 'network':
+        #             item['value'] = new_subnetwork_link
+        #             return
+        #
+        #     instance_configs['metadata']['items'].append({
+        #         'key': 'network',
+        #         'value': new_subnetwork_link})
 
     def modify_instance_configs_with_external_ip(self, external_ip,
                                                  instance_configs):
