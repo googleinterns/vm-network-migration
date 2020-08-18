@@ -31,3 +31,11 @@ it will be reserved as a static IP after the migration. The preserving action is
      python3 instance_group_migration.py  --project_id=my-project \
         --region=us-central1  --instance_group_name=my-instance-group  \
         --network=my-network  --subnetwork=my-network-subnet1
+        
+## Special Cases:
+### Unmanaged Instance Group:
+#### 1. The instance group is serving a target pool
+     The unmanaged instance group serves a target pool, which means the
+     instances in this instance group serve the target pool. The migration can
+     still succeed. But the instances might be detached from the target pool
+     after the migration. Therefore, it is not a recommended user case.
