@@ -250,13 +250,13 @@ class ManagedInstanceGroup(InstanceGroup):
         Returns: a deserialized Python object of the response
 
         """
+        current_target_pools = self.get_target_pools()
+        current_target_pools.add(target_pool_selfLink)
         args = {
             'project': self.project,
             'instanceGroupManager': self.instance_group_name,
             'body': {
-                'targetPools': [
-                    target_pool_selfLink
-                ]
+                'targetPools': current_target_pools
             }
         }
         self.add_zone_or_region_into_args(args)
@@ -279,17 +279,17 @@ class ManagedInstanceGroup(InstanceGroup):
         Returns: a deserialized Python object of the response
 
         """
+        current_target_pools = self.get_target_pools()
+        current_target_pools.remove(target_pool_selfLink)
         args = {
             'project': self.project,
             'instanceGroupManager': self.instance_group_name,
             'body': {
-                'targetPools': [
-                    target_pool_selfLink
-                ]
+                'targetPools': current_target_pools
             }
         }
         self.add_zone_or_region_into_args(args)
-        remove_target_pool_operation = self.instance_group_manager_api.removeTargetPools(
+        remove_target_pool_operation = self.instance_group_manager_api.setTargetPools(
             **args).execute()
         if self.is_multi_zone:
             self.operation.wait_for_region_operation(
