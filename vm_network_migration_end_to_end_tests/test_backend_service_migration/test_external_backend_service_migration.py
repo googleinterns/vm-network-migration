@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-
+import warnings
 import google.auth
 from vm_network_migration_end_to_end_tests.build_test_resource import TestResourceCreator
 from vm_network_migration_end_to_end_tests.check_result import *
@@ -234,4 +234,6 @@ class TestExternalBackendServiceMigration(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    warnings.filterwarnings(action="ignore", message="unclosed",
+                            category=ResourceWarning)
     unittest.main(failfast=True)

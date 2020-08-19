@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-
+import warnings
 import google.auth
 from googleapiclient import discovery
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
@@ -175,4 +175,6 @@ class TestInternalForwardingRuleMigration(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    warnings.filterwarnings(action="ignore", message="unclosed",
+                            category=ResourceWarning)
     unittest.main(failfast=True)
