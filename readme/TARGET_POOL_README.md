@@ -7,14 +7,17 @@
 5. If there are more than one backends serving this target pool, after the first backend finishes the migration, the tool will be paused and wait until the first backend become healthy (or partially healthy if the backend is a managed instance group). After the first backend passes the health check, the tool will continue migrating other backends without further health checks. The tool minimizes or even eliminates the downtime for the target pool migration if it has mutliple backends. 
 
 
-
 ## Examples:
 ### 1. A target pool only has single instances and managed instance groups as backends:
      python3 target_pool_migration.py  --project=my-project \
         --region=us-central1-a  --target_pool_name=my-target-pool  \
         --network=my-network  --subnetwork=my-network-subnet1 \
      (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
- 
-### 2. A target pool has instances from an unmanaged instance group as backends:
+     
+## Special cases
+### 1. A target pool has one or more instances from an unmanaged instance group as backends:
     Not supported. 
     The user should manually detach these instances, then try to migrate this target pool again.
+### 2. A target pool shares one or more backends with another target pool or backend service:
+    Not supported.
+    The tool will rollback.

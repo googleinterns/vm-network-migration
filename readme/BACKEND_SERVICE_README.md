@@ -22,3 +22,10 @@
     
     (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
  
+## Special Cases
+### 1. A backend service is serving a forwarding rule:
+    Not supported. 
+    The tool will terminate and will not start the migration. The user should migrate the forwarding rule directly.
+### 2. A backend service share the same backends with another backend service or target pool:
+    Not supported.
+    The tool will rollback.

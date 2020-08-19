@@ -19,3 +19,14 @@
     
     (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
  
+## Special cases:
+### 1. An INTERNAL forwarding rule is sharing the same backend service with another forwarding rule:
+    Not supported.
+    The tool will rollback. 
+### 2. An EXTERNAL or INTERNAL-SELF-MANAGED forwarding rule A is sharing the same backend service with another forwarding rule B:
+    Supported, but it is not recommended. 
+    The tool will still migrate A and all its backend services. After the migration, B will also be served by the migrated backend services. 
+### 3. Any kind of forwarding rule is sharing the same target pool or target instance with another forwarding rule:
+    Supported, but it is not recommended. 
+    Reason: see case2.
+ 
