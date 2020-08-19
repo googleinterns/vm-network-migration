@@ -54,6 +54,9 @@ class GoogleApiInterface:
         self.subnetworks = []
         self.ssl_certificates = []
 
+    def get_list_of_zones_from_regions(self):
+        return self.compute.regions().get(project=self.project, region=self.region).execute()['zones']
+
     def create_unmanaged_instance_group_with_instances(self, configs,
                                                        instances):
         """ Create the instance group
@@ -148,6 +151,10 @@ class GoogleApiInterface:
         return delete_instance_group_operation
 
     def create_multi_zone_managed_instance_group(self, configs):
+        configs['distributionPolicy'] = {"zones":[]}
+        all_valid_zones = self.get_list_of_zones_from_regions()
+        for zone in all_valid_zones:
+            configs['distributionPolicy']['zones'].append({'zone': zone})
         create_instance_group_operation = self.compute.regionInstanceGroupManagers().insert(
             project=self.project,
             region=self.region,
