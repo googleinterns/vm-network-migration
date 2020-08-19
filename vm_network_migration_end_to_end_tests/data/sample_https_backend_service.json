@@ -1,0 +1,23 @@
+{
+  "name": "sample-name",
+  "description": "",
+  "backends": [
+
+  ],
+  "healthChecks": [],
+  "timeoutSec": 30,
+  "port": 443,
+  "protocol": "HTTPS",
+  "portName": "https",
+  "enableCDN": false,
+  "sessionAffinity": "NONE",
+  "affinityCookieTtlSec": 0,
+  "loadBalancingScheme": "EXTERNAL",
+  "connectionDraining": {
+    "drainingTimeoutSec": 50
+  },
+  "logConfig": {
+    "enable": true,
+    "sampleRate": 1
+  }
+}
