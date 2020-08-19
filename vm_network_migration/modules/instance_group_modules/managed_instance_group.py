@@ -251,7 +251,7 @@ class ManagedInstanceGroup(InstanceGroup):
 
         """
         current_target_pools = self.get_target_pools()
-        current_target_pools.add(target_pool_selfLink)
+        current_target_pools.append(target_pool_selfLink)
         args = {
             'project': self.project,
             'instanceGroupManager': self.instance_group_name,
