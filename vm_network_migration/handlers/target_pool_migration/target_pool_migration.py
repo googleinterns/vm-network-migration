@@ -105,10 +105,10 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
                 self.instance_migration_handlers) + len(
                 self.instance_group_migration_handlers)
             for i in range(len(self.instance_migration_handlers)):
+                instance_migration_handler = self.instance_migration_handlers[i]
                 instance_selfLink = instance_migration_handler.get_instance_selfLink()
                 print('Detaching: %s' %(instance_migration_handler.original_instance_name))
                 self.target_pool.remove_instance(instance_selfLink)
-                instance_migration_handler = self.instance_migration_handlers[i]
                 print('Migrating: %s.'
                       % (instance_migration_handler.original_instance_name))
                 instance_migration_handler.network_migration()
