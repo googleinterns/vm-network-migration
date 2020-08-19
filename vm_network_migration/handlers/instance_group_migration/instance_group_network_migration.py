@@ -117,7 +117,7 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             self.instance_group_migration_handler.network_migration()
 
         except Exception as e:
-            warn(e, Warning)
+            warn(str(e), Warning)
             print(
                 'The migration was failed. Rolling back to the original network.')
             self.rollback()

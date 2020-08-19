@@ -103,22 +103,22 @@ class InstanceTemplate:
         instance_template_body['properties']['networkInterfaces'][0][
             'subnetwork'] = self.network_object.subnetwork_link
         # For testing
-        if add_network_metadata:
-            if 'items' not in instance_template_body['properties'][
-                'metadata']:
-                instance_template_body['properties']['metadata'][
-                    'items'] = []
-
-            for item in instance_template_body['properties']['metadata'][
-                'items']:
-                if item['key'] == 'network':
-                    item['value'] = self.network_object.subnetwork_link
-                    return
-
-            instance_template_body['properties']['metadata'][
-                'items'].append({
-                'key': 'network',
-                'value': self.network_object.subnetwork_link})
+        # if add_network_metadata:
+        #     if 'items' not in instance_template_body['properties'][
+        #         'metadata']:
+        #         instance_template_body['properties']['metadata'][
+        #             'items'] = []
+        #
+        #     for item in instance_template_body['properties']['metadata'][
+        #         'items']:
+        #         if item['key'] == 'network':
+        #             item['value'] = self.network_object.subnetwork_link
+        #             return
+        #
+        #     instance_template_body['properties']['metadata'][
+        #         'items'].append({
+        #         'key': 'network',
+        #         'value': self.network_object.subnetwork_link})
 
     def get_selfLink(self) -> str:
         """ Get the selfLink of the instance template

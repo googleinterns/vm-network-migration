@@ -34,6 +34,7 @@ Compute Engine resources.
 1. The users should not change any GCE resources during the migration. Otherwise, there might be some errors, such as resources can not be found or out of quota issues. 
 2. Downtime is required.
 3. The rollback can also fail due to network issue or quota limitation issue. In this scenario, the user can refer to the ‘backup.log’ file to recreate the lost resources by themselves. 
+4. If the rollback happens, the configuration of the target resource may change, including timestamp, id and fingerprint.
 ### Specific Limitations:
 #### [VM migration.](readme/VM_INSTANCE_README.md)
 #### [Instance group migration.](readme/INSTANCE_GROUP_README.md)
@@ -64,35 +65,35 @@ or 'projects/project/zones/zone/instances/instance'
 
      python3 migrate_by_selfLink.py --selfLink=selfLink-of-target-resource  \
      --region=us-central1 --network=my-network  --subnetwork=my-network-subnet \
-     --preserve_instance_external_ip=False
-     
+     --preserve_instance_external_ip=False     
+### If the user can not find the selfLink of the target resource:
 #### Single VM network migration. [See more examples.](readme/VM_INSTANCE_README.md)
-     python3 instance_network_migration.py  --project=my-project \
+     python3 instance_migration.py  --project_id=my-project \
      --zone=us-central1-a  --original_instance=my-original-instance  \
      --network=my-network  --subnetwork=my-network-subnet1 \
      --preserve_external_ip=False 
      
 #### Instance group network migration. [See more examples.](readme/INSTANCE_GROUP_README.md)
-     python3  instance_group_migration.py  --project=my-project \
-     --instance_group=my-original-instance-group  --region=us-central \
+     python3  instance_group_migration.py  --project_id=my-project \
+     --instance_group_name=my-original-instance-group  --region=us-central \
      --zone=None --network=my-network  --subnetwork=my-network-subnet1 \
      --preserve_external_ip=False
      (Note: either --region or --zone must be specified.)
   
 #### Target pool network migration. [See more examples.](readme/TARGET_POOL_README.md)
-    python3 target_pool_migration.py  --project=my-project \
+    python3 target_pool_migration.py  --project_id=my-project \
     --target_pool_name=my-target-pool --region=us-central1 \
     --network=my-network  --subnetwork=my-network-subnet \
     --preserve_instance_external_ip=False
 
 #### Backend service migration. [See more examples.](readme/BACKEND_SERVICE_README.md)
-    python3 backend_service_migration.py  --project=my-project \
+    python3 backend_service_migration.py  --project_id=my-project \
     --backend_service_name=my-backend-service --region=us-central1 \
     --network=my-network  --subnetwork=my-network-subnet \
     --preserve_instance_external_ip=False
     
 #### Forwarding rule migration. [See more examples.](readme/FORWARDING_RULE_README.md)
-    python3 forwarding_rule_migration.py  --project=my-project \
+    python3 forwarding_rule_migration.py  --project_id=my-project \
     --forwarding_rule_name=my-forwarding-rule  --region=us-central1 \
     --network=my-network  --subnetwork=my-network-subnet1 \
     --preserve_instance_external_ip=False

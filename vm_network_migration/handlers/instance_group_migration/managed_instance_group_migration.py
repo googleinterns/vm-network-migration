@@ -86,6 +86,13 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
             warn(
                 'For a managed instance group, the external IP addresses '
                 'of the instances can not be reserved.', Warning)
+        target_pool_list = self.instance_group.get_target_pools()
+        if len(target_pool_list) != 0:
+            warn(
+                'The instance group is serving target pools %s, ' 
+                'please detach it from the target pool and then try again.' % (
+                    target_pool_list), Warning)
+            return
 
         if self.instance_group.autoscaler != None:
             warn(

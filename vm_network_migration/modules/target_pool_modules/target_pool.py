@@ -98,6 +98,24 @@ class TargetPool:
             add_instance_operation['name'])
         return add_instance_operation
 
+    def remove_instance(self, instance_selfLink):
+        """ Remove instance from the backends
+
+              Returns: a deserialized python object of the response
+
+        """
+        remove_instance_operation = self.compute.targetPools().removeInstance(
+            project=self.project,
+            region=self.region,
+            targetPool=self.target_pool_name,
+            body={
+                'instances': [{
+                    'instance': instance_selfLink}]
+            }).execute()
+        self.operations.wait_for_region_operation(
+            remove_instance_operation['name'])
+        return remove_instance_operation
+
     def get_attached_backends(self):
         """ According to the target pool configs, the attached instances
         can be found. These instances can be a single instance which does
@@ -155,11 +173,9 @@ class TargetPool:
                     % (instance_selfLink_list, instance_group_selfLink))
 
             else:
-                target_pool_list = instance_group.get_target_pools(
-                    instance_group.original_instance_group_configs)
+                target_pool_list = instance_group.get_target_pools()
                 if len(target_pool_list) == 1 and self.selfLink == \
                         target_pool_list[0]:
-
                     self.attached_managed_instance_groups_selfLinks.append(
                         instance_group.selfLink)
                 elif self.selfLink not in target_pool_list:
