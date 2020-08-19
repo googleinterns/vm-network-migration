@@ -15,5 +15,6 @@
         --network=my-network  --subnetwork=my-network-subnet1 \
      (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
  
-### 2. A target pool has instances in an unmanaged instance group as backends:
-    Unsupported. The user should manually detach these instances, then try to migrate this target pool again.
+### 2. A target pool has instances from an unmanaged instance group as backends:
+    Not supported. 
+    The user should manually detach these instances, then try to migrate this target pool again.

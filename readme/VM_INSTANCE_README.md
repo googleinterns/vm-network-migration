@@ -21,10 +21,12 @@ it will be reserved as a static IP after the migration. The preserving action is
 
 ## Special Cases:
 ### 1. Migrate an instance which is a member of an instance group:
-     Not a supported case. The tool will terminate and the migration will not start.
+     Not supported. 
+     The tool will terminate and the migration will not start.
      The user should migrate that instance group directly.
      
 ### 2. Migrate an instance which is a backend serving one or more target pool:
+    Supported, but it is not recommended. 
     The user can still migrate this instance normally. During the migration, 
     this instance will be deleted and recreated. It will affact the target pool.
     After the migration, this instance may still be attached on the target pool. 
@@ -32,5 +34,6 @@ it will be reserved as a static IP after the migration. The preserving action is
     In general, the target pool will be affected. It is not a recommended use case.
 
 ### 3. Migrate an instance which serves a target instance:
+    Supported.
     The user can still migrate this instance. The target instance will not be affected.
     
