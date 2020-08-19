@@ -45,10 +45,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
                                                      subnetwork_name,
                                                      preserve_instance_ip)
         self.zone = zone
-        self.region = self.get_region()
-        self.instances = []
-        self.instance_selfLinks = []
-        self.retrieve_instances()
+        self.instance_selfLinks = self.list_instances()
         self.network = self.get_network()
         self.original_instance_group_configs = self.get_instance_group_configs()
         self.new_instance_group_configs = self.get_new_instance_group_configs_using_new_network(
@@ -58,23 +55,10 @@ class UnmanagedInstanceGroup(InstanceGroup):
         self.selfLink = self.get_selfLink(self.original_instance_group_configs)
         self.log()
 
-    def get_region(self) -> dict:
-        """ Get region information
-
-            Returns:
-                region name of the self.zone
-
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
-        """
-        return self.compute.zones().get(
-            project=self.project,
-            zone=self.zone).execute()['region'].split('regions/')[1]
-
     def get_network(self):
         print('Checking the target network information.')
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                 self.zone, self.region)
+                                                 self.zone)
         network = subnetwork_factory.generate_network(
             self.network_name,
             self.subnetwork_name)
@@ -90,15 +74,14 @@ class UnmanagedInstanceGroup(InstanceGroup):
                                                  zone=self.zone,
                                                  instanceGroup=self.instance_group_name).execute()
 
-    def retrieve_instances(self):
+    def list_instances(self):
         """Retrieve all the instances in this instance group,
         and save the instances into a list of Instance objects
 
         Returns: a list of Instance objects
 
         """
-        self.instances = []
-        self.instance_selfLinks = []
+        instance_selfLinks = []
         request = self.compute.instanceGroups().listInstances(
             project=self.project, zone=self.zone,
             instanceGroup=self.instance_group_name)
@@ -109,17 +92,11 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 break
             for instance_with_named_ports in response['items']:
                 print(instance_with_named_ports)
-                instance_name = \
-                    instance_with_named_ports['instance'].split('instances/')[1]
-                self.instances.append(
-                    Instance(self.compute, self.project, instance_name,
-                             self.region, self.zone, self.network_name,
-                             self.subnetwork_name,
-                             preserve_instance_ip=self.preserve_instance_ip))
-                self.instance_selfLinks.append(
+                instance_selfLinks.append(
                     instance_with_named_ports['instance'])
             request = self.compute.instanceGroups().listInstances_next(
                 previous_request=request, previous_response=response)
+        return instance_selfLinks
 
     def delete_instance_group(self) -> dict:
         """ Delete the instance group in the compute engine
@@ -148,10 +125,6 @@ class UnmanagedInstanceGroup(InstanceGroup):
             body=configs).execute()
         self.operation.wait_for_zone_operation(
             create_instance_group_operation['name'])
-        if configs == self.original_instance_group_configs:
-            self.migrated = False
-        elif configs == self.new_instance_group_configs:
-            self.migrated = True
         return create_instance_group_operation
 
     def add_an_instance(self, instance_selfLink):
@@ -211,13 +184,13 @@ class UnmanagedInstanceGroup(InstanceGroup):
                 raise e
 
     def add_all_instances(self):
-        """ Add all the instances in self.instances to the current instance group
+        """ Add all the instances in instances to the current instance group
         Returns:
 
         """
-        for instance in self.instances:
+        for instance_selfLink in self.instance_selfLinks:
             try:
-                self.add_an_instance(instance.selfLink)
+                self.add_an_instance(instance_selfLink)
             except HttpError:
                 raise AddInstanceToInstanceGroupError(
                     'Failed to add all instances to the instance group.')

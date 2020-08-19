@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" ForwardingRuleMigration class: It is the handler to migrate
-a forwarding rule based on the type of it.
+""" Migration handler for INTERNAL/INTERNAL_SELF_MANAGED forwarding rule
 
 """
 import warnings
@@ -30,7 +29,7 @@ class InternalForwardingRuleMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, forwarding_rule_name,
                  network_name, subnetwork_name,
-                 preserve_instance_external_ip, region=None):
+                 preserve_instance_external_ip, region=None, forwarding_rule=None):
         """ Initialize a InstanceNetworkMigration object
 
         Args:
@@ -43,7 +42,8 @@ class InternalForwardingRuleMigration(ComputeEngineResourceMigration):
             region: region of the internal load balancer
         """
         super(InternalForwardingRuleMigration, self).__init__()
-        self.forwarding_rule = self.build_forwarding_rule()
+        if self.forwarding_rule == None:
+            self.forwarding_rule = self.build_forwarding_rule()
         self.backends_migration_handlers = []
         self.migration_status = MigrationStatus(0)
 
@@ -136,6 +136,7 @@ class InternalForwardingRuleMigration(ComputeEngineResourceMigration):
             self.migration_status = MigrationStatus(2)
 
         if self.migration_status == 2:
+            print('Recreating the original forwarding rule %s.' %(self.forwarding_rule_name))
             self.forwarding_rule.insert_forwarding_rule(
                 self.forwarding_rule.forwarding_rule_configs)
             self.migration_status = MigrationStatus(0)

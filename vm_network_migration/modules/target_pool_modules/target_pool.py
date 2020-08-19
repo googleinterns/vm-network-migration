@@ -14,13 +14,17 @@
 """ TargetPool class: describes a target pool and its API methods
 
 """
+import logging
+import time
+from datetime import datetime
+
 from googleapiclient.http import HttpError
+from vm_network_migration.errors import *
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.other_modules.operations import Operations
 from vm_network_migration.utils import initializer
-from vm_network_migration.errors import *
-import logging
+
 
 class TargetPool:
     @initializer
@@ -94,6 +98,24 @@ class TargetPool:
             add_instance_operation['name'])
         return add_instance_operation
 
+    def remove_instance(self, instance_selfLink):
+        """ Remove instance from the backends
+
+              Returns: a deserialized python object of the response
+
+        """
+        remove_instance_operation = self.compute.targetPools().removeInstance(
+            project=self.project,
+            region=self.region,
+            targetPool=self.target_pool_name,
+            body={
+                'instances': [{
+                    'instance': instance_selfLink}]
+            }).execute()
+        self.operations.wait_for_region_operation(
+            remove_instance_operation['name'])
+        return remove_instance_operation
+
     def get_attached_backends(self):
         """ According to the target pool configs, the attached instances
         can be found. These instances can be a single instance which does
@@ -151,11 +173,9 @@ class TargetPool:
                     % (instance_selfLink_list, instance_group_selfLink))
 
             else:
-                target_pool_list = instance_group.get_target_pools(
-                    instance_group.original_instance_group_configs)
+                target_pool_list = instance_group.get_target_pools()
                 if len(target_pool_list) == 1 and self.selfLink == \
                         target_pool_list[0]:
-
                     self.attached_managed_instance_groups_selfLinks.append(
                         instance_group.selfLink)
                 elif self.selfLink not in target_pool_list:
@@ -175,3 +195,80 @@ class TargetPool:
                         " please detach it from the other target pools or \n"
                         "backend services and try again." % (
                             instance_group_selfLink))
+
+    def check_backend_health(self, backend_selfLink):
+        """ Check if the backend is healthy
+
+        Args:
+            backends_selfLink: url selfLink of the backend (just an instance)
+
+        Returns:
+
+        """
+        operation = self.compute.targetPools().getHealth(
+            project=self.project,
+            targetPool=self.target_pool_name,
+            region=self.region,
+            body={
+                "instance": backend_selfLink
+            }).execute()
+        if 'healthStatus' not in operation:
+            return False
+        else:
+            for instance_health_status in operation['healthStatus']:
+                # If any instance in this backend becomes healthy,
+                # this backend will start serving the backend service
+                if 'healthState' in instance_health_status and \
+                        instance_health_status['healthState'] == 'HEALTHY':
+                    return True
+        return False
+
+    def wait_for_instance_become_healthy(self, instance_selfLink, TIME_OUT=300):
+        """ Wait for backend being healthy
+
+        Args:
+            backend_selfLink: url selfLink of the backends (just an instance group)
+
+        Returns:
+
+        """
+        start = datetime.now()
+        print('Waiting for %s being healthy with time out %s seconds.' % (
+            instance_selfLink, TIME_OUT))
+        while not self.check_backend_health(instance_selfLink):
+            time.sleep(3)
+            current_time = datetime.now()
+            if (current_time - start).seconds > TIME_OUT:
+                print('Health waiting operation is timed out.')
+                return
+        print('At least one of the backend in %s is healthy.' % (
+            self.target_pool_name))
+
+    def wait_for_an_instance_group_become_partially_healthy(self,
+                                                            instance_group,
+                                                            TIME_OUT=300):
+        """ Wait for at least one instance from this instance group become healthy
+
+        Args:
+            instance_group:  a ManagedInstanceGroup object
+            TIME_OUT: maximum waiting time
+
+        Returns:
+
+        """
+        start = datetime.now()
+        print('Waiting for %s being healthy with timeout %s seconds.' % (
+            instance_group.selfLink, TIME_OUT))
+        while (datetime.now() - start).seconds < TIME_OUT:
+            instance_selfLinks = instance_group.list_instances()
+            for instance_selfLink in instance_selfLinks:
+                try:
+                    if self.check_backend_health(instance_selfLink):
+                        print(
+                            'At least one of the backend in %s is healthy.' % (
+                                self.target_pool_name))
+                        return
+                except:
+                    # the instance maybe hasn't been attached to the target pool
+                    continue
+            time.sleep(5)

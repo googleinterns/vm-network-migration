@@ -1,0 +1,13 @@
+{
+  "name": "sample-name",
+  "target":"",
+  "autoscalingPolicy": {
+    "minNumReplicas": 1,
+    "maxNumReplicas": 10,
+    "coolDownPeriodSec": 60,
+    "cpuUtilization": {
+      "utilizationTarget": 0.6
+    },
+    "mode": "ON"
+  }
+}

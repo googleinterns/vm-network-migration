@@ -19,6 +19,7 @@ from vm_network_migration.modules.forwarding_rule_modules.external_regional_forw
 from vm_network_migration.modules.forwarding_rule_modules.forwarding_rule import ForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.external_global_forwarding_rule import ExternalGlobalForwardingRule
 from vm_network_migration.modules.forwarding_rule_modules.internal_regional_forwarding_rule import InternalRegionalForwardingRule
+from vm_network_migration.modules.forwarding_rule_modules.internal_self_managed_global_forwarding_rule import InternalSelfManagedGlobalForwardingRule
 from vm_network_migration.utils import initializer
 
 
@@ -46,18 +47,15 @@ class ForwardingRuleHelper:
 
         """
         load_balancing_schema = self.get_load_balancing_schema()
-        if self.region == None and load_balancing_schema == 'EXTERNAL':
-            # it can be a global external forwarding rule, or
-            # a global internal-self-managed forwarding rule
-            return self.build_an_external_global_forwarding_rule()
-
+        if self.region == None:
+            if load_balancing_schema == 'EXTERNAL':
+                return self.build_an_external_global_forwarding_rule()
+            elif load_balancing_schema == 'INTERNAL_SELF_MANAGED':
+                return self.build_an_internal_global_forwarding_rule()
         else:
             if load_balancing_schema == 'EXTERNAL':
-                # regional external forwarding rule
                 return self.build_an_external_regional_forwarding_rule()
-            elif load_balancing_schema == 'INTERNAL' \
-                    or load_balancing_schema == 'INTERNAL_MANAGED':
-                # internal forwarding rule or an internal managed forwarding rule
+            elif load_balancing_schema == 'INTERNAL':
                 return self.build_an_internal_regional_forwarding_rule()
 
         raise UnsupportedForwardingRule(
@@ -97,6 +95,16 @@ class ForwardingRuleHelper:
                                               self.forwarding_rule_name,
                                               self.network,
                                               self.subnetwork, self.region)
+
+    def build_an_internal_global_forwarding_rule(self):
+        """ Build an internal global forwarding rule
+
+        Returns: a GlobalForwardingRule object
+
+        """
+        return InternalSelfManagedGlobalForwardingRule(self.compute, self.project,
+                                    self.forwarding_rule_name, self.network,
+                                    self.subnetwork)
 
     def get_regional_forwarding_rule_configs(self):
         """ Get the configs of the forwarding rule

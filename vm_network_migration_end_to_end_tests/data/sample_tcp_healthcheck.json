@@ -1,0 +1,14 @@
+{
+  "name": "sample-name",
+  "description": "",
+  "checkIntervalSec": 5,
+  "timeoutSec": 5,
+  "unhealthyThreshold": 2,
+  "healthyThreshold": 2,
+  "type": "TCP",
+  "tcpHealthCheck": {
+    "port": 80,
+    "proxyHeader": "NONE"
+  },
+  "kind": "compute#healthCheck"
+}

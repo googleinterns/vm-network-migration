@@ -22,7 +22,7 @@ from vm_network_migration.handlers.backend_service_migration.global_backend_serv
 from vm_network_migration.handlers.backend_service_migration.internal_backend_service_migration import InternalBackendServiceNetworkMigration
 from vm_network_migration.module_helpers.backend_service_helper import BackendServiceHelper
 from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
-from vm_network_migration.modules.backend_service_modules.internal_backend_service import InternalBackendService
+from vm_network_migration.modules.backend_service_modules.internal_regional_backend_service import InternalBackendService
 from vm_network_migration.modules.backend_service_modules.global_backend_service import GlobalBackendService
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
@@ -91,7 +91,7 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
         try:
             self.backend_service_migration_handler.network_migration()
         except Exception as e:
-            warnings.warn(e, Warning)
+            warnings.warn(str(e), Warning)
             print(
                 'The backend service migration was failed. Rolling back all the backends to its original network.')
             self.rollback()

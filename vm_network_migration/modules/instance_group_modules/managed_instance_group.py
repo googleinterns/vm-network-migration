@@ -250,13 +250,13 @@ class ManagedInstanceGroup(InstanceGroup):
         Returns: a deserialized Python object of the response
 
         """
+        current_target_pools = self.get_target_pools()
+        current_target_pools.append(target_pool_selfLink)
         args = {
             'project': self.project,
             'instanceGroupManager': self.instance_group_name,
             'body': {
-                'targetPools': [
-                    target_pool_selfLink
-                ]
+                'targetPools': current_target_pools
             }
         }
         self.add_zone_or_region_into_args(args)
@@ -270,6 +270,58 @@ class ManagedInstanceGroup(InstanceGroup):
                 set_target_pool_operation['name'])
         return set_target_pool_operation
 
-    def get_target_pools(self, configs):
+    def remove_target_pool(self, target_pool_selfLink):
+        """ Remove the target pool of the managed instance group
+
+        Args:
+            target_pool_selfLink: selfLink of the target pool
+
+        Returns: a deserialized Python object of the response
+
+        """
+        current_target_pools = self.get_target_pools()
+        current_target_pools.remove(target_pool_selfLink)
+        args = {
+            'project': self.project,
+            'instanceGroupManager': self.instance_group_name,
+            'body': {
+                'targetPools': current_target_pools
+            }
+        }
+        self.add_zone_or_region_into_args(args)
+        remove_target_pool_operation = self.instance_group_manager_api.setTargetPools(
+            **args).execute()
+        if self.is_multi_zone:
+            self.operation.wait_for_region_operation(
+                remove_target_pool_operation['name'])
+        else:
+            self.operation.wait_for_zone_operation(
+                remove_target_pool_operation['name'])
+        return remove_target_pool_operation
+
+    def get_target_pools(self):
         """Get a list of target pools served by the instance group"""
+        configs = self.get_instance_group_configs()
+        if 'targetPools' not in configs:
+            return []
         return configs['targetPools']
+
+    def list_instances(self) -> list:
+        """ List managed instances' selfLinks
+
+        Returns: a list of instances' selfLinks
+
+        """
+        instance_selfLinks = []
+        args = {
+            'project': self.project,
+            'instanceGroupManager': self.instance_group_name,
+
+        }
+        self.add_zone_or_region_into_args(args)
+        list_instances_operation = self.instance_group_manager_api.listManagedInstances(
+            **args).execute()
+
+        for item in list_instances_operation['managedInstances']:
+            instance_selfLinks.append(item['instance'])
+        return instance_selfLinks

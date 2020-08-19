@@ -65,7 +65,8 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
         if 'backends' not in self.backend_service.backend_service_configs:
             return None
         backends = self.backend_service.backend_service_configs['backends']
-        for backend in backends:
+        for i in range(len(backends)):
+            backend = backends[i]
             migration_helper = SelfLinkExecutor(self.compute, backend['group'],
                                                 self.network,
                                                 self.subnetwork,
@@ -81,6 +82,10 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
             backend_migration_handler.network_migration()
             print('Reattaching: %s' % (backend['group']))
             self.backend_service.reattach_all_backends()
+            # wait for the first backend becoming healthy,
+            # then continue migrate other backends
+            if i == 0 and len(backends) > 1:
+                self.backend_service.wait_for_backend_become_healthy(backend['group'])
 
     def network_migration(self):
         """ Migrate the network of an external backend service.

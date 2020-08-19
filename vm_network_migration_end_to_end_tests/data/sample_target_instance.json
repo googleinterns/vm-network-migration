@@ -1,0 +1,6 @@
+{
+  "name": "sample-name",
+  "description": "",
+  "natPolicy": "NO_NAT",
+  "instance": "sample-instance"
+}

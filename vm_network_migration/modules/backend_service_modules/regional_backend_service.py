@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" InternalBackendService class: internal backend service, which is used by
-TCP/UDP internal load balancer. It is always regional.
+""" RegionalBackendService class
 
 """
 from copy import deepcopy
 
+from googleapiclient.http import HttpError
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.backend_service_modules.backend_service import BackendService
 from vm_network_migration.modules.other_modules.operations import Operations
-from googleapiclient.http import HttpError
-import logging
 
 
-class InternalBackendService(BackendService):
+class RegionalBackendService(BackendService):
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork, preserve_instance_external_ip, region):
         """ Initialization
@@ -39,7 +37,7 @@ class InternalBackendService(BackendService):
             preserve_instance_external_ip: whether to preserve the external IP
             region: region of the load balancer
         """
-        super(InternalBackendService, self).__init__(compute, project,
+        super(RegionalBackendService, self).__init__(compute, project,
                                                      backend_service_name,
                                                      network, subnetwork,
                                                      preserve_instance_external_ip)
@@ -174,3 +172,27 @@ class InternalBackendService(BackendService):
                 previous_request=request,
                 previous_response=response)
         return forwarding_rule_list
+
+    def check_backend_health(self, backend_selfLink) -> bool:
+        """ Check if the backends is healthy
+
+        Args:
+            backends_selfLink: url selfLink of the backends (just an instance group)
+
+        Returns:
+
+        """
+        operation = self.compute.regionBackendServices().getHealth(
+            project=self.project,
+            region=self.region,
+            backendService=self.backend_service_name,
+            body={
+                "group": backend_selfLink
+            }).execute()
+        if 'healthStatus' not in operation or operation[
+            'healthStatus'] != 'HEALTHY':
+            return False
+
+        return True
+
+

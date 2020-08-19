@@ -1,0 +1,26 @@
+{
+  "name": "sample-name",
+  "hostRules": [
+    {
+      "hosts": [
+        "r"
+      ],
+      "pathMatcher": "path-matcher-1"
+    }
+  ],
+  "pathMatchers": [
+    {
+      "name": "path-matcher-1",
+      "defaultService": "sample-backend-service-1",
+      "pathRules": [
+        {
+          "service": "sample-backend-service-2",
+          "paths": [
+            "/r"
+          ]
+        }
+      ]
+    }
+  ],
+  "defaultService": "sample-backend-service-1",
+}

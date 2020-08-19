@@ -1,0 +1,17 @@
+{
+  "name": "sample-name",
+  "description": "",
+  "backends": [
+
+  ],
+  "healthChecks": [],
+  "timeoutSec": 30,
+  "protocol": "TCP",
+  "sessionAffinity": "NONE",
+  "failoverPolicy": {},
+  "loadBalancingScheme": "INTERNAL",
+  "connectionDraining": {
+    "drainingTimeoutSec": 300
+  },
+  "network": ""
+}
