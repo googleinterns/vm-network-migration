@@ -173,11 +173,9 @@ class TargetPool:
                     % (instance_selfLink_list, instance_group_selfLink))
 
             else:
-                target_pool_list = instance_group.get_target_pools(
-                    instance_group.original_instance_group_configs)
+                target_pool_list = instance_group.get_target_pools()
                 if len(target_pool_list) == 1 and self.selfLink == \
                         target_pool_list[0]:
-
                     self.attached_managed_instance_groups_selfLinks.append(
                         instance_group.selfLink)
                 elif self.selfLink not in target_pool_list:

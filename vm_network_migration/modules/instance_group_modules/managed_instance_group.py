@@ -299,8 +299,11 @@ class ManagedInstanceGroup(InstanceGroup):
                 remove_target_pool_operation['name'])
         return remove_target_pool_operation
 
-    def get_target_pools(self, configs):
+    def get_target_pools(self):
         """Get a list of target pools served by the instance group"""
+        configs = self.get_instance_group_configs()
+        if 'targetPools' not in configs:
+            return []
         return configs['targetPools']
 
     def list_instances(self) -> list:
