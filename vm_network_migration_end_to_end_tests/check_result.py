@@ -45,14 +45,14 @@ def check_selfLink_equal(url1, url2):
 def resource_config_is_unchanged_except_for_network(original_config,
                                                     new_config):
     except_tags = ['id', 'creationTimestamp', 'fingerprint', 'network',
-                   'subnetwork', 'networkIP', 'natIP']
+                   'subnetwork', 'networkIP', 'natIP', 'IPAddress']
     return resource_config_is_unchanged_except_for_tags(original_config,
                                                         new_config, except_tags)
 
 
 def resource_config_is_unchanged_including_network(original_config, new_config):
     except_tags = ['id', 'creationTimestamp', 'fingerprint', 'networkIP',
-                   'natIP']
+                   'natIP', 'IPAddress']
     return resource_config_is_unchanged_except_for_tags(original_config,
                                                         new_config, except_tags)
 
