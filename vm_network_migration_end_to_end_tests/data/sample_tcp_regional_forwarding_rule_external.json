@@ -1,0 +1,9 @@
+{
+  "name": "sample-name",
+  "description": "",
+  "IPProtocol": "TCP",
+  "portRange": "80-80",
+  "loadBalancingScheme": "EXTERNAL",
+  "networkTier": "PREMIUM"
+}
+

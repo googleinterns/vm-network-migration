@@ -1,0 +1,11 @@
+{
+  "name": "sample-name",
+  "description": "",
+  "IPAddress": "0.0.0.0",
+  "IPProtocol": "TCP",
+  "portRange": "80-80",
+  "target": "target-selfLink",
+  "loadBalancingScheme": "INTERNAL_SELF_MANAGED",
+  "network": "network-selfLink",
+  "networkTier": "PREMIUM"
+}

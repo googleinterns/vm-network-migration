@@ -1,0 +1,15 @@
+{
+  "name": "sample-name",
+  "description": "",
+  "backends": [
+
+  ],
+  "healthChecks": [],
+  "timeoutSec": 30,
+  "protocol": "HTTP",
+  "sessionAffinity": "NONE",
+  "loadBalancingScheme": "INTERNAL_SELF_MANAGED",
+  "connectionDraining": {
+    "drainingTimeoutSec": 300
+  }
+}

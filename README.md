@@ -97,7 +97,19 @@ or 'projects/project/zones/zone/instances/instance'
     --forwarding_rule_name=my-forwarding-rule  --region=us-central1 \
     --network=my-network  --subnetwork=my-network-subnet1 \
     --preserve_instance_external_ip=False
+## Run end-to-end tests(only for developer):
+### Before running:
+    1. A GCP project_id needs to provide.
+    2. Run in command line: 
+       export PROJECT_ID='some test project'
 
+#### Run all the tests together:    
+    python3 -m unittest discover
+#### Run a single test file:
+    python3 test_file_name.py
+#### Run a single test case:
+    python3 test_file_name.py TestClassName.testMethodName
+    
 ## Source Code Headers
 
 Every file containing source code must include copyright and license

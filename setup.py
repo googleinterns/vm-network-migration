@@ -16,8 +16,12 @@
 Also installs third party libraries, if those libraries are not
 already installed.
 """
+import unittest2
 
-from setuptools import setup, find_packages
+from setuptools import (
+    setup,
+    find_packages,
+)
 
 install_requires = [
     # NOTE: Apache Beam tests depend on this library and cannot
@@ -33,15 +37,23 @@ install_requires = [
     "unittest2"
 ]
 
+def my_test_suite():
+    test_loader = unittest2.TestLoader()
+    test_suite = test_loader.discover('vm_network_migration_end_to_end_tests',
+                                      pattern='test_*.py')
+    return test_suite
+
 
 setup(
-   name='vm_network_migration',
-   version='1.0',
-   description='',
-   author='',
-   author_email='',
-   test_suite = 'tests',
-
-   packages= find_packages(),
-   install_requires=install_requires, #external packages as dependencies
+    name='vm_network_migration',
+    version='1.0',
+    description='',
+    author='',
+    author_email='',
+    test_suite='setup.my_test_suite',
+    packages=find_packages(),
+    package_data={
+        'vm_network_migration_end_to_end_tests': ['data/*.json']
+    },
+    install_requires=install_requires,  # external packages as dependencies
 )

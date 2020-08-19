@@ -1,0 +1,7 @@
+{
+  "description": "",
+  "group": "sample-selfLink",
+  "balancingMode": "UTILIZATION",
+  "maxUtilization": 0.8,
+  "capacityScaler": 1
+}
