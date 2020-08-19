@@ -43,5 +43,8 @@ setup(
    test_suite = 'tests',
 
    packages= find_packages(),
+   package_data = {
+     'vm_network_migration_end_to_end_tests':['data/*.json']
+   },
    install_requires=install_requires, #external packages as dependencies
 )
