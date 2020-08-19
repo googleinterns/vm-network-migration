@@ -18,7 +18,7 @@ from its legacy network to a subnetwork mode network.
 """
 
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.modules.backend_service_modules.internal_backend_service import \
+from vm_network_migration.modules.backend_service_modules.internal_regional_backend_service import \
     InternalBackendService
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration

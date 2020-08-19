@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" InternalBackendService class: internal backend service, which is used by
-TCP/UDP internal load balancer. It is always regional.
+""" RegionalBackendService class
 
 """
 from copy import deepcopy
@@ -24,7 +23,7 @@ from vm_network_migration.modules.backend_service_modules.backend_service import
 from vm_network_migration.modules.other_modules.operations import Operations
 
 
-class InternalBackendService(BackendService):
+class RegionalBackendService(BackendService):
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork, preserve_instance_external_ip, region):
         """ Initialization
@@ -38,7 +37,7 @@ class InternalBackendService(BackendService):
             preserve_instance_external_ip: whether to preserve the external IP
             region: region of the load balancer
         """
-        super(InternalBackendService, self).__init__(compute, project,
+        super(RegionalBackendService, self).__init__(compute, project,
                                                      backend_service_name,
                                                      network, subnetwork,
                                                      preserve_instance_external_ip)
