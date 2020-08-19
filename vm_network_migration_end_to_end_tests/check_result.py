@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""" Helper functions for comparing the test results
 
+"""
 def compare_instance_external_ip(config1, config2):
     return config1['networkInterfaces'][0]['accessConfigs'][0]['natIP'] == \
            config2['networkInterfaces'][0]['accessConfigs'][0]['natIP']

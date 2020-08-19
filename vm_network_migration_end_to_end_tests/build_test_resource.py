@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""" Helper functions to create test resources.
 
+"""
 from vm_network_migration_end_to_end_tests.utils import *
 class TestResourceCreator:
     def __init__(self, google_api_interface):

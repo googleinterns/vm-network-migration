@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""" Basic Google Client API function call
 
-from enum import Enum
+"""
 
-from googleapiclient.http import HttpError
 from vm_network_migration.modules.other_modules.operations import Operations
 
 
@@ -227,19 +227,6 @@ class GoogleApiInterface:
         self.operation.wait_for_zone_operation(operation['name'])
         return operation
 
-    def create_disk_and_instance_together(self, disk_filename,
-                                          instance_filename, instance_name):
-        instance_configs = read_json_file(instance_filename)
-        disk_configs = read_json_file(disk_filename)
-
-        instance_configs = replace_nested(instance_configs,
-                                          'sample-name',
-                                          instance_name)
-        disk_configs = replace_nested(disk_configs, 'sample-name',
-                                      instance_name)
-        self.create_disk(disk_configs)
-        return self.create_instance(instance_configs)
-
     def delete_instance(self, instance_name) -> dict:
         delete_instance_operation = self.compute.instances().delete(
             project=self.project,
@@ -258,25 +245,6 @@ class GoogleApiInterface:
         ).execute()
         self.operation.wait_for_zone_operation(stop_instance_operation['name'])
         return stop_instance_operation
-
-    def get_instance_status(self, instance_name):
-        """ Get current instance's status.
-
-        Returns: an InstanceStatus object
-        Raises: HttpError for incorrect response
-
-        """
-        try:
-            instance_configs = self.get_instance_configs(instance_name)
-        except HttpError as e:
-            error_reason = e._get_reason()
-            print(error_reason)
-            # if instance is not found, it has a NOTEXISTS status
-            if "not found" in error_reason:
-                return InstanceStatus.NOTEXISTS
-            else:
-                raise e
-        return InstanceStatus(instance_configs['status'])
 
     def get_instance_configs(self, instance_name):
         instance_template = self.compute.instances().get(
@@ -1143,24 +1111,3 @@ class GoogleApiInterface:
                 self.delete_network(network)
             except:
                 continue
-
-
-class InstanceStatus(Enum):
-    """
-    An Enum class for instance's status
-    """
-    NOTEXISTS = None
-    RUNNING = "RUNNING"
-    STOPPING = "STOPPING"
-    TERMINATED = "TERMINATED"
-
-    def __eq__(self, other):
-        """ Override __eq__ function
-
-        Args:
-            other: another InstanceStatus object
-
-        Returns: True/False
-
-        """
-        return self.value == other.value
