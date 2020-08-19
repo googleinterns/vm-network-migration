@@ -89,8 +89,9 @@ class TestInternalSelfManagedForwardingRuleMigration(unittest.TestCase):
         self.assertTrue(resource_config_is_unchanged_except_for_network(
             original_forwarding_rule_config,
             new_forwarding_rule_config))
-        self.assertEqual(new_forwarding_rule_config['network'],
-                         self.test_resource_creator.network_selfLink)
+        self.assertTrue(
+            check_selfLink_equal(new_forwarding_rule_config['network'],
+                                 self.test_resource_creator.network_selfLink))
         # check backend service config
         new_backend_service_configs = self.google_api_interface.get_global_backend_service_configs(
             backend_service_name)
@@ -170,8 +171,9 @@ class TestInternalSelfManagedForwardingRuleMigration(unittest.TestCase):
         self.assertTrue(resource_config_is_unchanged_except_for_network(
             original_forwarding_rule_config,
             new_forwarding_rule_config))
-        self.assertEqual(new_forwarding_rule_config['network'],
-                         self.test_resource_creator.network_selfLink)
+        self.assertTrue(
+            check_selfLink_equal(new_forwarding_rule_config['network'],
+                                 self.test_resource_creator.network_selfLink))
         # check backend service config
         new_backend_service_configs = self.google_api_interface.get_global_backend_service_configs(
             backend_service_name)

@@ -79,8 +79,9 @@ class TestInternalBackendServiceMigration(unittest.TestCase):
         new_backend_selfLinks = self.google_api_interface.get_backends_links_from_backend_service_configs(
             new_backend_service_configs)
         # check backend service config
-        self.assertEqual(new_backend_service_configs['network'],
-                         self.test_resource_creator.network_selfLink)
+        self.assertTrue(
+            check_selfLink_equal(new_backend_service_configs['network'],
+                                 self.test_resource_creator.network_selfLink))
         self.assertTrue(
             compare_two_list(original_backend_selfLinks, new_backend_selfLinks))
         # check its backends
@@ -132,8 +133,9 @@ class TestInternalBackendServiceMigration(unittest.TestCase):
             backend_service_name)
 
         # check backend service config
-        self.assertEqual(new_backend_service_configs['network'],
-                         self.test_resource_creator.network_selfLink)
+        self.assertTrue(
+            check_selfLink_equal(new_backend_service_configs['network'],
+                                 self.test_resource_creator.network_selfLink))
         self.assertTrue(resource_config_is_unchanged_except_for_network(
             original_backend_service_configs,
             new_backend_service_configs))

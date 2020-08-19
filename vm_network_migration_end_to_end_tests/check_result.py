@@ -14,6 +14,8 @@
 """ Helper functions for comparing the test results
 
 """
+
+
 def compare_instance_external_ip(config1, config2):
     return config1['networkInterfaces'][0]['accessConfigs'][0]['natIP'] == \
            config2['networkInterfaces'][0]['accessConfigs'][0]['natIP']
@@ -28,6 +30,16 @@ def compare_two_list(l1, l2):
         if value not in l1:
             return False
     return True
+
+
+def check_selfLink_equal(url1, url2):
+    """
+    'https://googleapi/project/project_id/...' == '/project/project_id/...'
+
+    """
+    traced_url1 = url1.split('project')[1]
+    traced_url2 = url2.split('project')[1]
+    return traced_url1 == traced_url2
 
 
 def resource_config_is_unchanged_except_for_network(original_config,

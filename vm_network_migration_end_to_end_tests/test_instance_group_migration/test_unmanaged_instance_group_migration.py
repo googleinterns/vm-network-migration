@@ -71,12 +71,12 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
             original_config, new_config))
 
         # network changed
-        self.assertEqual(
-            new_config['network'],
-            self.test_resource_creator.network_selfLink)
-        self.assertEqual(
-            new_config['subnetwork'],
-            self.test_resource_creator.subnetwork_selfLink)
+        self.assertTrue(
+            check_selfLink_equal(new_config['network'],
+                                 self.test_resource_creator.network_selfLink))
+        self.assertTrue(
+            check_selfLink_equal(new_config['subnetwork'],
+                                 self.test_resource_creator.network_selfLink))
         print('Pass the current test')
 
     def testWithNoInstanceInTheGroup(self):
@@ -105,9 +105,9 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
                                                             new_config))
 
         # network changed
-        self.assertEqual(
-            new_config['network'],
-            self.test_resource_creator.network_selfLink)
+        self.assertTrue(
+            check_selfLink_equal(new_config['network'],
+                                 self.test_resource_creator.network_selfLink))
         print('Pass the current test')
 
     def testAsBackendOfTargetPool(self):

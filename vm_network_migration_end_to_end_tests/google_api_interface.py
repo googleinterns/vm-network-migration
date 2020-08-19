@@ -693,7 +693,7 @@ class GoogleApiInterface:
     def get_global_forwarding_rule_config(self, forwarding_rule_name):
         return self.compute.globalForwardingRules().get(
             project=self.project,
-            forwardingRule=forwarding_rule_name).execute
+            forwardingRule=forwarding_rule_name).execute()
 
     def create_urlmapping(self, urlmapping_configs):
         operation = self.compute.urlMaps().insert(project=self.project,

@@ -8,12 +8,6 @@
     "type": "OPPORTUNISTIC",
     "instanceRedistributionType": "PROACTIVE",
     "minimalAction": "REPLACE",
-    "maxSurge": {
-      "fixed": 3
-    },
-    "maxUnavailable": {
-      "fixed": 3
-    },
     "replacementMethod": "SUBSTITUTE"
   }
 }
