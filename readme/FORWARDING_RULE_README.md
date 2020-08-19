@@ -8,17 +8,17 @@
 ### 1. A regional forwarding rule (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
      python3 forwarding_rule_migration.py  --project_id=my-project \
         --region=us-central1-a  --forwarding_rule_name=my-forwarding-rule  \
-        --network=my-network  --subnetwork=my-network-subnet1 \
-
-     (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
- 
-### 1. A global forwarding rule (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
+        --network=my-network  --subnetwork=my-network-subnet1 
+        
+     (Note: you can add --preserve-instance-external-ip=True 
+     if you want to preserve the single instances' IP) 
+### 2. A global forwarding rule (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
      python3 forwarding_rule_migration.py  --project_id=my-project \
         --forwarding_rule_name=my-forwarding-rule  \
-        --network=my-network  --subnetwork=my-network-subnet1 \
+        --network=my-network  --subnetwork=my-network-subnet1 
     
-    (Note: you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP) 
- 
+    (Note: you can add --preserve-instance-external-ip=True 
+    if you want to preserve the single instances' IP) 
 ## Special cases:
 ### 1. An INTERNAL forwarding rule is sharing the same backend service with another forwarding rule:
     Not supported.
