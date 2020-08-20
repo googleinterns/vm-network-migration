@@ -14,9 +14,10 @@
 """ Instance class: describe an instance
     InstanceStatus class: describe an instance's current status
 """
+import logging
 from copy import deepcopy
 from enum import Enum
-import logging
+
 from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.module_helpers.address_helper import AddressHelper
@@ -48,7 +49,7 @@ class Instance(object):
         self.network_object = self.get_network()
         self.address_object = self.get_address()
         self.new_instance_configs = self.get_new_instance_configs()
-
+        self.original_status = self.get_instance_status()
         self.operations = Operations(compute, project, zone)
         self.selfLink = self.get_selfLink(self.original_instance_configs)
         self.log()
@@ -338,6 +339,24 @@ class Instance(object):
             delete_instance_operation['name'])
         return delete_instance_operation
 
+    def get_instance_status(self):
+        """ Get current instance's status.
+
+        Returns: an InstanceStatus object
+        Raises: HttpError for incorrect response
+        """
+        try:
+            instance_configs = self.retrieve_instance_configs()
+        except HttpError as e:
+            error_reason = e._get_reason()
+            print(error_reason)
+            # if instance is not found, it has a NOTEXISTS status
+            if 'not found' in error_reason:
+                return InstanceStatus.NOTEXISTS
+            else:
+                raise e
+        return InstanceStatus(instance_configs['status'])
+
     def create_instance_with_ephemeral_external_ip(self, configs) -> dict:
         """ Create instance using configs, but without static external IP.
 
@@ -387,8 +406,27 @@ class Instance(object):
                 self.original_instance_configs['networkInterfaces'][0]:
             return False
         elif is_equal_or_contians(
-                self.original_instance_configs['networkInterfaces'][0]['subnetwork'],
+                self.original_instance_configs['networkInterfaces'][0][
+                    'subnetwork'],
                 self.network_object.subnetwork_link):
             return True
         else:
             return False
+
+
+class InstanceStatus(Enum):
+    """
+    An Enum class for instance's status
+    """
+    NOTEXISTS = None
+    RUNNING = 'RUNNING'
+    STOPPING = 'STOPPING'
+    TERMINATED = 'TERMINATED'
+
+    def __eq__(self, other):
+        """ Override __eq__ function
+        Args:
+            other: another InstanceStatus object
+        Returns: True/False
+        """
+        return self.value == other.value

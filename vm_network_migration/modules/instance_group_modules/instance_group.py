@@ -13,10 +13,11 @@
 # limitations under the License.
 """ Instance group class: describe an instance group
 """
+import logging
+from enum import Enum
 
 from googleapiclient.http import HttpError
 from vm_network_migration.utils import initializer
-import logging
 
 
 class InstanceGroup(object):
@@ -117,3 +118,17 @@ class InstanceGroup(object):
         return False
 
 
+class InstanceGroupStatus(Enum):
+    """
+    An Enum class for instance group's status
+    """
+    NOTEXISTS = None
+    EXISTS = 'EXISTS'
+
+    def __eq__(self, other):
+        """ Override __eq__ function
+        Args:
+            other: another InstanceGroupStatus object
+        Returns: True/False
+        """
+        return self.value == other.value

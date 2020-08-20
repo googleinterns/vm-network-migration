@@ -879,6 +879,7 @@ class GoogleApiInterface:
         operation = self.compute.networks().insert(project=self.project,
                                                    body=network_body).execute()
         self.operation.wait_for_global_operation(operation['name'])
+        self.networks.append(network_name)
         return operation
 
     def delete_subnetwork(self, subnetwork_name):
