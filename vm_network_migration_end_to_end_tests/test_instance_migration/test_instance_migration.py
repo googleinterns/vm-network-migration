@@ -36,6 +36,11 @@ class TestInstanceMigration(unittest.TestCase):
         google_api_interface)
 
     def testInvalidNetworkInfo(self):
+        """ Invalid target network information
+
+        Expectation: http error. The migration will not start.
+
+        """
         ### create test resources
         instance_name = "end-to-end-test-instance-1"
         instance_selfLink = \
@@ -158,6 +163,11 @@ class TestInstanceMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testMigrateAnInstanceInAnInstanceGroup(self):
+        """ The instance is serving an instance group
+
+        Expectation: the migration will not start
+
+        """
         ### create test resources
         instance_name_1 = 'end-to-end-test-instance-1'
         instance_selfLink_1 = \
@@ -189,8 +199,9 @@ class TestInstanceMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testAsBackendOfTargetPool(self):
-        """ If an instance is serving a target pool, the instance migration will
-        still finish. But the instance will be detached from the target pool.
+        """ An instance is serving a target pool.
+        Expectation: the instance migration will still finish.
+        But the instance will be detached from the target pool.
         So the target pool will be affected. This is not a recommended use case.
         """
         ### create test resources

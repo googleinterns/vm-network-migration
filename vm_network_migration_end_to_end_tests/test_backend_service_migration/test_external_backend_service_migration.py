@@ -38,6 +38,12 @@ class TestExternalBackendServiceMigration(unittest.TestCase):
         google_api_interface)
 
     def testWithMultipleBackendsAttached(self):
+        """ A backend service has multiple backends
+
+        Expectation: all the backends will be migrated
+
+        """
+        ### create test resources
         group_name_1 = 'end-to-end-test-managed-instance-group-1'
         operation = self.test_resource_creator.create_regional_managed_instance_group(
             self.test_resource_creator.legacy_instance_template_selfLink,
@@ -67,7 +73,7 @@ class TestExternalBackendServiceMigration(unittest.TestCase):
             backend_service_name, original_backend_selfLinks)
 
         backend_service_selfLink = operation['targetLink']
-        # start migration
+        ### start migration
         selfLink_executor = SelfLinkExecutor(self.compute,
                                              backend_service_selfLink,
                                              self.test_resource_creator.network_name,

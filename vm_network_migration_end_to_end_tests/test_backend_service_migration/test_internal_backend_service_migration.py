@@ -37,6 +37,11 @@ class TestInternalBackendServiceMigration(unittest.TestCase):
         google_api_interface)
 
     def testWithMultipleBackends(self):
+        """ A backend service has multiple backends
+
+        Expectation: all the backends will be migrated
+
+        """
         ### create test resources
         backend_service_name = 'end-to-end-test-backend-service'
         group_name_1 = 'end-to-end-test-managed-instance-group-1'
@@ -114,6 +119,11 @@ class TestInternalBackendServiceMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testWithNoBackends(self):
+        """ A backend service has no backend
+
+        Expectation: the backend service itself will be migrated
+
+        """
         ### create test resources
         backend_service_name = 'end-to-end-test-backend-service'
         operation = self.test_resource_creator.create_regional_backend_service(
@@ -144,6 +154,12 @@ class TestInternalBackendServiceMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testWithForwardingRuleAttached(self):
+        """ A forwaring rule is using the external backend service.
+          Try to migrate the external backend service directly.
+
+          Expectation: still can migrate
+
+        """
         ### create test resources
         backend_service_name = 'end-to-end-test-backend-service'
         original_backend_selfLinks = []

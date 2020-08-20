@@ -109,9 +109,6 @@ class TestExternalForwardingRuleMigration(unittest.TestCase):
     def testWithTargetHttpProxyRelatedToMultipleBackendServices(self):
         """ The urlMapping is related to two backend service.
         All the backend services will be migrated.
-
-        Returns:
-
         """
         ### create test resrouces
         forwarding_rule_name = 'end-to-end-test-forwarding-rule'

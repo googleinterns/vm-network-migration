@@ -116,8 +116,9 @@ class TestManagedInstanceGroupMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testAsBackendOfTargetPool(self):
-        """ The managed instance group serves a target pool. The migration will
-        not start.
+        """ The managed instance group serves a target pool.
+
+        Expectation: The migration will not start.
 
         """
         ### create test resources
@@ -155,8 +156,9 @@ class TestManagedInstanceGroupMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testAsBackendOfBackendService(self):
-        """ The managed instance group serves a backend service. The migration will
-        fail.
+        """ The managed instance group serves a backend service.
+
+        Expectation: The migration will fail and rollback.
 
         """
         ### create test resources
