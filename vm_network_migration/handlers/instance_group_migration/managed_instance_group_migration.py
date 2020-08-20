@@ -92,7 +92,7 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
                 'The instance group is serving target pools %s, ' 
                 'please detach it from the target pool and then try again.' % (
                     target_pool_list), Warning)
-            return
+            raise MigrationFailed('The migration didn\'t start.')
 
         if self.instance_group.autoscaler != None:
             warn(
