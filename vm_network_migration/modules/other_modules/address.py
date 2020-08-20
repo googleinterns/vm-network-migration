@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Address class: describes a instance's IP address and handle the related methods
+""" Address class: describes an instance's IP address and handle the related API calls
 """
 import warnings
 
@@ -33,11 +33,10 @@ class Address:
         """
         self.operations = Operations(compute, project, None, region)
 
-    def get_region(self) -> dict:
+    def get_region(self) -> str:
         """ Get region information
 
-            Returns:
-                region name of the self.zone
+            Returns: region name
 
             Raises:
                 googleapiclient.errors.HttpError: invalid request
@@ -75,12 +74,13 @@ class Address:
                 'natIP']
         else:
             self.external_ip = None
+        return self.external_ip
 
     def preserve_ip_addresses_handler(self, preserve_external_ip):
         """Preserve the IP address.
 
         Args:
-            preserve_external_ip: bool for preserving the external ip or not
+            preserve_external_ip: boolean. Preserving the external ip or not
 
         """
 
@@ -142,8 +142,8 @@ class Address:
             preserve_external_ip_operation['name'])
         return preserve_external_ip_operation
 
-    def generate_external_ip_address_body(self):
-        """Generate external IP address.
+    def generate_external_ip_address_body(self) -> dict:
+        """Generate body of an external IP address.
 
         Returns:
               {

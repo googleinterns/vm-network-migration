@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" TargetPoolMigration class: Handle the migration of a target pool.
+""" Migrate a target pool.
 
 """
 import warnings
@@ -28,16 +28,16 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, target_pool_name, network, subnetwork,
                  preserve_instance_external_ip, region):
-        """ Initialize a BackendServiceMigration object
+        """ Initialization
 
         Args:
             project: project ID
-            backend_service_name: name of the backend service
+            target_pool_name: name of the target pool
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether preserve the external IP
-            of the instances which serves this load balancer
-            region: region of the internal load balancer
+            of the instances serving this target pool
+            region: region of the target pool
         """
         super(TargetPoolMigration, self).__init__()
         self.target_pool = TargetPool(self.compute, self.project,
@@ -143,7 +143,7 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
             raise MigrationFailed('Rollback finished.')
 
     def rollback(self):
-        """ Rollback
+        """ Rollback a target pool, which means rollback all its backends one by one
 
         Returns:
 

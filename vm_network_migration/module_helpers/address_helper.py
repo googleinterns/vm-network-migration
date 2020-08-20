@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" AddressHelper class: helps to generate an Address class object.
+""" AddressHelper class: helps to generate an Address object.
 
 """
 from vm_network_migration.modules.other_modules.address import Address
@@ -21,6 +21,14 @@ from vm_network_migration.utils import initializer
 class AddressHelper:
     @initializer
     def __init__(self, compute, project, zone, region=None):
+        """ Initialization
+
+        Args:
+            compute: compute engine API
+            project: project id
+            zone: zone of the address
+            region: region of the address
+        """
         if self.region == None:
             self.region = self.get_region()
 

@@ -41,8 +41,7 @@ class Instance(object):
             name: name of the instance
             region: region of the instance
             zone: zone of the instance
-            instance_configs: the instance template of the instance
-            stauts:instance's status
+            instance_configs: the instance config
         """
 
         self.original_instance_configs = instance_configs or self.retrieve_instance_configs()
@@ -51,8 +50,6 @@ class Instance(object):
         self.new_instance_configs = self.get_new_instance_configs()
 
         self.operations = Operations(compute, project, zone)
-        self.original_status = self.get_instance_status()
-        self.status = deepcopy(self.original_status)
         self.selfLink = self.get_selfLink(self.original_instance_configs)
         self.log()
 
@@ -63,10 +60,10 @@ class Instance(object):
         logging.info('--------------------------')
 
     def retrieve_instance_configs(self) -> dict:
-        """ Get the instance template from an instance.
+        """ Get the instance config.
 
         Returns:
-            instance template of self.instance
+            config of the instance
 
         Raises:
             googleapiclient.errors.HttpError: invalid request
@@ -151,7 +148,7 @@ class Instance(object):
         return stop_instance_operation
 
     def get_disks_info_from_instance_configs(self) -> list:
-        """ Get disks' info from the instance template.
+        """ Get disks' info from the instance config.
 
         Returns:
             a list of disks' info
@@ -228,14 +225,14 @@ class Instance(object):
                                                  new_subnetwork_link,
                                                  instance_configs,
                                                  add_network_metadata=True):
-        """ Modify the instance template with the new network links
+        """ Modify the instance config with the new network links
 
             Args:
                 new_network_link: the selflink of the network
                 new_subnetwork_link: the selflink of the subnetwork
 
             Returns:
-                modified instance template
+                modified instance config
         """
         instance_configs['networkInterfaces'][0][
             'network'] = new_network_link
@@ -257,12 +254,12 @@ class Instance(object):
 
     def modify_instance_configs_with_external_ip(self, external_ip,
                                                  instance_configs):
-        """ Modify the instance template with the given external IP address
+        """ Modify the instance config with the given external IP address
 
         Args:
             external_ip: external IP address, such as "123.213.213.123"
 
-        Returns: modified instance template
+        Returns: modified instance config
 
         """
         if external_ip == None:
@@ -287,7 +284,7 @@ class Instance(object):
             del instance_configs['networkInterfaces'][0]['networkIP']
 
     def get_new_instance_configs(self):
-        """ Update the instance template with current attributes
+        """ Update the instance config with current attributes
 
         Returns: None
 
@@ -306,25 +303,6 @@ class Instance(object):
             self.network_object.subnetwork_link,
             new_instance_configs)
         return new_instance_configs
-
-    def get_instance_status(self):
-        """ Get current instance's status.
-
-        Returns: an InstanceStatus object
-        Raises: HttpError for incorrect response
-
-        """
-        try:
-            instance_configs = self.retrieve_instance_configs()
-        except HttpError as e:
-            error_reason = e._get_reason()
-            print(error_reason)
-            # if instance is not found, it has a NOTEXISTS status
-            if 'not found' in error_reason:
-                return InstanceStatus.NOTEXISTS
-            else:
-                raise e
-        return InstanceStatus(instance_configs['status'])
 
     def create_instance(self, instance_configs) -> dict:
         """ Create the instance using self.instance_configs
@@ -360,8 +338,8 @@ class Instance(object):
             delete_instance_operation['name'])
         return delete_instance_operation
 
-    def create_instance_with_ephemeral_external_ip(self, configs):
-        """ Create instance using configs, but without specified external IP.
+    def create_instance_with_ephemeral_external_ip(self, configs) -> dict:
+        """ Create instance using configs, but without static external IP.
 
         Args:
             configs: configs of the instance
@@ -370,10 +348,10 @@ class Instance(object):
         cur_configs = deepcopy(configs)
         self.modify_instance_configs_with_external_ip(None, cur_configs)
         print('Modified VM configuration:', cur_configs)
-        self.create_instance(cur_configs)
+        return self.create_instance(cur_configs)
 
-    def get_referrer_selfLinks(self):
-        """ Get all this instance's referrer's selfLink
+    def get_referrer_selfLinks(self) -> list:
+        """ Get all this instance's referrer's selfLinks
 
         Returns:a list of instance group selfLinks
 
@@ -399,6 +377,8 @@ class Instance(object):
     def compare_original_network_and_target_network(self):
         """ Check if the original network is the
         same as the target subnet
+
+        Returns: True for the same
         """
         if self.network_object == None or self.network_object.subnetwork_link == None:
             raise InvalidTargetNetworkError
@@ -412,24 +392,3 @@ class Instance(object):
             return True
         else:
             return False
-
-
-class InstanceStatus(Enum):
-    """
-    An Enum class for instance's status
-    """
-    NOTEXISTS = None
-    RUNNING = 'RUNNING'
-    STOPPING = 'STOPPING'
-    TERMINATED = 'TERMINATED'
-
-    def __eq__(self, other):
-        """ Override __eq__ function
-
-        Args:
-            other: another InstanceStatus object
-
-        Returns: True/False
-
-        """
-        return self.value == other.value

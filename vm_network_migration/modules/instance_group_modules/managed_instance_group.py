@@ -27,6 +27,11 @@ class ManagedInstanceGroup(InstanceGroup):
             compute: google compute engine
             project: project ID
             instance_group_name: name of the instance group
+            network_name: target network
+            subnetwork_name: target subnet
+            preserve_instance_ip: (only valid for unmanaged instance group) whether
+                                    to preserve instances external IPs
+
         """
         super(ManagedInstanceGroup, self).__init__(compute, project,
                                                    instance_group_name,
@@ -299,8 +304,11 @@ class ManagedInstanceGroup(InstanceGroup):
                 remove_target_pool_operation['name'])
         return remove_target_pool_operation
 
-    def get_target_pools(self):
-        """Get a list of target pools served by the instance group"""
+    def get_target_pools(self) -> list:
+        """Get a list of target pools served by the instance group
+
+        Returns: a list of target pools' selfLink
+        """
         configs = self.get_instance_group_configs()
         if 'targetPools' not in configs:
             return []

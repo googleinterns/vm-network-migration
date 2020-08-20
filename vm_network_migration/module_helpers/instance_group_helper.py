@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" InstanceGroupHelper class helps to create an InstanceGroup object.
+""" Helper class for creating an InstanceGroup object.
 """
 
 from vm_network_migration.modules.instance_group_modules.regional_managed_instance_group import RegionalManagedInstanceGroup
 from vm_network_migration.modules.instance_group_modules.unmanaged_instance_group import UnmanagedInstanceGroup
 from vm_network_migration.modules.instance_group_modules.zonal_managed_instance_group import ZonalManagedInstanceGroup
+from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroup
 from vm_network_migration.utils import initializer
 
 
@@ -32,16 +33,13 @@ class InstanceGroupHelper:
             instance_group_name: name of the instance group
             region: region of the instance group
             zone: zone of the instance group
+            preserve_instance_ip: only valid for an unmanaged instance group
         """
 
-        self.status = None
-
-    def build_instance_group(self) -> object:
-        """ Initialize a subclass object of the InstanceGroup.
-
-        Returns: a subclass object of the InstanceGroup
-
+    def build_instance_group(self) -> InstanceGroup:
+        """ Build an object which is an instance of the InstanceGroup's subclass
         """
+        # try to build a zonal instance group
         try:
             instance_group_configs = self.get_instance_group_in_zone()
         except Exception:
@@ -64,6 +62,7 @@ class InstanceGroupHelper:
                                                  self.subnetwork,
                                                  self.preserve_instance_ip,
                                                  self.zone)
+        # try to build a regional instance group
         try:
             self.get_instance_group_in_region()
         except Exception as e:
@@ -77,7 +76,7 @@ class InstanceGroupHelper:
                                                 self.region)
 
     def get_instance_group_in_zone(self) -> dict:
-        """ Get a single zone instance group's configurations
+        """ Get a zonal instance group's configurations
 
         Returns: instance group's configurations
 
@@ -88,7 +87,7 @@ class InstanceGroupHelper:
             instanceGroup=self.instance_group_name).execute()
 
     def get_instance_group_in_region(self) -> dict:
-        """ Get multi-zone instance group's configurations
+        """ Get a regional instance group's configurations
 
         Returns: instance group's configurations
 

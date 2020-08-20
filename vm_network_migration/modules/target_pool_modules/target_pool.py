@@ -50,7 +50,6 @@ class TargetPool:
                                      self.region)
         # The instances which don't belong to any instance groups
         self.attached_single_instances_selfLinks = []
-        # The instances which belong to one or more unmanaged instance groups
         self.attached_managed_instance_groups_selfLinks = []
         self.get_attached_backends()
 
@@ -81,7 +80,7 @@ class TargetPool:
             return self.target_pool_config['selfLink']
 
     def add_instance(self, instance_selfLink):
-        """ Add instance into the backends
+        """ Add an instance into the backends
 
         Returns: a deserialized python object of the response
 
@@ -99,7 +98,7 @@ class TargetPool:
         return add_instance_operation
 
     def remove_instance(self, instance_selfLink):
-        """ Remove instance from the backends
+        """ Remove an instance from the backends
 
               Returns: a deserialized python object of the response
 
@@ -224,7 +223,7 @@ class TargetPool:
         return False
 
     def wait_for_instance_become_healthy(self, instance_selfLink, TIME_OUT=300):
-        """ Wait for backend being healthy
+        """ Wait for an instance being healthy
 
         Args:
             backend_selfLink: url selfLink of the backends (just an instance group)
@@ -247,7 +246,7 @@ class TargetPool:
     def wait_for_an_instance_group_become_partially_healthy(self,
                                                             instance_group,
                                                             TIME_OUT=300):
-        """ Wait for at least one instance from this instance group become healthy
+        """ Wait for at least one instance in this instance group being healthy
 
         Args:
             instance_group:  a ManagedInstanceGroup object
