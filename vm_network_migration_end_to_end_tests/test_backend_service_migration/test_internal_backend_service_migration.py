@@ -14,13 +14,15 @@
 
 import unittest
 import warnings
+
 import google.auth
+from googleapiclient import discovery
+from vm_network_migration.errors import *
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration_end_to_end_tests.build_test_resource import TestResourceCreator
 from vm_network_migration_end_to_end_tests.check_result import *
 from vm_network_migration_end_to_end_tests.google_api_interface import GoogleApiInterface
-from googleapiclient import discovery
 from vm_network_migration_end_to_end_tests.utils import *
-from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 
 
 class TestInternalBackendServiceMigration(unittest.TestCase):
@@ -171,6 +173,123 @@ class TestInternalBackendServiceMigration(unittest.TestCase):
             backend_service_name)
         self.assertTrue(resource_config_is_unchanged_including_network(
             original_backend_service_configs, new_backend_service_configs))
+        print('Pass the current test')
+
+    def testSharingBackendWithAnotherBackendService(self):
+        """ The internal backend service A shares the same backend with another backend service B
+
+        Expectation: rollback
+
+        """
+        ### create test resources
+        backend_service_1_name = 'end-to-end-test-backend-service-1'
+        backend_service_2_name = 'end-to-end-test-backend-service-2'
+        group_name_1 = 'end-to-end-test-managed-instance-group-1'
+        operation = self.test_resource_creator.create_regional_managed_instance_group(
+            self.test_resource_creator.legacy_instance_template_selfLink,
+            group_name_1,
+            'sample_multi_zone_managed_instance_group.json',
+        )
+        instance_group_1_selfLink = operation['targetLink'].replace(
+            '/instanceGroupManagers/', '/instanceGroups/')
+        original_instance_group_config = self.google_api_interface.get_multi_zone_managed_instance_group_configs(
+            group_name_1)
+
+        backend_service_1_selfLink = \
+            self.test_resource_creator.create_regional_backend_service(
+                'sample_internal_backend_service.json',
+                backend_service_1_name, [instance_group_1_selfLink])[
+                'targetLink']
+        original_backend_service_1_configs = self.google_api_interface.get_regional_backend_service_configs(
+            backend_service_1_name)
+        self.test_resource_creator.create_regional_backend_service(
+            'sample_internal_backend_service.json',
+            backend_service_2_name, [instance_group_1_selfLink])
+        ### start migration
+        selfLink_executor = SelfLinkExecutor(self.compute,
+                                             backend_service_1_selfLink,
+                                             self.test_resource_creator.network_name,
+                                             self.test_resource_creator.subnetwork_name,
+                                             )
+        with self.assertRaises(MigrationFailed):
+            migration_handler = selfLink_executor.build_migration_handler()
+            migration_handler.network_migration()
+        ### check migration result
+        new_backend_service_1_configs = self.google_api_interface.get_regional_backend_service_configs(
+            backend_service_1_name)
+
+        # check backend service config
+        self.assertTrue(resource_config_is_unchanged_including_network(
+            original_backend_service_1_configs, new_backend_service_1_configs))
+        # check its backends
+        new_instance_group_config = self.google_api_interface.get_multi_zone_managed_instance_group_configs(
+            group_name_1)
+        self.assertTrue(
+            instance_template_config_is_unchanged(
+                original_instance_group_config,
+                new_instance_group_config)
+        )
+        print('Pass the current test')
+
+    def testSharingBackendWithATargetPool(self):
+        """ backend_service_1 share the same backend with a target pool.
+            Try to migrate backend_service_1.
+
+            Expectation: rollback
+
+        """
+        ### create test resources
+        backend_service_1_name = 'end-to-end-test-backend-service-1'
+        group_name_1 = 'end-to-end-test-managed-instance-group-1'
+        operation = self.test_resource_creator.create_regional_managed_instance_group(
+            self.test_resource_creator.legacy_instance_template_selfLink,
+            group_name_1,
+            'sample_multi_zone_managed_instance_group.json',
+        )
+        instance_group_1_selfLink = operation['targetLink'].replace(
+            '/instanceGroupManagers/', '/instanceGroups/')
+        original_instance_group_config = self.google_api_interface.get_multi_zone_managed_instance_group_configs(
+            group_name_1)
+
+        backend_service_1_selfLink = \
+            self.test_resource_creator.create_regional_backend_service(
+                'sample_internal_backend_service.json',
+                backend_service_1_name, [instance_group_1_selfLink])[
+                'targetLink']
+        original_backend_service_1_configs = self.google_api_interface.get_regional_backend_service_configs(
+            backend_service_1_name)
+        target_pool_name = 'end-to-end-test-target-pool'
+        target_pool_selfLink = \
+            self.test_resource_creator.create_target_pool_with_health_check(
+                'sample_target_pool_with_no_instance.json',
+                target_pool_name,
+                [group_name_1],
+                [],
+                health_check_selfLink=None)['targetLink']
+        ### start migration
+        selfLink_executor = SelfLinkExecutor(self.compute,
+                                             backend_service_1_selfLink,
+                                             self.test_resource_creator.network_name,
+                                             self.test_resource_creator.subnetwork_name,
+                                             )
+        with self.assertRaises(MigrationFailed):
+            migration_handler = selfLink_executor.build_migration_handler()
+            migration_handler.network_migration()
+        ### check migration result
+        new_backend_service_1_configs = self.google_api_interface.get_regional_backend_service_configs(
+            backend_service_1_name)
+
+        # check backend service config
+        self.assertTrue(resource_config_is_unchanged_including_network(
+            original_backend_service_1_configs, new_backend_service_1_configs))
+        # check its backends
+        new_instance_group_config = self.google_api_interface.get_multi_zone_managed_instance_group_configs(
+            group_name_1)
+        self.assertTrue(
+            instance_template_config_is_unchanged(
+                original_instance_group_config,
+                new_instance_group_config)
+        )
         print('Pass the current test')
 
     def tearDown(self) -> None:
