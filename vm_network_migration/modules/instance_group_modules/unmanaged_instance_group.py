@@ -49,7 +49,6 @@ class UnmanagedInstanceGroup(InstanceGroup):
         self.original_instance_group_configs = self.get_instance_group_configs()
         self.new_instance_group_configs = self.get_new_instance_group_configs_using_new_network(
             self.original_instance_group_configs)
-        self.status = self.get_status()
         self.operation = Operations(self.compute, self.project, self.zone, None)
         self.selfLink = self.get_selfLink(self.original_instance_group_configs)
         self.log()
