@@ -20,3 +20,11 @@
 ### 2. A target pool shares one or more backends with another target pool or backend service:
     Not supported.
     The tool will rollback.
+### 3. A target pool is serving a forwarding rule:
+    Supported.
+    After the migration, this target pool will still serve its original forwarding rule.
+### 4. A target pool has a backup pool:
+    Supported with limitation.
+    The backup pool will not be migrated. 
+    The user can migrate the backup pool seperately using the same API call.
+    

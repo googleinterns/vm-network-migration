@@ -76,7 +76,7 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
                                  self.test_resource_creator.network_selfLink))
         self.assertTrue(
             check_selfLink_equal(new_config['subnetwork'],
-                                 self.test_resource_creator.network_selfLink))
+                                 self.test_resource_creator.subnetwork_selfLink))
         print('Pass the current test')
 
     def testWithNoInstanceInTheGroup(self):
