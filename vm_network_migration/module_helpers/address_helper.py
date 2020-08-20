@@ -20,7 +20,7 @@ from vm_network_migration.utils import initializer
 
 class AddressHelper:
     @initializer
-    def __init__(self, compute, project, zone, region):
+    def __init__(self, compute, project, zone, region=None):
         if self.region == None:
             self.region = self.get_region()
 

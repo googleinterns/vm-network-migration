@@ -30,7 +30,7 @@ from vm_network_migration.utils import (
 
 class Instance(object):
     @initializer
-    def __init__(self, compute, project, name, region, zone, network,
+    def __init__(self, compute, project, name, zone, network,
                  subnetwork, preserve_instance_ip=False,
                  instance_configs=None):
         """ Initialize an instance object
@@ -50,7 +50,7 @@ class Instance(object):
         self.address_object = self.get_address()
         self.new_instance_configs = self.get_new_instance_configs()
 
-        self.operations = Operations(compute, project, zone, region)
+        self.operations = Operations(compute, project, zone)
         self.original_status = self.get_instance_status()
         self.status = deepcopy(self.original_status)
         self.selfLink = self.get_selfLink(self.original_instance_configs)
@@ -87,7 +87,7 @@ class Instance(object):
         if self.original_instance_configs == None:
             self.original_instance_configs = self.retrieve_instance_configs()
         address_factory = AddressHelper(self.compute, self.project,
-                                        self.zone, self.region)
+                                        self.zone)
         address = address_factory.generate_address(
             self.original_instance_configs)
         return address
@@ -99,7 +99,7 @@ class Instance(object):
 
         """
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
-                                                 self.zone, self.region)
+                                                 self.zone)
         network = subnetwork_factory.generate_network(
             self.network,
             self.subnetwork)
