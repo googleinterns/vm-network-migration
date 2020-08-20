@@ -48,7 +48,6 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
         super(InstanceNetworkMigration, self).__init__()
         self.instance = Instance(self.compute, self.project,
                                  self.original_instance_name,
-                                 self.region,
                                  self.zone, self.network_name,
                                  self.subnetwork_name,
                                  preserve_instance_ip=self.preserve_external_ip)
@@ -64,16 +63,7 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             return self.instance.selfLink
 
     def network_migration(self, force=False):
-        """ The main method of the instance network migration process
-
-        Args:
-            original_instance_name: original instance's name
-            network_name: target network name
-            subnetwork_name: target subnetwork name
-            preserve_external_ip: True/False
-
-        Returns: None
-
+        """ Migrate the instance
         """
         self.migration_status = MigrationStatus(0)
         print('Migrating the VM: %s.' % (self.original_instance_name))

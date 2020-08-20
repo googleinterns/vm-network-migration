@@ -38,8 +38,9 @@ class ExternalForwardingRuleMigration(ComputeEngineResourceMigration):
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether preserve the external IP
-            of the instances which serves this load balancer
-            region: region of the internal load balancer
+            of the instances serving this forwarding rule
+            region: region of the forwarding rule. None for global forwarding rule
+            forwarding_rule: a ForwardingRule object
         """
         super(ExternalForwardingRuleMigration, self).__init__()
         if self.forwarding_rule==None:
@@ -47,7 +48,7 @@ class ExternalForwardingRuleMigration(ComputeEngineResourceMigration):
         self.backends_migration_handlers = []
 
     def build_forwarding_rule(self):
-        """ Use a helper class to create a ForwardingRule object
+        """ Use ForwardingRuleHelper class to create a ForwardingRule object
 
         Returns: a ForwardingRule object
 
@@ -65,7 +66,7 @@ class ExternalForwardingRuleMigration(ComputeEngineResourceMigration):
     def network_migration(self):
         """ Network migration for a external forwarding rule.
         The tool will migrate its backend services one by one.
-        The forwarding rule will not be deleted or recreated.
+        The forwarding rule itself will not be deleted or recreated.
 
         """
         if self.forwarding_rule.compare_original_network_and_target_network():
@@ -109,7 +110,7 @@ class ExternalForwardingRuleMigration(ComputeEngineResourceMigration):
 
 
     def rollback(self):
-        """ Error happens. Rollback to the original status.
+        """ Error happens. Rollback all the backend services to the original network.
 
         """
         for backend_service_migration_handler in self.backends_migration_handlers:

@@ -115,6 +115,11 @@ class TestInternalSelfManagedBackendServiceMigration(unittest.TestCase):
             new_backend_service_configs))
 
     def testInUseByForwardingRule(self):
+        """
+
+        Expectation: still can migrate
+
+        """
         ### create test resources
         forwarding_rule_name = 'end-to-end-test-forwarding-rule'
         group_name_1 = 'end-to-end-test-managed-instance-group-1'

@@ -21,9 +21,8 @@ from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroup
-from vm_network_migration.modules.instance_modules.instance import Instance
+
 from vm_network_migration.modules.other_modules.operations import Operations
-import logging
 from vm_network_migration.utils import is_equal_or_contians
 
 

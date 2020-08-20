@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This script is used to migrate a GCP instance group from its legacy network to a
-subnetwork mode network.
-
-Ihe Google API python client module is imported to manage the GCP Compute Engine
- resources.
+""" Migrate a managed instance group from its legacy network to a
+target subnet.
 """
 
 from enum import IntEnum
@@ -36,12 +33,17 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
                  network_name,
                  subnetwork_name, preserve_external_ip, zone, region,
                  instance_group_name):
-        """ Initialize a InstanceNetworkMigration object
+        """Initialization
 
         Args:
-            project: project ID
-            zone: zone of the instance group
-            region:
+            compute: google compute engine API
+            project: project id
+            network_name: target network
+            subnetwork_name: target subnetwork
+            preserve_external_ip: whether to preserve instances' external IPs
+            zone: zone of a zonal instance group
+            region: region of regional instance group
+            instance_group_name: name
         """
         super(ManagedInstanceGroupMigration, self).__init__()
         self.instance_group = self.build_instance_group()
@@ -72,14 +74,7 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
     def network_migration(self):
         """ Migrate the network of a managed instance group.
         The instance group will be recreated with a new
-        instance template which has the subnet information.
-
-        Args:
-            network_name: target network
-            subnetwork_name: target subnetwork
-
-        Returns:
-
+        instance template using the target subnet info.
         """
         self.migration_status = MigrationStatus(0)
         if self.preserve_external_ip:
@@ -145,7 +140,7 @@ class ManagedInstanceGroupMigration(ComputeEngineResourceMigration):
         self.migration_status = MigrationStatus(4)
 
     def rollback(self):
-        """ Rollback an managed instance group
+        """ Rollback
 
         """
         if self.migration_status >= 3:

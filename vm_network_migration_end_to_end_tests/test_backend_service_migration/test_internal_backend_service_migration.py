@@ -163,9 +163,9 @@ class TestInternalBackendServiceMigration(unittest.TestCase):
                                              self.test_resource_creator.network_name,
                                              self.test_resource_creator.subnetwork_name,
                                              )
-
-        migration_handler = selfLink_executor.build_migration_handler()
-        migration_handler.network_migration()
+        with self.assertRaises(MigrationFailed):
+            migration_handler = selfLink_executor.build_migration_handler()
+            migration_handler.network_migration()
 
         ### check migration result
         # migration didn't start

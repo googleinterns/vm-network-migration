@@ -38,8 +38,8 @@ class InternalForwardingRuleMigration(ComputeEngineResourceMigration):
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether preserve the external IP
-            of the instances which serves this load balancer
-            region: region of the internal load balancer
+            of the instances serving the forwarding rule
+            region: region of the forwarding rule
         """
         super(InternalForwardingRuleMigration, self).__init__()
         if self.forwarding_rule == None:

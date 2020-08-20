@@ -33,12 +33,17 @@ class UnmanagedInstanceGroupMigration(ComputeEngineResourceMigration):
                  network_name,
                  subnetwork_name, preserve_external_ip, zone, region,
                  instance_group_name):
-        """ Initialize a InstanceNetworkMigration object
+        """Initialize a InstanceNetworkMigration object
 
-        Args:
-            project: project ID
-            zone: zone of the instance group
-            region:
+         Args:
+           compute: google compute engine API
+           project: project id
+           network_name: target network
+           subnetwork_name: target subnetwork
+           preserve_external_ip: whether to preserve instances' external IPs
+           zone: zone of a zonal instance group
+           region: region of regional instance group
+           instance_group_name: name
         """
         super(UnmanagedInstanceGroupMigration, self).__init__()
         self.instance_group = self.build_instance_group()
@@ -110,9 +115,6 @@ class UnmanagedInstanceGroupMigration(ComputeEngineResourceMigration):
 
     def rollback(self):
         """ Rollback an unmanaged instance group
-
-        Returns:
-
         """
         if self.migration_status >= 4:
             # New instance group has been created, so it needs to be deleted

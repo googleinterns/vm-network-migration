@@ -32,3 +32,6 @@
 ### 3. A backend service share the same backends with another backend service or target pool:
     Not supported.
     The tool will rollback.
+### 4. A backend service has zonal NEGs or internet NEG as its backends
+    Supported.
+    Since the NEG doesn't have a network configuration, the tool will ignore those backends and migrate instance group backends.
