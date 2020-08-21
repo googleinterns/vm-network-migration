@@ -201,7 +201,7 @@ class TestTargetPoolMigration(unittest.TestCase):
         new_instance_template_1_configs = self.google_api_interface.get_multi_zone_instance_template_configs(
             group_name_1)
         new_instance_template_2_configs = self.google_api_interface.get_multi_zone_instance_template_configs(
-            group_name_1)
+            group_name_2)
         # group 1 didn't migrate
         self.assertTrue(
             instance_template_config_is_unchanged(
@@ -329,13 +329,11 @@ class TestTargetPoolMigration(unittest.TestCase):
                                              self.test_resource_creator.network_name,
                                              self.test_resource_creator.subnetwork_name,
                                              )
-
-        try:
+        # the migration will not start, and raise an error
+        with self.assertRaises(AmbiguousTargetResource):
             migration_handler = selfLink_executor.build_migration_handler()
             migration_handler.network_migration()
-        except Exception as e:
-            # the migration will not start, and raise an error
-            self.assertTrue(isinstance(e, AmbiguousTargetResource))
+
         ### check migration result
         # unmanaged instance group doesn't change
         new_group_config = self.google_api_interface.get_unmanaged_instance_group_configs(
