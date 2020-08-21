@@ -21,9 +21,8 @@ from googleapiclient.errors import HttpError
 from vm_network_migration.errors import *
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.modules.instance_group_modules.instance_group import InstanceGroup
-from vm_network_migration.modules.instance_modules.instance import Instance
+from vm_network_migration.modules.other_modules.subnet_network import SubnetNetwork
 from vm_network_migration.modules.other_modules.operations import Operations
-import logging
 from vm_network_migration.utils import is_equal_or_contians
 
 
@@ -35,8 +34,10 @@ class UnmanagedInstanceGroup(InstanceGroup):
         Args:
             compute: google compute engine
             project: project name
+            network_name: target network
+            subnetwork_name: target subnet
             instance_group_name: instance group's name
-            region: region name of the instance group
+            preserve_instance_ip: whether to preserve instances external IPs
             zone: zone name of the instance group
         """
         super(UnmanagedInstanceGroup, self).__init__(compute, project,
@@ -50,12 +51,16 @@ class UnmanagedInstanceGroup(InstanceGroup):
         self.original_instance_group_configs = self.get_instance_group_configs()
         self.new_instance_group_configs = self.get_new_instance_group_configs_using_new_network(
             self.original_instance_group_configs)
-        self.status = self.get_status()
         self.operation = Operations(self.compute, self.project, self.zone, None)
         self.selfLink = self.get_selfLink(self.original_instance_group_configs)
         self.log()
 
-    def get_network(self):
+    def get_network(self) -> SubnetNetwork:
+        """ Get a SubnetNetwork object
+
+        Returns:
+
+        """
         print('Checking the target network information.')
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
                                                  self.zone)
@@ -74,11 +79,10 @@ class UnmanagedInstanceGroup(InstanceGroup):
                                                  zone=self.zone,
                                                  instanceGroup=self.instance_group_name).execute()
 
-    def list_instances(self):
+    def list_instances(self) -> list:
         """Retrieve all the instances in this instance group,
-        and save the instances into a list of Instance objects
 
-        Returns: a list of Instance objects
+        Returns: a list of the instances' selfLinks
 
         """
         instance_selfLinks = []
@@ -99,7 +103,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
         return instance_selfLinks
 
     def delete_instance_group(self) -> dict:
-        """ Delete the instance group in the compute engine
+        """ Delete the instance group
 
         Returns:  a deserialized object of the response
 
@@ -159,7 +163,7 @@ class UnmanagedInstanceGroup(InstanceGroup):
         """ Remove an instance from the instance group
 
          Args:
-             instance_selflink: the instance's selfLink
+             instance_selflink: the instance to be removed
 
          Returns: a deserialized object of the response
          Raises: HttpError
@@ -185,7 +189,6 @@ class UnmanagedInstanceGroup(InstanceGroup):
 
     def add_all_instances(self):
         """ Add all the instances in instances to the current instance group
-        Returns:
 
         """
         for instance_selfLink in self.instance_selfLinks:
@@ -210,9 +213,11 @@ class UnmanagedInstanceGroup(InstanceGroup):
         new_instance_group_configs['subnetwork'] = self.network.subnetwork_link
         return new_instance_group_configs
 
-    def compare_original_network_and_target_network(self):
-        """ Abstract method: check if the original network is the
+    def compare_original_network_and_target_network(self) -> bool:
+        """ check if the original network is the
         same as the target subnet
+
+        Returns: True/False
         """
         if 'subnetwork' not in self.original_instance_group_configs:
             return False

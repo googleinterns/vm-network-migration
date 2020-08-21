@@ -35,6 +35,11 @@ class TestInternalForwardingRuleMigration(unittest.TestCase):
         google_api_interface)
 
     def testWithBackendServiceAttached(self):
+        """ A backend service is in use by this forwarding rule
+
+        Expectation: both the forwarding rule and the backend service will be migrated.
+
+        """
         ### create test resources
         forwarding_rule_name = 'end-to-end-test-forwarding-rule'
         backend_service_name = 'end-to-end-test-backend-service'
@@ -108,6 +113,11 @@ class TestInternalForwardingRuleMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testWithTargetInstanceAttached(self):
+        """ A targetInstance is in use by the forwarding rule
+
+        Expectation: both the targetInstance and the forwarding rule will be migrated
+
+        """
         ### create test resources
         forwarding_rule_name = 'end-to-end-test-forwarding-rule'
         target_instance_name = 'end-to-end-test-instance'

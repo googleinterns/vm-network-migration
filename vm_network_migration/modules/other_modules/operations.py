@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Operations class: support operation related methods
+""" Operation related methods
 """
 import time
 
@@ -32,7 +32,7 @@ class Operations:
         pass
 
     def wait_for_zone_operation(self, operation):
-        """ Keep waiting for a zone operation until it finishes
+        """ Keep waiting for a zonal operation until it finishes
 
             Args:
                 operation: name of the Operations resource to return
@@ -58,7 +58,7 @@ class Operations:
             time.sleep(1)
 
     def wait_for_region_operation(self, operation):
-        """ Keep waiting for a region operation until it finishes
+        """ Keep waiting for a regional operation until it finishes
 
             Args:
                 operation: name of the Operations resource to return
@@ -85,7 +85,7 @@ class Operations:
             time.sleep(1)
 
     def wait_for_global_operation(self, operation):
-        """ Keep waiting for a region operation until it finishes
+        """ Keep waiting for a global operation until it finishes
 
             Args:
                 operation: name of the Operations resource to return

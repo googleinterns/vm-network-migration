@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" SubnetNetworkHelper class: helps to create a SubnetNetwork object
+""" Helper class for creating a SubnetNetwork object
 """
 from vm_network_migration.modules.other_modules.subnet_network import SubnetNetwork
 from vm_network_migration.utils import initializer
@@ -32,7 +32,7 @@ class SubnetNetworkHelper:
         if self.region == None and not self.only_check_network_info:
             self.region = self.get_region()
 
-    def generate_network(self, network, subnetwork):
+    def generate_network(self, network, subnetwork) -> SubnetNetwork:
         """ Generate a network object
 
         Args:
@@ -49,14 +49,10 @@ class SubnetNetworkHelper:
 
         return network
 
-    def get_region(self) -> dict:
+    def get_region(self) -> str:
         """ Get region information
 
-            Returns:
-                region name of the self.zone
-
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
+            Returns: region name
         """
         return self.compute.zones().get(
             project=self.project,

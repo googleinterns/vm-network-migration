@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This script is used to migrate an internal backend service
-from its legacy network to a subnetwork mode network.
-
+""" This script is used to migrate an INTERNAL backend service.
 """
 
 from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
@@ -22,6 +20,7 @@ from vm_network_migration.modules.backend_service_modules.internal_regional_back
     InternalBackendService
 from vm_network_migration.utils import initializer
 from vm_network_migration.handlers.compute_engine_resource_migration import ComputeEngineResourceMigration
+from vm_network_migration.errors import *
 from enum import IntEnum
 
 
@@ -37,10 +36,9 @@ class InternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
             backend_service_name: name of the backend service
             network: target network
             subnetwork: target subnet
-            preserve_instance_external_ip: whether preserve the external IP
-            of the instances which serves this load balancer
-            region: region of the internal load balancer
-            backend_service: an InternalBackEndService object
+            preserve_instance_external_ip: whether preserve the instances' external IPs
+            region: region of the internal backend service
+            backend_service: an InternalBackendService object
         """
         super(InternalBackendServiceNetworkMigration, self).__init__()
         self.backend_migration_handlers = []
@@ -77,18 +75,20 @@ class InternalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
                     backend_migration_handler)
 
     def network_migration(self):
-        """ Migrate the network of an internal backend service.
+        """ Migrate the network of an INTERNAL backend service.
         If there is a forwarding rule serving the backend service,
-        the forwarding rule needs to be deleted and recreated.
+        the tool will terminate.
         """
         self.migration_status = MigrationStatus(0)
         count_forwarding_rules = self.backend_service.count_forwarding_rules()
         if count_forwarding_rules == 1:
             print(
                 'The backend service is in use by a forwarding rule. Please try the forwarding rule migration method instead.')
+            raise MigrationFailed('The migration did\'t start.')
         elif count_forwarding_rules > 1:
             print(
                 'The backend service is in use by two or more forwarding rules. It cannot be migrated. Terminating.')
+            raise MigrationFailed('The migration did\'t start.')
         else:
             self.migration_status = MigrationStatus(1)
             print('Deleting: %s.' % (self.backend_service_name))

@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Instance group class: describe an instance group
-    InstanceGroupStatus class: describe an instance group's current status
 """
+import logging
 from enum import Enum
 
 from googleapiclient.http import HttpError
 from vm_network_migration.utils import initializer
-import logging
 
 
 class InstanceGroup(object):
@@ -31,10 +30,14 @@ class InstanceGroup(object):
             compute: google compute engine
             project: project ID
             instance_group_name: name of the instance group
+            network_name: target network
+            subnetwork_name: target subnet
+            preserve_instance_ip: (only valid for unmanaged instance group) whether
+                                    to preserve instances external IPs
+
         """
         self.original_instance_group_configs = None
         self.new_instance_group_configs = None
-        self.status = None
         self.operation = None
         self.selfLink = None
 
@@ -107,6 +110,11 @@ class InstanceGroup(object):
         pass
 
     def compare_original_network_and_target_network(self):
+        """ Check whether the target network is different from the original network
+
+        Returns: True for same
+
+        """
         return False
 
 
@@ -119,11 +127,8 @@ class InstanceGroupStatus(Enum):
 
     def __eq__(self, other):
         """ Override __eq__ function
-
         Args:
             other: another InstanceGroupStatus object
-
         Returns: True/False
-
         """
         return self.value == other.value

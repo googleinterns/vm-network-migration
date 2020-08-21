@@ -26,10 +26,13 @@ class ZonalManagedInstanceGroup(ManagedInstanceGroup):
         """ Initialization
 
         Args:
-            compute: compute engine
-            project: project ID
-            instance_group_name: name of the instance group
-            region: region of the instance group
+            compute: google compute engine
+            project: project name
+            network_name: target network
+            subnetwork_name: target subnet
+            instance_group_name: instance group's name
+            preserve_instance_ip: whether to preserve instances external IPs
+            zone: zone name of the instance group
         """
         super(ZonalManagedInstanceGroup, self).__init__(compute, project,
                                                         instance_group_name,

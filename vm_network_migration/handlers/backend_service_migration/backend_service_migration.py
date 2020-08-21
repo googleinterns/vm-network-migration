@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Migrate a external backend service.
+""" Migrate a backend service. It will call the specific backend service migration
+handler based on the type of the backend service.
 
 """
 import warnings
@@ -31,7 +32,7 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork,
-                 preserve_instance_external_ip, region):
+                 preserve_instance_external_ip, region=None):
         """ Initialize a BackendServiceMigration object
 
         Args:
@@ -40,8 +41,8 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether preserve the external IP
-            of the instances which serves this load balancer
-            region: region of the internal load balancer
+            of the instances which is serving this backend service
+            region: region of the backend service
         """
         super(BackendServiceMigration, self).__init__()
         self.backend_service_migration_handler = None
@@ -65,7 +66,7 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
         return backend_service
 
     def network_migration(self):
-        """ Migrate an external backend service's network
+        """ Migrate the backend service's network
         """
         if self.backend_service.compare_original_network_and_target_network():
             print('The backend service %s is already using target subnet.' %(self.backend_service_name))
@@ -75,7 +76,7 @@ class BackendServiceMigration(ComputeEngineResourceMigration):
                 self.compute,
                 self.project, self.backend_service_name, self.network,
                 self.subnetwork,
-                self.preserve_instance_external_ip, self.region,
+                self.preserve_instance_external_ip,
                 self.backend_service)
 
         elif isinstance(self.backend_service, InternalBackendService):

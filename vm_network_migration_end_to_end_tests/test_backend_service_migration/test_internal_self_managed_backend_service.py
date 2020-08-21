@@ -35,6 +35,11 @@ class TestInternalSelfManagedBackendServiceMigration(unittest.TestCase):
         google_api_interface)
 
     def testWithBackends(self):
+        """ A backend service has backends
+
+        Expectation: all the backends will be migrated
+
+        """
         ### create test resources
         backend_service_name = 'end-to-end-test-backend-service'
 
@@ -88,6 +93,11 @@ class TestInternalSelfManagedBackendServiceMigration(unittest.TestCase):
                                             self.test_resource_creator.subnetwork_selfLink))
 
     def testWithNoBackend(self):
+        """ A backend service has no backend
+
+           Expectation: the backend service itself will be migrated
+
+        """
         ### create test resources
         backend_service_name = 'end-to-end-test-backend-service'
         backend_service_selfLink = \
@@ -115,6 +125,11 @@ class TestInternalSelfManagedBackendServiceMigration(unittest.TestCase):
             new_backend_service_configs))
 
     def testInUseByForwardingRule(self):
+        """ The backend service is serving a forwarding rule
+
+        Expectation: still can migrate
+
+        """
         ### create test resources
         forwarding_rule_name = 'end-to-end-test-forwarding-rule'
         group_name_1 = 'end-to-end-test-managed-instance-group-1'

@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" RegionalForwardingRule: it describes a regional forwarding rule and has
-some google API interface functions.
+""" Describe a regional forwarding rule.
 """
+
 import warnings
 
 from googleapiclient.http import HttpError
@@ -33,7 +33,7 @@ class RegionalForwardingRule(ForwardingRule):
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether to preserve the IPs of
-                the instances serving the backend service
+                the instances serving the forwarding rule
             region: region of the forwarding rule
         """
         super(RegionalForwardingRule, self).__init__(compute, project,
@@ -84,7 +84,7 @@ class RegionalForwardingRule(ForwardingRule):
         return delete_forwarding_rule_operation
 
     def insert_forwarding_rule(self, forwarding_rule_config):
-        """ Insert the forwarding rule
+        """ create the forwarding rule
 
              Returns: a deserialized python object of the response
 

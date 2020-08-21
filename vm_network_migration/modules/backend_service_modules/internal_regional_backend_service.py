@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" InternalBackendService class: internal backend service, which is used by
+""" InternalBackendService class: INTERNAL backend service, which is used by
 TCP/UDP internal load balancer. It is always regional.
 
 """
@@ -32,7 +32,7 @@ class InternalBackendService(RegionalBackendService):
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether to preserve the external IP
-            region: region of the load balancer
+            region: region of the backend service
         """
         super(InternalBackendService, self).__init__(compute, project,
                                                      backend_service_name,

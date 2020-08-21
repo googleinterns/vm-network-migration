@@ -14,14 +14,15 @@
 
 import unittest
 import warnings
+
 import google.auth
+from googleapiclient import discovery
+from vm_network_migration.errors import *
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration_end_to_end_tests.build_test_resource import TestResourceCreator
 from vm_network_migration_end_to_end_tests.check_result import *
 from vm_network_migration_end_to_end_tests.google_api_interface import GoogleApiInterface
-from googleapiclient import discovery
 from vm_network_migration_end_to_end_tests.utils import *
-from vm_network_migration.errors import *
-from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 
 
 class TestInstanceMigration(unittest.TestCase):
@@ -36,6 +37,11 @@ class TestInstanceMigration(unittest.TestCase):
         google_api_interface)
 
     def testInvalidNetworkInfo(self):
+        """ Invalid target network information
+
+        Expectation: http error. The migration will not start.
+
+        """
         ### create test resources
         instance_name = "end-to-end-test-instance-1"
         instance_selfLink = \
@@ -61,14 +67,54 @@ class TestInstanceMigration(unittest.TestCase):
         self.assertEqual(original_config, new_config)
         print('Pass the current test')
 
+    def testAutomodeNetwork(self):
+        """ Target network is an auto-mode subnet
+        Without providing the subnetwork name, the migration will still success
+
+        """
+        ### create test resources
+        instance_name = "end-to-end-test-instance-1"
+        instance_selfLink = \
+            self.test_resource_creator.create_instance_using_template(
+                instance_name,
+                self.test_resource_creator.legacy_instance_template_selfLink)[
+                'targetLink']
+        original_config = self.google_api_interface.get_instance_configs(
+            instance_name)
+        auto_subnetwork_name = 'end-to-end-test-auto-subnetwork'
+        network_selfLink = self.google_api_interface.create_auto_subnetwork(auto_subnetwork_name)['targetLink']
+
+        ### start migration
+        selfLink_executor = SelfLinkExecutor(self.compute, instance_selfLink,
+                                             auto_subnetwork_name,
+                                             None,
+                                             True)
+
+        migration_handler = selfLink_executor.build_migration_handler()
+        migration_handler.network_migration()
+
+        ### check result
+        new_config = self.google_api_interface.get_instance_configs(
+            instance_name)
+        self.assertTrue(
+            resource_config_is_unchanged_except_for_network(new_config,
+                                                            original_config))
+        self.assertTrue(
+            compare_instance_external_ip(new_config, original_config))
+        # network changed
+        self.assertTrue(check_instance_network(new_config,
+                                               network_selfLink,
+                                               ))
+        print('Pass the current test')
+
     def testIpPreservation(self):
         # create test resources
         instance_name = "end-to-end-test-instance-1"
         instance_selfLink = \
-        self.test_resource_creator.create_instance_using_template(
-            instance_name,
-            self.test_resource_creator.legacy_instance_template_selfLink)[
-            'targetLink']
+            self.test_resource_creator.create_instance_using_template(
+                instance_name,
+                self.test_resource_creator.legacy_instance_template_selfLink)[
+                'targetLink']
         original_config = self.google_api_interface.get_instance_configs(
             instance_name)
         # start migration
@@ -96,10 +142,10 @@ class TestInstanceMigration(unittest.TestCase):
         # create test resources
         instance_name = "end-to-end-test-instance-1"
         instance_selfLink = \
-        self.test_resource_creator.create_instance_using_template(
-            instance_name,
-            self.test_resource_creator.legacy_instance_template_selfLink)[
-            'targetLink']
+            self.test_resource_creator.create_instance_using_template(
+                instance_name,
+                self.test_resource_creator.legacy_instance_template_selfLink)[
+                'targetLink']
         original_config = self.google_api_interface.get_instance_configs(
             instance_name)
         # start migration
@@ -128,10 +174,10 @@ class TestInstanceMigration(unittest.TestCase):
         # create test resources
         instance_name = "end-to-end-test-instance-1"
         instance_selfLink = \
-        self.test_resource_creator.create_instance_using_template(
-            instance_name,
-            self.test_resource_creator.legacy_instance_template_selfLink)[
-            'targetLink']
+            self.test_resource_creator.create_instance_using_template(
+                instance_name,
+                self.test_resource_creator.legacy_instance_template_selfLink)[
+                'targetLink']
         self.test_resource_creator.add_additional_disk_to_instance(
             instance_name, 'second-disk',
             'sample_disk.json')
@@ -158,13 +204,18 @@ class TestInstanceMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testMigrateAnInstanceInAnInstanceGroup(self):
+        """ The instance is serving an instance group
+
+        Expectation: the migration will not start
+
+        """
         ### create test resources
         instance_name_1 = 'end-to-end-test-instance-1'
         instance_selfLink_1 = \
-        self.test_resource_creator.create_instance_using_template(
-            instance_name_1,
-            self.test_resource_creator.legacy_instance_template_selfLink)[
-            'targetLink']
+            self.test_resource_creator.create_instance_using_template(
+                instance_name_1,
+                self.test_resource_creator.legacy_instance_template_selfLink)[
+                'targetLink']
         original_config = self.google_api_interface.get_instance_configs(
             instance_name_1)
         unmanaged_instance_group_name = 'end-to-end-test-unmanaged-instance-group-1'
@@ -189,17 +240,18 @@ class TestInstanceMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testAsBackendOfTargetPool(self):
-        """ If an instance is serving a target pool, the instance migration will
-        still finish. But the instance will be detached from the target pool.
+        """ An instance is serving a target pool.
+        Expectation: the instance migration will still finish.
+        But the instance will be detached from the target pool.
         So the target pool will be affected. This is not a recommended use case.
         """
         ### create test resources
         instance_name_1 = 'end-to-end-test-instance-1'
         instance_selfLink_1 = \
-        self.test_resource_creator.create_instance_using_template(
-            instance_name_1,
-            self.test_resource_creator.legacy_instance_template_selfLink)[
-            'targetLink']
+            self.test_resource_creator.create_instance_using_template(
+                instance_name_1,
+                self.test_resource_creator.legacy_instance_template_selfLink)[
+                'targetLink']
         original_instance_config = self.google_api_interface.get_instance_configs(
             instance_name_1)
         target_pool_name = 'end-to-end-test-target-pool'

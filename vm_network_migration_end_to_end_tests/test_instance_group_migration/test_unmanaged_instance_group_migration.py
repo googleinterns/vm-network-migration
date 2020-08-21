@@ -76,7 +76,7 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
                                  self.test_resource_creator.network_selfLink))
         self.assertTrue(
             check_selfLink_equal(new_config['subnetwork'],
-                                 self.test_resource_creator.network_selfLink))
+                                 self.test_resource_creator.subnetwork_selfLink))
         print('Pass the current test')
 
     def testWithNoInstanceInTheGroup(self):
@@ -112,9 +112,10 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
 
     def testAsBackendOfTargetPool(self):
         """ The unmanaged instance group serves a target pool, which means the
-        instances in this instance group serve the target pool. The migration can
-        still succeed. But the instances might be detached from the target pool
-        after the migration.
+        instances in this instance group serve the target pool.
+
+        Expectation: The migration can still succeed.
+        But the instances might be detached from the target pool after the migration.
 
         """
         ### create test resources
@@ -165,9 +166,9 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
         print('Pass the current test')
 
     def testAsBackendOfBackendService(self):
-        """ The migration will fail and rollback to the legacy network.
-        The user should migrate the backend service directly, or detach the instance
-        group from the backend service.
+        """ The instance group is serving a backend service
+
+        Expectation: The migration will fail and rollback to the legacy network.
 
         """
         ### create test resources

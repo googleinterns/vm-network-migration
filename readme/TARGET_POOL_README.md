@@ -9,9 +9,10 @@
 ### 1. A target pool only has single instances and managed instance groups as backends:
      python3 target_pool_migration.py  --project=my-project \
         --region=us-central1-a  --target_pool_name=my-target-pool  \
-        --network=my-network  --subnetwork=my-network-subnet1 \
-     (Note: you can add --preserve-instance-external-ip=True if
-      you want to preserve the single instances' IP) 
+        --network=my-network  --subnetwork=my-network-subnet1 
+        
+     Note: 
+     1. you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP.
 ## Special cases
 ### 1. A target pool has one or more instances from an unmanaged instance group as backends:
     Not supported. 
@@ -20,3 +21,11 @@
 ### 2. A target pool shares one or more backends with another target pool or backend service:
     Not supported.
     The tool will rollback.
+### 3. A target pool is serving a forwarding rule:
+    Supported.
+    After the migration, this target pool will still serve its original forwarding rule.
+### 4. A target pool has a backup pool:
+    Supported with limitation.
+    The backup pool will not be migrated. 
+    The user can migrate the backup pool seperately using the same API call.
+    
