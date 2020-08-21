@@ -20,21 +20,16 @@ Compute Engine resources.
         (1)INTERNAL 
         (2)EXTERNAL (with IP preservation)
         (3)INTERNA-SELF-MANAGED 
-
-
-## Requirements:
-1. Support migration from a legacy network to a subnetwork, or from one VPC network to another VPC network. Migration from any network to a legacy network is not allowed.
-2. After the migration, only the network configuration will change, and all other configurations including project, zone and region will remain unchanged.
-3. For a VM, which is not in a managed instance group, after the migration, its external IP can remain unchanged.
-4. Rollback mechanism is needed to protect the failure
-5. The users need to take care of the firewalls by themselves. 
-
+        
 ## Limitations
 ### General Limitations:
-1. The users should not change any GCE resources during the migration. Otherwise, there might be some errors, such as resources can not be found or out of quota issues. 
-2. Downtime is required.
-3. The rollback can also fail due to network issue or quota limitation issue. In this scenario, the user can refer to the ‘backup.log’ file to recreate the lost resources by themselves. 
-4. If the rollback happens, the configuration of the target resource may change, including timestamp, id and fingerprint.
+1. Support migration from a legacy network to a subnetwork, or from one VPC network to another VPC network. Migration from any network to a legacy network is not allowed.
+2. After the migration, only the network configuration will change, and all other configurations including project, zone and region will remain unchanged.
+3. The users should not manually change any GCE resources during the migration. Otherwise, there might be some errors, such as resources can not be found or out of quota issues. 
+4. Downtime is required in general.
+5. If there is an error during the migration, the tool will rollback the target resource to its original legacy network. However, the rollback can also fail due to network issue or quota limitation issue. In this scenario, the user can refer to the ‘backup.log’ file to recreate the lost resources by themselves. 
+6. The user needs to take care of the firewalls on the target VPC subnet by themselves. 
+
 ### Specific Limitations:
 #### [VM migration.](readme/VM_INSTANCE_README.md)
 #### [Instance group migration.](readme/INSTANCE_GROUP_README.md)
@@ -58,27 +53,27 @@ Compute Engine resources.
     cd vm_network_migration
     pip3 install .
 ## Run
-#### Migrate by selfLink.
-A GCE resources can be referred by its selfLink.
-A legal selfLink's format can be 'https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance'
-or 'projects/project/zones/zone/instances/instance'
+#### Migrate by selfLink (It is the easiest way to use the tool.)
+    A GCE resources can be referred by its selfLink.
+    A legal selfLink's format can be 'https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance'
+    or 'projects/project/zones/zone/instances/instance'
 
      python3 migrate_by_selfLink.py --selfLink=selfLink-of-target-resource  \
-     --region=us-central1 --network=my-network  --subnetwork=my-network-subnet \
+     --network=my-network  --subnetwork=my-network-subnet \
      --preserve_instance_external_ip=False     
-### If the user can not find the selfLink of the target resource:
+### If the user can not find the selfLink of the target resource, try the following methods:
 #### Single VM network migration. [See more examples.](readme/VM_INSTANCE_README.md)
      python3 instance_migration.py  --project_id=my-project \
-     --zone=us-central1-a  --original_instance=my-original-instance  \
+     --zone=us-central1-a  --instance_name=my-original-instance  \
      --network=my-network  --subnetwork=my-network-subnet1 \
-     --preserve_external_ip=False 
+     --preserve_instance_external_ip=False 
      
 #### Instance group network migration. [See more examples.](readme/INSTANCE_GROUP_README.md)
      python3  instance_group_migration.py  --project_id=my-project \
      --instance_group_name=my-original-instance-group  --region=us-central \
-     --zone=None --network=my-network  --subnetwork=my-network-subnet1 \
-     --preserve_external_ip=False
-     (Note: either --region or --zone must be specified.)
+     --network=my-network  --subnetwork=my-network-subnet1 \
+     --preserve_instance_external_ip=False
+     (Note: either --region or --zone must be specified depending on the type of instance group.)
   
 #### Target pool network migration. [See more examples.](readme/TARGET_POOL_README.md)
     python3 target_pool_migration.py  --project_id=my-project \
@@ -91,14 +86,19 @@ or 'projects/project/zones/zone/instances/instance'
     --backend_service_name=my-backend-service --region=us-central1 \
     --network=my-network  --subnetwork=my-network-subnet \
     --preserve_instance_external_ip=False
+    (Note: --region tag is only for a regional backend service. For a global
+    backend service, --region shouldn't be specified.)
     
 #### Forwarding rule migration. [See more examples.](readme/FORWARDING_RULE_README.md)
     python3 forwarding_rule_migration.py  --project_id=my-project \
     --forwarding_rule_name=my-forwarding-rule  --region=us-central1 \
     --network=my-network  --subnetwork=my-network-subnet1 \
     --preserve_instance_external_ip=False
+    (Note: --region tag is only for a regional forwarding rule. For a global
+    forwarding rule, --region shouldn't be specified.)
+    
 ## Run end-to-end tests(only for developer):
-### Before running:
+#### Before running:
     1. A GCP project_id needs to provide.
     2. Run in command line: 
        export PROJECT_ID='some test project'

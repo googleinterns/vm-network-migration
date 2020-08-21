@@ -7,17 +7,14 @@
 ## Examples:
 ### 1. Migrate an instance without preserving the external IP address:
      python3 instance_migration.py  --project_id=my-project \
-        --zone=us-central1-a  --original_instance=my-original-instance  \
+        --zone=us-central1-a  --instance_name=my-original-instance  \
         --network=my-network  --subnetwork=my-network-subnet1 \
-        --preserve_external_ip=False 
+        --preserve_instance_external_ip=False 
 ### 2. Migrate an instance with preserving the external IP address:
-     (Note: No matter whether its external IP address is a static one or a ephemeral one, 
-           it will be reserved as a static IP after the migration. 
-           The preserving action is not reversible.)
      python3 instance_migration.py  --project_id=my-project \
-         --zone=us-central1-a  --original_instance=my-original-instance  \
+         --zone=us-central1-a  --instance_name=my-original-instance  \
          --network=my-network  --subnetwork=my-network-subnet1 \
-         --preserve_external_ip=True
+         --preserve_instance_external_ip=True 
 ## Special cases:
 ### 1. Migrate an instance which is a member of an instance group:
     Not supported. 

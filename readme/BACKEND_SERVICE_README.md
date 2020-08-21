@@ -13,15 +13,19 @@
         --region=us-central1-a  --backend_service_name=my-backend-service  \
         --network=my-network  --subnetwork=my-network-subnet1 \
 
-     (Note: you can add --preserve-instance-external-ip=True 
-     if you want to preserve the single instances' IP) 
+     Note: 
+     1. you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP.
+     2. --region tag is only for a regional backend service. 
+        For a global backend service, --region shouldn't be specified. 
 ### 2. A global backend service (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
     python3 backend_service_migration.py  --project_id=my-project \
         --backend_service_name=my-backend-service  \
         --network=my-network  --subnetwork=my-network-subnet1 \
     
-    (Note: you can add --preserve-instance-external-ip=True 
-    if you want to preserve the single instances' IP) 
+     Note: 
+     1. you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP.
+     2. --region tag is only for a regional backend service. 
+        For a global backend service, --region shouldn't be specified. 
 ## Special Cases
 ### 1. A backend service is serving an EXTERNAL or INTERNAL-SELF-MANAGED forwarding rule:
     Supported, but it is not recommended. 
