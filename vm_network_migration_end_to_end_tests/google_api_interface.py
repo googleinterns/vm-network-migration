@@ -375,7 +375,7 @@ class GoogleApiInterface:
             project=self.project).execute()
 
         for instance_template in operation['items']:
-            if instance_template['name'].startwith(suffix):
+            if instance_template['name'].startswith(suffix):
                 instance_template_name_list.append(instance_template['name'])
 
         return instance_template_name_list
@@ -534,8 +534,7 @@ class GoogleApiInterface:
 
         for firewall in response['items']:
             # delete it
-
-            if network_name in firewall['network']:
+            if firewall['name'].startswith(network_name):
                 delete_operation = self.compute.firewalls().delete(
                     project=self.project, firewall=firewall['name']).execute()
                 self.operation.wait_for_global_operation(
@@ -978,7 +977,6 @@ class GoogleApiInterface:
         print('Cleaning all test resources')
         print('Deleting forwarding rules')
         for forwarding_rule in self.regional_forwarding_rules:
-
             try:
                 self.delete_regional_forwarding_rule(forwarding_rule)
             except:

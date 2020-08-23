@@ -51,7 +51,7 @@ class TestResourceCreator:
                 self.legacy_template_name)['selfLink']
         except:
             self.legacy_instance_template_selfLink = \
-                self.google_api_interface.create_instance_template(
+                self.create_instance_template(
                     'sample_instance_template.json',
                     'end-to-end-test-legacy-template')[
                     'targetLink']
