@@ -911,7 +911,7 @@ class GoogleApiInterface:
                                                    subnetwork=subnetwork_name).execute()
         return operation
 
-    def create_non_auto_network(self, network_name, subnetwork_name):
+    def create_non_auto_network(self, network_name):
         network_body = {
             "name": network_name,
             "autoCreateSubnetworks": False,
@@ -919,31 +919,30 @@ class GoogleApiInterface:
                 "routingMode": "REGIONAL"
             },
         }
-        try:
-            operation1 = self.compute.networks().insert(project=self.project,
-                                                        body=network_body).execute()
-            self.operation.wait_for_global_operation(operation1['name'])
-            self.networks.append(network_name)
-            network_selfLink = operation1['targetLink']
-        except:
-            network_selfLink = self.get_network(network_name)['selfLink']
 
+        operation = self.compute.networks().insert(project=self.project,
+                                                   body=network_body).execute()
+        self.operation.wait_for_global_operation(operation['name'])
+        self.networks.append(network_name)
+        return operation['targetLink']
+
+    def create_subnetwork(self, subnetwork_name, network_selfLink,
+                          subnetwork_ipCidrRange='10.120.0.0/24'):
         subnetwork_body = {
             "name": subnetwork_name,
             "network": network_selfLink,
-            "ipCidrRange": "10.120.0.0/24",
+            "ipCidrRange": subnetwork_ipCidrRange,
             "privateIpGoogleAccess": False,
             "purpose": "PRIVATE"
         }
 
-        operation2 = self.compute.subnetworks().insert(project=self.project,
-                                                       region=self.region,
-                                                       body=subnetwork_body).execute()
+        operation = self.compute.subnetworks().insert(project=self.project,
+                                                      region=self.region,
+                                                      body=subnetwork_body).execute()
 
-        self.operation.wait_for_region_operation(operation2['name'])
+        self.operation.wait_for_region_operation(operation['name'])
         self.subnetworks.append(subnetwork_name)
-        subnetwork_selfLink = operation2['targetLink']
-        return [network_selfLink, subnetwork_selfLink]
+        return operation['targetLink']
 
     def get_project_selfLink(self):
         return self.compute.projects().get(project=self.project).execute()[
@@ -952,6 +951,8 @@ class GoogleApiInterface:
     def delete_reserved_ips(self, ipv4_address_list):
         address_list = self.compute.addresses().list(project=self.project,
                                                      region=self.region).execute()
+        if 'items' not in address_list:
+            return
         for address in address_list['items']:
             if address['address'] in ipv4_address_list and address[
                 'status'] == 'RESERVED':
