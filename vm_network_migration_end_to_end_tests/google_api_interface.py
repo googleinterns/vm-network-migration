@@ -53,9 +53,11 @@ class GoogleApiInterface:
         self.networks = []
         self.subnetworks = []
         self.ssl_certificates = []
+        self.possible_reserved_ips = []
 
     def get_list_of_zones_from_regions(self):
-        return self.compute.regions().get(project=self.project, region=self.region).execute()['zones']
+        return self.compute.regions().get(project=self.project,
+                                          region=self.region).execute()['zones']
 
     def create_unmanaged_instance_group_with_instances(self, configs,
                                                        instances):
@@ -151,10 +153,12 @@ class GoogleApiInterface:
         return delete_instance_group_operation
 
     def create_multi_zone_managed_instance_group(self, configs):
-        configs['distributionPolicy'] = {"zones":[]}
+        configs['distributionPolicy'] = {
+            "zones": []}
         all_valid_zones = self.get_list_of_zones_from_regions()
         for zone in all_valid_zones:
-            configs['distributionPolicy']['zones'].append({'zone': zone})
+            configs['distributionPolicy']['zones'].append({
+                'zone': zone})
         create_instance_group_operation = self.compute.regionInstanceGroupManagers().insert(
             project=self.project,
             region=self.region,
@@ -216,6 +220,8 @@ class GoogleApiInterface:
         self.operation.wait_for_zone_operation(
             create_instance_operation['name'])
         self.instances.append(instance_configs['name'])
+        external_ip = self.get_instance_external_ip(instance_configs['name'])
+        self.possible_reserved_ips.append(external_ip)
         return create_instance_operation
 
     def get_instance_selfLink(self, instance_name):
@@ -362,6 +368,17 @@ class GoogleApiInterface:
             instanceTemplate=instance_template_name).execute()
         self.operation.wait_for_global_operation(
             delete_instance_template_operation['name'])
+
+    def list_instance_template_names_begin_with_suffix(self, suffix):
+        instance_template_name_list = []
+        operation = self.compute.instanceTemplates().list(
+            project=self.project).execute()
+
+        for instance_template in operation['items']:
+            if instance_template['name'].startwith(suffix):
+                instance_template_name_list.append(instance_template['name'])
+
+        return instance_template_name_list
 
     def retrieve_instance_template_name(self, instance_zone_configs):
         instance_template_link = instance_zone_configs['instanceTemplate']
@@ -933,7 +950,31 @@ class GoogleApiInterface:
         return self.compute.projects().get(project=self.project).execute()[
             'selfLink']
 
+    def delete_reserved_ips(self, ipv4_address_list):
+        address_list = self.compute.addresses().list(project=self.project,
+                                                     region=self.region).execute()
+        for address in address_list['items']:
+            if address['address'] in ipv4_address_list and address[
+                'status'] == 'RESERVED':
+                try:
+                    operation = self.compute.addresses().delete(
+                        project=self.project, region=self.region,
+                        address=address['name'])
+                    self.operation.wait_for_region_operation(operation['name'])
+                except Exception as e:
+                    print(str(e))
+                    continue
+
     def clean_all_resources(self):
+        # get all the instance templates created during the test
+        instance_templates_created_during_migration = []
+        for instance_template_name in self.instance_templates:
+            instance_templates_created_during_migration.extend(
+                self.list_instance_template_names_begin_with_suffix(
+                    instance_template_name[:20]))
+        self.instance_templates.extend(
+            instance_templates_created_during_migration)
+        self.instance_templates = list(set(self.instance_templates))
         print('Cleaning all test resources')
         print('Deleting forwarding rules')
         for forwarding_rule in self.regional_forwarding_rules:
@@ -959,7 +1000,7 @@ class GoogleApiInterface:
             try:
                 self.delete_http_proxy(proxy)
             except Exception as e:
-                print('Delete target proxy failed: ', e)
+                print('Delete target proxy failed: ', str(e))
                 continue
         for proxy in self.target_https_proxies:
             try:
@@ -986,38 +1027,27 @@ class GoogleApiInterface:
 
         print('Deleting url mappings:', self.urlmappings)
         for urlmapping in self.urlmappings:
-            print(urlmapping)
             try:
                 self.delete_urlmapping(urlmapping)
             except Exception as e:
-                print('Err:', e)
                 continue
         print('Deleting external backend services')
         for backend_service in self.external_backend_service:
             try:
-                print('deleting:', backend_service)
-
                 self.delete_external_backend_service(backend_service)
             except Exception as e:
-                print(e)
                 continue
         print('Deleting regional backend services')
         for backend_service in self.regional_backend_services:
             try:
-                print('deleting:', backend_service)
-
                 self.delete_regional_backend_service(backend_service)
             except Exception as e:
-                print(e)
                 continue
         print('Deleting global backend services')
         for backend_service in self.global_backend_services:
             try:
-                print('deleting:', backend_service)
-
                 self.delete_global_backend_service(backend_service)
             except Exception as e:
-                print(e)
                 continue
         print('Deleting target instances')
         for target_instance in self.target_instances:
@@ -1084,6 +1114,9 @@ class GoogleApiInterface:
                 self.delete_address(address_name)
             except:
                 continue
+
+        self.delete_reserved_ips(self.possible_reserved_ips)
+
         print('Deleting health checks')
         for healthcheck in self.healthcheck:
             try:
