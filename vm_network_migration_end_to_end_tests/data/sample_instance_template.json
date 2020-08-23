@@ -24,37 +24,10 @@
         "deviceName": "test-legacy-resource-migration",
         "boot": true,
         "initializeParams": {
-          "sourceImage": "projects/eip-images/global/images/debian-10-drawfork-v20200207",
-          "diskSizeGb": "10",
-          "diskType": "pd-standard"
+          "sourceImage": "projects/debian-cloud/global/images/family/debian-9"
         },
         "autoDelete": true
       }
-    ],
-    "serviceAccounts": [
-      {
-        "scopes": [
-          "https://www.googleapis.com/auth/devstorage.read_only",
-          "https://www.googleapis.com/auth/logging.write",
-          "https://www.googleapis.com/auth/monitoring.write",
-          "https://www.googleapis.com/auth/servicecontrol",
-          "https://www.googleapis.com/auth/service.management.readonly",
-          "https://www.googleapis.com/auth/trace.append"
-        ]
-      }
-    ],
-    "scheduling": {
-      "onHostMaintenance": "MIGRATE",
-      "automaticRestart": true,
-      "preemptible": false
-    },
-    "reservationAffinity": {
-      "consumeReservationType": "ANY_RESERVATION"
-    },
-    "shieldedInstanceConfig": {
-      "enableSecureBoot": false,
-      "enableVtpm": false,
-      "enableIntegrityMonitoring": false
-    }
+    ]
   }
 }
