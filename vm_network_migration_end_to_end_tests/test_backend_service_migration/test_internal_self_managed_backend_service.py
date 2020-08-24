@@ -14,25 +14,28 @@
 
 import unittest
 import warnings
+
 import google.auth
+from googleapiclient import discovery
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration_end_to_end_tests.build_test_resource import TestResourceCreator
 from vm_network_migration_end_to_end_tests.check_result import *
 from vm_network_migration_end_to_end_tests.google_api_interface import GoogleApiInterface
-from googleapiclient import discovery
 from vm_network_migration_end_to_end_tests.utils import *
-from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 
 
 class TestInternalSelfManagedBackendServiceMigration(unittest.TestCase):
-    project = os.environ["PROJECT_ID"]
-    credentials, default_project = google.auth.default()
-    compute = discovery.build('compute', 'v1', credentials=credentials)
-    google_api_interface = GoogleApiInterface(compute,
-                                              project,
-                                              'us-central1',
-                                              'us-central1-a')
-    test_resource_creator = TestResourceCreator(
-        google_api_interface)
+    def setUp(self):
+        print('Initialize test environment.')
+        project = os.environ["PROJECT_ID"]
+        credentials, default_project = google.auth.default()
+        self.compute = discovery.build('compute', 'v1', credentials=credentials)
+        self.google_api_interface = GoogleApiInterface(self.compute,
+                                                       project,
+                                                       'us-central1',
+                                                       'us-central1-a')
+        self.test_resource_creator = TestResourceCreator(
+            self.google_api_interface)
 
     def testWithBackends(self):
         """ A backend service has backends
@@ -56,9 +59,9 @@ class TestInternalSelfManagedBackendServiceMigration(unittest.TestCase):
             group_name_1)
         original_backend_selfLinks = [instance_group_1_selfLink]
         backend_service_selfLink = \
-        self.test_resource_creator.create_global_backend_service(
-            'sample_internal_self_managed_backend_service.json',
-            backend_service_name, original_backend_selfLinks)['targetLink']
+            self.test_resource_creator.create_global_backend_service(
+                'sample_internal_self_managed_backend_service.json',
+                backend_service_name, original_backend_selfLinks)['targetLink']
         original_backend_service_configs = self.google_api_interface.get_global_backend_service_configs(
             backend_service_name)
         ### start migration
@@ -101,9 +104,9 @@ class TestInternalSelfManagedBackendServiceMigration(unittest.TestCase):
         ### create test resources
         backend_service_name = 'end-to-end-test-backend-service'
         backend_service_selfLink = \
-        self.test_resource_creator.create_global_backend_service(
-            'sample_internal_self_managed_backend_service.json',
-            backend_service_name, [])['targetLink']
+            self.test_resource_creator.create_global_backend_service(
+                'sample_internal_self_managed_backend_service.json',
+                backend_service_name, [])['targetLink']
         original_backend_service_configs = self.google_api_interface.get_global_backend_service_configs(
             backend_service_name)
         ### start migration
@@ -146,9 +149,9 @@ class TestInternalSelfManagedBackendServiceMigration(unittest.TestCase):
         backend_service_name = 'end-to-end-test-backend-service'
         original_backend_selfLinks = [instance_group_1_selfLink]
         backend_service_selfLink = \
-        self.test_resource_creator.create_global_backend_service(
-            'sample_internal_self_managed_backend_service.json',
-            backend_service_name, original_backend_selfLinks)['targetLink']
+            self.test_resource_creator.create_global_backend_service(
+                'sample_internal_self_managed_backend_service.json',
+                backend_service_name, original_backend_selfLinks)['targetLink']
 
         urlmap_selfLink = \
             self.test_resource_creator.create_urlmapping(backend_service_name,

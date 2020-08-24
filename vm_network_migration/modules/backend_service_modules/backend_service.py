@@ -80,7 +80,7 @@ class BackendService(object):
         """
         return True
 
-    def wait_for_backend_become_healthy(self, backend_selfLink, TIME_OUT = 600):
+    def wait_for_backend_become_healthy(self, backend_selfLink, TIME_OUT = 300):
         """ Wait for backend being healthy
 
         Args:

@@ -106,7 +106,13 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
 
         except Exception as e:
             warnings.warn(str(e), Warning)
-            self.rollback()
+            print('Rolling back to the original resource.')
+            try:
+                self.rollback()
+            except Exception as e:
+                warnings.warn(str(e), Warning)
+                raise RollbackError(
+                    'Rollback failed. You may lose your original resource. Please refer \'backup.log\' file.')
             raise MigrationFailed('Rollback to the original instance %s.' % (
                 self.original_instance_name))
 

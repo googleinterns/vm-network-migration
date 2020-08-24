@@ -139,7 +139,12 @@ class TargetPoolMigration(ComputeEngineResourceMigration):
             print(
                 'The target pool migration was failed. '
                 'Rolling back to its original network.')
-            self.rollback()
+            try:
+                self.rollback()
+            except Exception as e:
+                warnings.warn(str(e), Warning)
+                raise RollbackError(
+                    'Rollback failed. You may lose your original resource. Please refer \'backup.log\' file.')
             raise MigrationFailed('Rollback finished.')
 
     def rollback(self):

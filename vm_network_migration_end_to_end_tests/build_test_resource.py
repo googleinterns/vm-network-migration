@@ -15,6 +15,8 @@
 
 """
 from vm_network_migration_end_to_end_tests.utils import *
+
+
 class TestResourceCreator:
     def __init__(self, google_api_interface):
         self.google_api_interface = google_api_interface
@@ -25,8 +27,7 @@ class TestResourceCreator:
             self.legacy_network_selfLink = \
                 self.google_api_interface.get_network(self.legacy_network_name)[
                     'selfLink']
-        except Exception as e:
-            print(e)
+        except:
             self.legacy_network_selfLink = \
                 self.google_api_interface.create_legacy_network(
                     'end-to-end-test-legacy-network')['targetLink']
@@ -34,24 +35,26 @@ class TestResourceCreator:
             self.network_selfLink = \
                 self.google_api_interface.get_network(self.network_name)[
                     'selfLink']
+        except:
+            self.network_selfLink = self.google_api_interface.create_non_auto_network(
+                self.network_name)
+        try:
             self.subnetwork_selfLink = \
                 self.google_api_interface.get_subnetwork(self.subnetwork_name)[
                     'selfLink']
         except:
-
-            [self.network_selfLink,
-             self.subnetwork_selfLink] = self.google_api_interface.create_non_auto_network(
-                self.network_name,
-                self.subnetwork_name)
+            self.subnetwork_selfLink = self.google_api_interface.create_subnetwork_using_random_ip_range(
+                self.subnetwork_name, self.network_selfLink)['targetLink']
+            print('Created subnetwork: ', self.subnetwork_selfLink)
 
         self.legacy_template_name = 'end-to-end-test-legacy-template'
         try:
             self.legacy_instance_template_selfLink = \
-            self.google_api_interface.get_instance_template_body(
-                self.legacy_template_name)['selfLink']
+                self.google_api_interface.get_instance_template_body(
+                    self.legacy_template_name)['selfLink']
         except:
             self.legacy_instance_template_selfLink = \
-                self.google_api_interface.create_instance_template(
+                self.create_instance_template(
                     'sample_instance_template.json',
                     'end-to-end-test-legacy-template')[
                     'targetLink']
@@ -101,7 +104,8 @@ class TestResourceCreator:
         disk_config = read_json_file(
             disk_file)
         disk_config['name'] = disk_name
-        disk_selfLink = self.google_api_interface.create_disk(disk_config)['targetLink']
+        disk_selfLink = self.google_api_interface.create_disk(disk_config)[
+            'targetLink']
         self.google_api_interface.attach_disk(instance_name, disk_selfLink)
 
     def create_instance_using_template(self, instance_name, template_selfLink):

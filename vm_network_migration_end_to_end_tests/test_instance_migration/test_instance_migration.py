@@ -26,15 +26,17 @@ from vm_network_migration_end_to_end_tests.utils import *
 
 
 class TestInstanceMigration(unittest.TestCase):
-    project = os.environ["PROJECT_ID"]
-    credentials, default_project = google.auth.default()
-    compute = discovery.build('compute', 'v1', credentials=credentials)
-    google_api_interface = GoogleApiInterface(compute,
-                                              project,
-                                              'us-central1',
-                                              'us-central1-a')
-    test_resource_creator = TestResourceCreator(
-        google_api_interface)
+    def setUp(self):
+        print('Initialize test environment.')
+        project = os.environ["PROJECT_ID"]
+        credentials, default_project = google.auth.default()
+        self.compute = discovery.build('compute', 'v1', credentials=credentials)
+        self.google_api_interface = GoogleApiInterface(self.compute,
+                                                  project,
+                                                  'us-central1',
+                                                  'us-central1-a')
+        self.test_resource_creator = TestResourceCreator(
+            self.google_api_interface)
 
     def testInvalidNetworkInfo(self):
         """ Invalid target network information
@@ -82,7 +84,10 @@ class TestInstanceMigration(unittest.TestCase):
         original_config = self.google_api_interface.get_instance_configs(
             instance_name)
         auto_subnetwork_name = 'end-to-end-test-auto-subnetwork'
-        network_selfLink = self.google_api_interface.create_auto_subnetwork(auto_subnetwork_name)['targetLink']
+        try:
+            network_selfLink = self.google_api_interface.get_network(auto_subnetwork_name)['selfLink']
+        except:
+            network_selfLink = self.google_api_interface.create_auto_subnetwork(auto_subnetwork_name)['targetLink']
 
         ### start migration
         selfLink_executor = SelfLinkExecutor(self.compute, instance_selfLink,
