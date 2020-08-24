@@ -373,7 +373,8 @@ class GoogleApiInterface:
         instance_template_name_list = []
         operation = self.compute.instanceTemplates().list(
             project=self.project).execute()
-
+        if 'items' not in operation:
+            return instance_template_name_list
         for instance_template in operation['items']:
             if instance_template['name'].startswith(suffix):
                 instance_template_name_list.append(instance_template['name'])
@@ -517,7 +518,8 @@ class GoogleApiInterface:
         request = self.compute.firewalls().list(project=self.project)
 
         response = request.execute()
-
+        if 'items' not in response:
+            return
         for firewall in response['items']:
             # delete it
 
@@ -531,7 +533,8 @@ class GoogleApiInterface:
         request = self.compute.firewalls().list(project=self.project)
 
         response = request.execute()
-
+        if 'items' not in response:
+            return
         for firewall in response['items']:
             # delete it
             if firewall['name'].startswith(network_name):
