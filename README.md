@@ -9,7 +9,7 @@ Compute Engine resources.
 ## Supported GCE Resources:
     1. VM instance (with IP preservation)
     2. Instance group
-        (1)Unmanaged  (with IP preservation)
+        (1)Unmanaged
         (2)Managed 
     3. Target pool
     4. Backend service
@@ -18,8 +18,11 @@ Compute Engine resources.
         (3)INTERNAL-SELF-MANAGED
     5. Forwarding rule 
         (1)INTERNAL 
-        (2)EXTERNAL (with IP preservation)
+        (2)EXTERNAL (without change external IP)
         (3)INTERNA-SELF-MANAGED 
+    6. Load Balancer
+        A load balancer is not a GCE resource, but a combination of different GCE resources.
+        You can try to migrate a load balancer's forwarding rule so that the tool will migrate all the resources in this load balancer.
         
 ## Limitations
 ### General Limitations:
