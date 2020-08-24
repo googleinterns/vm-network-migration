@@ -111,7 +111,13 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
             self.forwarding_rule_migration_handler.network_migration()
         except Exception as e:
             warnings.warn(str(e), Warning)
-            self.rollback()
+            try:
+                self.rollback()
+            except Exception as e:
+                warnings.warn(str(e), Warning)
+                raise RollbackError(
+                    'Rollback failed. You may lose your original resource. Please refer \'backup.log\' file.')
+
             raise MigrationFailed('Rollback finished.')
 
     def rollback(self):

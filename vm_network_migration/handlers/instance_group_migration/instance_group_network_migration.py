@@ -111,7 +111,12 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             warn(str(e), Warning)
             print(
                 'The migration was failed. Rolling back to the original network.')
-            self.rollback()
+            try:
+                self.rollback()
+            except Exception as e:
+                warnings.warn(str(e), Warning)
+                raise RollbackError(
+                    'Rollback failed. You may lose your original resource. Please refer \'backup.log\' file.')
             raise MigrationFailed('Rollback finished.')
 
     def rollback(self):
