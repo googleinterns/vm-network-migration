@@ -23,12 +23,13 @@ Compute Engine resources.
         
 ## Limitations
 ### General Limitations:
-1. Support migration from a legacy network to a subnetwork, or from one VPC network to another VPC network. Migration from any network to a legacy network is not allowed.
-2. After the migration, only the network configuration will change, and all other configurations including project, zone and region will remain unchanged.
-3. The users should not manually change any GCE resources during the migration. Otherwise, there might be some errors, such as resources can not be found or out of quota issues. 
-4. Downtime is required in general.
-5. If there is an error during the migration, the tool will rollback the target resource to its original legacy network. However, the rollback can also fail due to network issue or quota limitation issue. In this scenario, the user can refer to the ‘backup.log’ file to recreate the lost resources by themselves. 
+1. The users should not manually change any GCE resources during the migration. Otherwise, there might be some errors, such as resources can not be found or out of quota issues. 
+2. Downtime is required in general.
+3. The rollback can also fail due to network issue or quota limitation issue. In this scenario, the user can refer to the ‘backup.log’ file to recreate the lost resources by themselves. 
+4. If the target subnet can not serve the target resource, the migration will not succeed. For example, the target subnet only exists in region A, but the target resource is in region B, then the migration will not succeed. 
+5. Cross-region resource migration is allowed, as long as the target subnet exists in all those regions. If the target subnet does not exist in all the regions of the target resources, the rollback will happen.
 6. The user needs to take care of the firewalls on the target VPC subnet by themselves. 
+
 
 ### Specific Limitations:
 #### [VM migration.](readme/VM_INSTANCE_README.md)

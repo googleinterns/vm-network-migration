@@ -292,7 +292,7 @@ class TestCrossRegionExternalBackendServiceMigration(unittest.TestCase):
         print('Pass the current test')
 
     def tearDown(self) -> None:
-        pass
+        self.doCleanups()
 
     def doCleanups(self) -> None:
         self.google_api_interface_region_1.clean_all_resources()

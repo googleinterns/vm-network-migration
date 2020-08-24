@@ -42,3 +42,9 @@ The tool minimizes or even eliminates the downtime for the backend service migra
 ### 4. A backend service has zonal NEGs or internet NEG as its backends
     Supported.
     Since the NEG doesn't have a network configuration, the tool will ignore those backends and migrate instance group backends.
+### 5. A backend service has backends from different regions:
+    Supported, as long as the target subnet exists in all those regions.
+    For example, an instance group A from region A and an instance group B from region B serve a backend service together. 
+    If the target subnet with a name 'a-target-subnet' exists in both region A and region B, then the migration will succeed.
+    Otherwise, the tool will rollback.
+      
