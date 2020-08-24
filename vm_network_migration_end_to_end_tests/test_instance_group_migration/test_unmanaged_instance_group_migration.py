@@ -14,26 +14,29 @@
 
 import unittest
 import warnings
+
 import google.auth
+from googleapiclient import discovery
+from vm_network_migration.errors import *
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration_end_to_end_tests.build_test_resource import TestResourceCreator
 from vm_network_migration_end_to_end_tests.check_result import *
 from vm_network_migration_end_to_end_tests.google_api_interface import GoogleApiInterface
-from googleapiclient import discovery
 from vm_network_migration_end_to_end_tests.utils import *
-from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
-from vm_network_migration.errors import *
 
 
 class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
-    project = os.environ["PROJECT_ID"]
-    credentials, default_project = google.auth.default()
-    compute = discovery.build('compute', 'v1', credentials=credentials)
-    google_api_interface = GoogleApiInterface(compute,
-                                              project,
-                                              'us-central1',
-                                              'us-central1-a')
-    test_resource_creator = TestResourceCreator(
-        google_api_interface)
+    def setUp(self):
+        print('Initialize test environment.')
+        project = os.environ["PROJECT_ID"]
+        credentials, default_project = google.auth.default()
+        self.compute = discovery.build('compute', 'v1', credentials=credentials)
+        self.google_api_interface = GoogleApiInterface(self.compute,
+                                                       project,
+                                                       'us-central1',
+                                                       'us-central1-a')
+        self.test_resource_creator = TestResourceCreator(
+            self.google_api_interface)
 
     def testWithMultipleInstancesInTheGroup(self):
         ### create test resources
@@ -46,7 +49,6 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
         self.test_resource_creator.create_instance_using_template(
             instance_name_2,
             self.test_resource_creator.legacy_instance_template_selfLink)
-
 
         unmanaged_instance_group_name = 'end-to-end-test-unmanaged-instance-group-1'
         original_instances_in_group = [instance_name_1, instance_name_2]
@@ -129,9 +131,9 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
         unmanaged_instance_group_name = 'end-to-end-test-unmanaged-instance-group-1'
         original_instances_in_group = [instance_name_1]
         unmanaged_instance_group_selfLink = \
-        self.test_resource_creator.create_unmanaged_instance_group(
-            unmanaged_instance_group_name,
-            original_instances_in_group)['targetLink']
+            self.test_resource_creator.create_unmanaged_instance_group(
+                unmanaged_instance_group_name,
+                original_instances_in_group)['targetLink']
         original_instance_group_config = self.google_api_interface.get_unmanaged_instance_group_configs(
             unmanaged_instance_group_name)
         target_pool_name = 'end-to-end-test-target-pool'
@@ -161,8 +163,9 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
             original_instance_group_config, new_instance_group_config))
 
         # network changed
-        self.assertTrue(check_instance_network(new_instance_config, self.test_resource_creator.network_selfLink,
-                               self.test_resource_creator.subnetwork_selfLink))
+        self.assertTrue(check_instance_network(new_instance_config,
+                                               self.test_resource_creator.network_selfLink,
+                                               self.test_resource_creator.subnetwork_selfLink))
         print('Pass the current test')
 
     def testAsBackendOfBackendService(self):
@@ -182,9 +185,9 @@ class TestUnmanagedInstanceGroupMigration(unittest.TestCase):
         unmanaged_instance_group_name = 'end-to-end-test-unmanaged-instance-group-1'
         original_instances_in_group = [instance_name_1]
         unmanaged_instance_group_selfLink = \
-        self.test_resource_creator.create_unmanaged_instance_group(
-            unmanaged_instance_group_name,
-            original_instances_in_group)['targetLink']
+            self.test_resource_creator.create_unmanaged_instance_group(
+                unmanaged_instance_group_name,
+                original_instances_in_group)['targetLink']
         original_instance_group_config = self.google_api_interface.get_unmanaged_instance_group_configs(
             unmanaged_instance_group_name)
         backend_service_name = 'end-to-end-test-backend-service'

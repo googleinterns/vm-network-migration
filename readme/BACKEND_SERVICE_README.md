@@ -6,7 +6,10 @@
 4. If an EXTERNAL or INTERNAL_SELF_MANAGED backend service is serving a frontend, the migration is legal. The backend service will not be deleted or recreated, only its backends will be migrated to the target subnet one by one.
 5. If an EXTERNAL or INTERNAL_SELF_MANAGED backend service is serving multiple frontends at the same time, the migration can still succeed, but it is not recommended.
 6. If multiple backend services are sharing the same backends, the migration will fail and rollback.
-7. If there are more than one backends serving this backend service, after the first backend finishes the migration, the tool will be paused and wait until the first backend become partially healthy. After the first backend passes the health check, the tool will continue migrating other backends without further health checks. The tool minimizes or even eliminates the downtime for the backend service migration if it has mutliple backends. 
+7. If there are more than one backends serving this backend service, it may have no downtime during the migration. 
+After the first backend finishes the migration, the tool will be paused and wait until the first backend become partially healthy. 
+After the first backend passes the health check, the tool will continue migrating other backends without further health checks. 
+The tool minimizes or even eliminates the downtime for the backend service migration if it has multiple backends. 
 ## Examples:
 ### 1. A regional backend service (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
      python3 backend_service_migration.py  --project_id=my-project \

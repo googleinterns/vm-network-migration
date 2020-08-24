@@ -43,17 +43,9 @@ class TestResourceCreator:
                 self.google_api_interface.get_subnetwork(self.subnetwork_name)[
                     'selfLink']
         except:
-            try:
-                self.subnetwork_selfLink = self.google_api_interface.create_subnetwork(
-                    self.subnetwork_name, self.network_selfLink,
-                    subnetwork_ipCidrRange='10.120.0.0/24')
-            except:
-                import random
-                random_ipCidrRange = '10.' + str(
-                    random.randint(1, 120)) + '.0.0/24'
-                self.subnetwork_selfLink = self.google_api_interface.create_subnetwork(
-                    self.subnetwork_name, self.network_selfLink,
-                    subnetwork_ipCidrRange=random_ipCidrRange)
+            self.subnetwork_selfLink = self.google_api_interface.create_subnetwork_using_random_ip_range(
+                self.subnetwork_name, self.network_selfLink)['targetLink']
+            print('Created subnetwork: ', self.subnetwork_selfLink)
 
         self.legacy_template_name = 'end-to-end-test-legacy-template'
         try:

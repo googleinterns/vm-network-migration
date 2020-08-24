@@ -26,22 +26,24 @@ from vm_network_migration_end_to_end_tests.utils import *
 
 
 class TestCrossRegionExternalBackendServiceMigration(unittest.TestCase):
-    project = os.environ["PROJECT_ID"]
-    credentials, default_project = google.auth.default()
-    compute = discovery.build('compute', 'v1', credentials=credentials)
-    google_api_interface_region_1 = GoogleApiInterface(compute,
-                                                       project,
-                                                       'us-central1',
-                                                       'us-central1-a')
-    test_resource_creator_region_1 = TestResourceCreator(
-        google_api_interface_region_1)
-    google_api_interface_region_2 = GoogleApiInterface(compute,
-                                                       project,
-                                                       'us-east1',
-                                                       'us-east1-b')
-    test_resource_creator_region_2 = TestResourceCreator(
-        google_api_interface_region_2
-    )
+    def setUp(self):
+        print('Initialize test environment.')
+        project = os.environ["PROJECT_ID"]
+        credentials, default_project = google.auth.default()
+        self.compute = discovery.build('compute', 'v1', credentials=credentials)
+        self.google_api_interface_region_1 = GoogleApiInterface(self.compute,
+                                                                project,
+                                                                'us-central1',
+                                                                'us-central1-a')
+        self.test_resource_creator_region_1 = TestResourceCreator(
+            self.google_api_interface_region_1)
+        self.google_api_interface_region_2 = GoogleApiInterface(self.compute,
+                                                                project,
+                                                                'us-east1',
+                                                                'us-east1-b')
+        self.test_resource_creator_region_2 = TestResourceCreator(
+            self.google_api_interface_region_2
+        )
 
     def testAutomodeSubnetworkExistsInBothRegions(self):
         """ A backend service has two instance groups from two regions as backends.
@@ -55,8 +57,8 @@ class TestCrossRegionExternalBackendServiceMigration(unittest.TestCase):
         auto_subnetwork_name = 'end-to-end-test-auto-subnetwork'
         try:
             target_network_selfLink = \
-            self.google_api_interface_region_1.get_network(
-                auto_subnetwork_name)['selfLink']
+                self.google_api_interface_region_1.get_network(
+                    auto_subnetwork_name)['selfLink']
         except:
             target_network_selfLink = \
                 self.google_api_interface_region_1.create_auto_subnetwork(
@@ -218,14 +220,14 @@ class TestCrossRegionExternalBackendServiceMigration(unittest.TestCase):
 
          Expectation: rollback will happen
 
-         """
+        """
         ### create test resources
         target_subnetwork_name = 'subnetwork-only-in-region-1'
         target_subnetwork_selfLink = \
-        self.google_api_interface_region_1.create_subnetwork(
-            target_subnetwork_name,
-            self.test_resource_creator_region_1.network_selfLink,
-            subnetwork_ipCidrRange='10.110.0.0/24')['targetLink']
+            self.google_api_interface_region_1.create_subnetwork_using_random_ip_range(
+                target_subnetwork_name,
+                self.test_resource_creator_region_1.network_selfLink
+            )['targetLink']
         group_name_1 = 'end-to-end-test-managed-instance-group-1'
         operation = self.test_resource_creator_region_1.create_regional_managed_instance_group(
             self.test_resource_creator_region_1.legacy_instance_template_selfLink,

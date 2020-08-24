@@ -926,6 +926,19 @@ class GoogleApiInterface:
         self.networks.append(network_name)
         return operation['targetLink']
 
+    def create_subnetwork_using_random_ip_range(self, subnetwork_name, network_selfLink):
+        import random
+
+        MAX_FAIL_TIME = 5
+        for i in range(MAX_FAIL_TIME):
+            try:
+                random_ipCidrRange = '10.' + str(
+                    random.randint(1, 120)) + '.0.0/24'
+                return self.create_subnetwork(subnetwork_name, network_selfLink,random_ipCidrRange)
+            except:
+                continue
+        return None
+
     def create_subnetwork(self, subnetwork_name, network_selfLink,
                           subnetwork_ipCidrRange='10.120.0.0/24'):
         subnetwork_body = {
@@ -942,7 +955,7 @@ class GoogleApiInterface:
 
         self.operation.wait_for_region_operation(operation['name'])
         self.subnetworks.append(subnetwork_name)
-        return operation['targetLink']
+        return operation
 
     def get_project_selfLink(self):
         return self.compute.projects().get(project=self.project).execute()[
@@ -957,10 +970,7 @@ class GoogleApiInterface:
             if address['address'] in ipv4_address_list and address[
                 'status'] == 'RESERVED':
                 try:
-                    operation = self.compute.addresses().delete(
-                        project=self.project, region=self.region,
-                        address=address['name'])
-                    self.operation.wait_for_region_operation(operation['name'])
+                    self.delete_address(address['name'])
                 except Exception as e:
                     print(str(e))
                     continue

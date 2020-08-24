@@ -26,15 +26,17 @@ from vm_network_migration_end_to_end_tests.utils import *
 
 
 class TestInternalBackendServiceMigration(unittest.TestCase):
-    project = os.environ["PROJECT_ID"]
-    credentials, default_project = google.auth.default()
-    compute = discovery.build('compute', 'v1', credentials=credentials)
-    google_api_interface = GoogleApiInterface(compute,
-                                              project,
-                                              'us-central1',
-                                              'us-central1-a')
-    test_resource_creator = TestResourceCreator(
-        google_api_interface)
+    def setUp(self):
+        print('Initialize test environment.')
+        project = os.environ["PROJECT_ID"]
+        credentials, default_project = google.auth.default()
+        self.compute = discovery.build('compute', 'v1', credentials=credentials)
+        self.google_api_interface = GoogleApiInterface(self.compute,
+                                                       project,
+                                                       'us-central1',
+                                                       'us-central1-a')
+        self.test_resource_creator = TestResourceCreator(
+            self.google_api_interface)
 
     def testWithMultipleBackends(self):
         """ A backend service has multiple backends
