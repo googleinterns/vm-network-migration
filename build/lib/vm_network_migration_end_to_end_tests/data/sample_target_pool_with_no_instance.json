@@ -1,7 +1,0 @@
-{
-  "name": "sample-name",
-  "description": "",
-  "healthChecks": [],
-  "instances": [],
-  "sessionAffinity": "NONE"
-}
