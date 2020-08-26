@@ -1,0 +1,9 @@
+{
+  "name": "sample-name",
+  "IPProtocol": "TCP",
+  "portRange": "25",
+  "target": "sample-target-proxy-selfLink",
+  "loadBalancingScheme": "EXTERNAL",
+  "networkTier": "PREMIUM",
+  "ipVersion": "IPV4"
+}

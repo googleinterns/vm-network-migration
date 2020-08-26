@@ -1,50 +1,41 @@
 # Backend Service Network Migration
-## Limitations:
-1. Supported type: ‘EXTERNAL’, ‘INTERNAL’ and ‘INTERAL_SELF_MANAGED’. The ‘INTERNAL_MANAGED’ is not supported, because it can not use a legacy network.
-2. For an EXTERNAL or an INTERAL_SELF_MANAGED backend service, it will not be deleted. For an INTERNAL backend service, it will be deleted and recreated using the new network configuration.
-3. If an INTERNAL backend service is serving a forwarding rule , the migration will not start. The user should detach this backend service from the frontend, or directly migrate its frontend instead. 
-4. If an EXTERNAL or INTERNAL_SELF_MANAGED backend service is serving a frontend, the migration is legal. The backend service will not be deleted or recreated, only its backends will be migrated to the target subnet one by one.
-5. If an EXTERNAL or INTERNAL_SELF_MANAGED backend service is serving multiple frontends at the same time, the migration can still succeed, but it is not recommended.
-6. If multiple backend services are sharing the same backends, the migration will fail and rollback.
-7. If there are more than one backends serving this backend service, it may have no downtime during the migration. 
-After the first backend finishes the migration, the tool will be paused and wait until the first backend become partially healthy. 
+## Characteristics:
+The backend service can have one or more instance groups as its backends. The tool will migrate the backend service and all its backends to the target subnet. 
+### Global backend service:
+* Supported global backend service: EXTERNAL or INTERNAL_SELF_MANAGED. 
+* During the migration, the tool won't modify the backend service itself, because a global backend service doesn't live within a network. The tool will only migrate the backends serving this backend service. 
+* If it is serving a forwarding rule, the migration will still succeed.
+* If more than one backends serve this backend service, it may have no downtime during the migration. After the first backend finishes the migration, the tool will be paused and wait until the first backend become partially healthy. 
 After the first backend passes the health check, the tool will continue migrating other backends without further health checks. 
-The tool minimizes or even eliminates the downtime for the backend service migration if it has multiple backends. 
+With this feature, the tool minimizes or eliminates the downtime for the backend service migration if it has multiple backends. 
+### Regional backend service:
+* Supported regional backend service: INTERNAL. 
+* During the migration, it will be deleted and recreated using the new network configuration.
+* If it is serving a forwarding rule, the migration will not start. The user should detach this backend service from the forwarding rule, or try to [migrate its forwarding rule](./FORWARDING_RULE_README.md) instead. 
+## Limitations:
+* If a backend service is using a same backend with another backend service or target pool, the migration will fail and rollback.
 ## Examples:
-### 1. A regional backend service (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
+### 1. A regional backend service (INTERNAL):
      python3 backend_service_migration.py  --project_id=my-project \
-        --region=us-central1-a  --backend_service_name=my-backend-service  \
-        --network=my-network  --subnetwork=my-network-subnet1 \
-
-     Note: 
-     1. you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP.
-     2. --region tag is only for a regional backend service. 
-        For a global backend service, --region shouldn't be specified. 
-### 2. A global backend service (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
+        --target_resource_name=my-backend-service  \
+        --region=us-central1-a \
+        --network=my-network  \
+        [--subnetwork=my-network-subnet1 --preserve-instance-external-ip=True] 
+        
+### 2. A global backend service (EXTERNAL or INTERNAL_SELF_MANAGED):
     python3 backend_service_migration.py  --project_id=my-project \
-        --backend_service_name=my-backend-service  \
-        --network=my-network  --subnetwork=my-network-subnet1 \
-    
-     Note: 
-     1. you can add --preserve-instance-external-ip=True if you want to preserve the single instances' IP.
-     2. --region tag is only for a regional backend service. 
-        For a global backend service, --region shouldn't be specified. 
+        --target_resource_name=my-backend-service  \
+        --network=my-network  \
+        [--subnetwork=my-network-subnet1 --preserve-instance-external-ip=True] 
+     
 ## Special Cases
-### 1. A backend service is serving an EXTERNAL or INTERNAL-SELF-MANAGED forwarding rule:
-    Supported, but it is not recommended. 
-    The tool will migrate this backend services. After the migration, it will still be in use by its original forwarding rule. 
-### 2. A backend service is serving an INTERNAL forwarding rule:
-    Not supported. 
-    The tool will terminate and will not start the migration. The user should migrate the forwarding rule directly.
-### 3. A backend service share the same backends with another backend service or target pool:
-    Not supported.
-    The tool will rollback.
-### 4. A backend service has zonal NEGs or internet NEG as its backends
-    Supported.
-    Since the NEG doesn't have a network configuration, the tool will ignore those backends and migrate instance group backends.
-### 5. A backend service has backends from different regions:
-    Supported, as long as the target subnet exists in all those regions.
-    For example, an instance group A from region A and an instance group B from region B serve a backend service together. 
-    If the target subnet with a name 'a-target-subnet' exists in both region A and region B, then the migration will succeed.
-    Otherwise, the tool will rollback.
-      
+### 1. A backend service has NEGs as its backends
+Supported. \
+There is no need to migrate the NEGs, see [Unsupported GCE Resources](../README.md).
+The tool will ignore those NEGs backends and migrate instance group backends.
+### 2. A backend service has backends from different regions:
+Supported, as long as the target subnet exists in all those regions. \
+For example, both an instance group from region A and another instance group from region B serve a backend service. 
+If the target subnet with a name 'a-target-subnet' exists in both region A and region B, the migration will succeed.
+Otherwise, the tool will rollback.
+  

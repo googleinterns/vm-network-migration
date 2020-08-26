@@ -1,0 +1,33 @@
+{
+  "name": "sample-name",
+  "description": "",
+  "properties": {
+    "tags": {},
+    "machineType": "n1-standard-1",
+    "canIpForward": false,
+    "networkInterfaces": [
+      {
+        "network": "",
+        "accessConfigs": [
+          {
+            "type": "ONE_TO_ONE_NAT",
+            "name": "External NAT",
+            "networkTier": "PREMIUM"
+          }
+        ]
+      }
+    ],
+    "disks": [
+      {
+        "type": "PERSISTENT",
+        "mode": "READ_WRITE",
+        "deviceName": "test-legacy-resource-migration",
+        "boot": true,
+        "initializeParams": {
+          "sourceImage": "projects/debian-cloud/global/images/family/debian-9"
+        },
+        "autoDelete": true
+      }
+    ]
+  }
+}
