@@ -57,7 +57,7 @@ if __name__ == '__main__':
                         help='The zone of the instance group.')
     parser.add_argument('--region', default=None,
                         help='The region of the instance group.')
-    parser.add_argument('--instance_group_name',
+    parser.add_argument('--target_resource_name',
                         help='The name of the original instance group')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
@@ -98,5 +98,5 @@ if __name__ == '__main__':
                                                              args.preserve_instance_external_ip,
                                                              args.zone,
                                                              args.region,
-                                                             args.instance_group_name)
+                                                             args.target_resource_name)
     instance_group_migration.network_migration()

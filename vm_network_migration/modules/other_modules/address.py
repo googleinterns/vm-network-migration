@@ -97,25 +97,18 @@ class Address:
                     preserve_external_ip_operation[
                         'name'])
             except Exception as e:
-                if isinstance(e, HttpError):
-                    error_reason = e._get_reason()
+                if isinstance(e, HttpError) and \
+                        'already reserved' in e._get_reason():
                     # The external IP is already preserved as a static IP,
-                    # or the current name of the external IP already exists
-                    if 'already reserved' in error_reason:
-                        return
-                    elif 'exists' in error_reason:
-                        warnings.warn(error_reason, Warning)
-                        return
-
+                    return
                 warnings.warn(
                     'Failed to preserve the external IP address as a static IP.',
                     Warning)
-                print('An ephemeral external IP address will be assigned.')
-                self.external_ip = None
-
+                raise e
             else:
                 print(
-                    '%s is reserved as a static IP address.' %(self.external_ip))
+                    '%s is reserved as a static IP address.' % (
+                        self.external_ip))
         else:
             self.external_ip = None
 
