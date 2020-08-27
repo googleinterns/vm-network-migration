@@ -13,7 +13,7 @@ With this feature, the tool minimizes or eliminates the downtime for the backend
 * During the migration, it will be deleted and recreated using the new network configuration.
 * If it is serving a forwarding rule, the migration will not start. The user should detach this backend service from the forwarding rule, or try to [migrate its forwarding rule](./FORWARDING_RULE_README.md) instead. 
 ## Limitations:
-* If a backend service is using a same backend with another backend service or target pool, the migration will fail and rollback.
+* If the backend service shares a backend with another backend service or target pool, the migration will fail and rollback.
 ## Examples:
 ### 1. A regional backend service (INTERNAL):
      python3 backend_service_migration.py  --project_id=my-project \
@@ -28,14 +28,14 @@ With this feature, the tool minimizes or eliminates the downtime for the backend
         --network=my-network  \
         [--subnetwork=my-network-subnet1 --preserve-instance-external-ip=True] 
      
-## Special Cases
+## Special cases
 ### 1. A backend service has NEGs as its backends
 Supported. \
 There is no need to migrate the NEGs, see [Unsupported GCE Resources](../README.md).
 The tool will ignore those NEGs backends and migrate instance group backends.
 ### 2. A backend service has backends from different regions:
 Supported, as long as the target subnet exists in all those regions. \
-For example, both an instance group from region A and another instance group from region B serve a backend service. 
-If the target subnet with a name 'a-target-subnet' exists in both region A and region B, the migration will succeed.
+For example, both an instance group from region A and another instance group from region B serve the backend service. 
+If the target subnet with a name 'a-target-subnet' exists in both region A and region B, the migration of the backend service will succeed.
 Otherwise, the tool will rollback.
   

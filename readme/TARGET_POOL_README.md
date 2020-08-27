@@ -20,12 +20,11 @@
 Not supported. \
 Reason: see **Limitations**
   
-### 2. The target pool is served by a same instance group with another target pool or backend service:
+### 2. The target pool shares an instance group backend with another target pool or backend service:
 Not supported. \
 The tool will rollback. \
 *Recommendation*: [remove this instance group from the target pool](https://cloud.google.com/compute/docs/reference/rest/v1/instanceGroupManagers/setTargetPools) and try the target pool migration again. 
-
-### 3. The target pool is served by a same VM instance with another target pool:
+### 3. The target pool shares an VM instance (which is not a member of any instance group) backend with another target pool:
 Supported, but not recommended. \
 The migration will succeed, but the shared VM instance may be removed from another target pool.
 *Recommendation*: after the migration, double-check if the VM instance has been removed from another target pool.

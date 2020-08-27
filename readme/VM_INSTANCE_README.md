@@ -1,4 +1,4 @@
-# VM Network Migration
+# VM Instance Network Migration
 ## Characteristics:
 1. You can choose to preserve the external IP. If the original VM uses an Ephemeral external IP, its IP will be a static external IP after the migration.  
 2. The original VM will be deleted and recreated using modified network configuration (modified fields: network, subnetwork, natIP, networkIP.) If you choose to preserve the external IP, the ‘natIP’ field won’t change. ![See more details.](vm_config.png) 

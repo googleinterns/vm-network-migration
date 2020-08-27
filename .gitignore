@@ -7,3 +7,4 @@ vm_network_migration/__pycache__/
 *.txt
 *.log
 env/
+build/
