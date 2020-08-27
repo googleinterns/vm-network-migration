@@ -11,9 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""ExternalBackendService class: external backend service, which is used by
-TCP/UDP external load balancer or an HTTP external load balancer.
-It is always a global compute engine resource.
+"""GlobalBackendService: describes a global backend service.
 
 """
 from copy import deepcopy
@@ -35,7 +33,7 @@ class GlobalBackendService(BackendService):
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether to preserve the external IPs
-            of the instances serving the backends
+            of the instances serving the backend service
         """
         super(GlobalBackendService, self).__init__(compute, project,
                                                    backend_service_name,
@@ -46,14 +44,19 @@ class GlobalBackendService(BackendService):
         self.preserve_instance_external_ip = preserve_instance_external_ip
         self.log()
 
-    def get_backend_service_configs(self):
+    def get_backend_service_configs(self) -> dict:
+        """ Get the config of the backend service
+
+        Returns: config
+
+        """
         args = {
             'project': self.project,
             'backendService': self.backend_service_name
         }
         return self.compute.backendServices().get(**args).execute()
 
-    def detach_a_backend(self, backend_selfLink):
+    def detach_a_backend(self, backend_selfLink) -> dict:
         """ Detach a backend from the backend service
 
         Args:
@@ -83,8 +86,8 @@ class GlobalBackendService(BackendService):
         print('Instance group %s has been detached.' % (backend_selfLink))
         return detach_a_backend_operation
 
-    def reattach_all_backends(self):
-        """ Revert the backend service to its original configs.
+    def reattach_all_backends(self) -> dict:
+        """ Revert the backend service to its original backend config.
         If a backend has been detached, after this operation,
         it will be reattached to the backend service.
 
@@ -133,7 +136,6 @@ class GlobalBackendService(BackendService):
                 if 'backendService' in forwarding_rule and forwarding_rule[
                     'backendService'] == backend_service_selfLink:
                     forwarding_rule_list.append(forwarding_rule)
-
             request = self.compute.globalForwardingRules().list_next(
                 previous_request=request,
                 previous_response=response)

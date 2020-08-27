@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This class is used to build a migration handler
+""" This class is used to build a migration handler or a module
 according to the given resource's selfLink.
 
 """
@@ -266,7 +266,7 @@ class SelfLinkExecutor:
         from vm_network_migration.modules.instance_modules.instance import Instance
         if self.instance != None:
             instance = Instance(self.compute, self.project, self.instance,
-                                self.region, self.zone, self.network,
+                                self.zone, self.network,
                                 self.subnetwork,
                                 self.preserve_instance_external_ip)
             return instance

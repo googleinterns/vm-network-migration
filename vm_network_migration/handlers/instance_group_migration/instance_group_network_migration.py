@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This script is used to migrate a GCP instance group from its legacy network to a
+""" This script is used to migrate an instance group from its legacy network to a
 subnetwork mode network.
-
-Ihe Google API python client module is imported to manage the GCP Compute Engine
- resources.
 """
 
 import warnings
@@ -37,12 +34,17 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
                  network_name,
                  subnetwork_name, preserve_external_ip, zone, region,
                  instance_group_name):
-        """ Initialize a InstanceNetworkMigration object
+        """Initialize a InstanceNetworkMigration object
 
         Args:
-            project: project ID
-            zone: zone of the instance group
-            region:
+          compute: google compute engine API
+          project: project id
+          network_name: target network
+          subnetwork_name: target subnetwork
+          preserve_external_ip: whether to preserve instances' external IPs
+          zone: zone of a zonal instance group
+          region: region of regional instance group
+          instance_group_name: name
         """
         super(InstanceGroupNetworkMigration, self).__init__()
         self.instance_group = self.build_instance_group()
@@ -97,19 +99,8 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
         return self.instance_group_migration_handler
 
     def network_migration(self):
-        """ The main method of the instance network migration process
-
-        Args:
-            network_name: target network name
-            subnetwork_name: target subnetwork name
-            preserve_external_ip: preserve the external IP of the instances
-            in an unmanaged instance group
-
-        Returns: None
-
+        """ Network migration
         """
-
-
         if self.instance_group_migration_handler == None:
             warnings.warn('Unable to get the instance group resource.')
             return
@@ -120,19 +111,20 @@ class InstanceGroupNetworkMigration(ComputeEngineResourceMigration):
             warn(str(e), Warning)
             print(
                 'The migration was failed. Rolling back to the original network.')
-            self.rollback()
+            try:
+                self.rollback()
+            except Exception as e:
+                warnings.warn(str(e), Warning)
+                raise RollbackError(
+                    'Rollback failed. You may lose your original resource. Please refer \'backup.log\' file.')
             raise MigrationFailed('Rollback finished.')
 
     def rollback(self):
         """ Rollback to the original instance group
-
         """
-        warnings.warn('Rolling back: %s.' % (self.instance_group_name), Warning)
-
         if self.instance_group == None or self.instance_group_migration_handler == None:
             print('Unable to fetch the instance group: %s.' % (
                 self.instance_group_name))
             return
         else:
             self.instance_group_migration_handler.rollback()
-            self.instance_group.migrated = False

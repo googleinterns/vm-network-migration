@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" RegionalManagedInstanceGroup: describes a multi-zone managed instance group
+""" RegionalManagedInstanceGroup: describes a regional managed instance group
 """
 from copy import deepcopy
 
@@ -24,11 +24,15 @@ class RegionalManagedInstanceGroup(ManagedInstanceGroup):
                  subnetwork_name, preserve_instance_ip, region):
         """ Initialization
 
+
         Args:
-            compute: compute engine
+            compute: google compute engine
             project: project ID
             instance_group_name: name of the instance group
-            region: region of the instance group
+            network_name: target network
+            subnetwork_name: target subnet
+            preserve_instance_ip: (only valid for unmanaged instance group) whether
+                                    to preserve instances external IPs
         """
         super(RegionalManagedInstanceGroup, self).__init__(compute, project,
                                                            instance_group_name,

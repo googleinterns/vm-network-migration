@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Create a subclass instance of the ForwardingRuleMigration class
+""" Helper class for creating a ForwardingRuleMigration class
 
 """
 from vm_network_migration.errors import *
@@ -36,14 +36,14 @@ class ForwardingRuleHelper:
             forwarding_rule_name: name of the forwarding rule
             network: target network
             subnetwork: target subnet
-            region: region of the forwarding rule. It is None for a global one
+            region: region of the forwarding rule. It is None if it is global
         """
         pass
 
     def build_a_forwarding_rule(self) -> ForwardingRule:
-        """ Build a forwarding rule with a specific type according to the attributes
+        """ Build a ForwardingRule object.
 
-        Returns: a subclass object of ForwardingRule
+        Returns: an object which is instance of ForwardingRule's subclass
 
         """
         load_balancing_schema = self.get_load_balancing_schema()
@@ -63,9 +63,9 @@ class ForwardingRuleHelper:
             'migrated. Terminating.')
 
     def build_an_external_global_forwarding_rule(self) -> ExternalGlobalForwardingRule:
-        """ Build a global forwarding rule
+        """ Build an external global forwarding rule
 
-        Returns: a GlobalForwardingRule object
+        Returns: a ExternalGlobalForwardingRule object
 
         """
         return ExternalGlobalForwardingRule(self.compute, self.project,
@@ -107,7 +107,7 @@ class ForwardingRuleHelper:
                                     self.subnetwork)
 
     def get_regional_forwarding_rule_configs(self):
-        """ Get the configs of the forwarding rule
+        """ Get the configs of a regional forwarding rule
 
         Returns: configs
 
@@ -118,7 +118,7 @@ class ForwardingRuleHelper:
             forwardingRule=self.forwarding_rule_name).execute()
 
     def get_global_forwarding_rule_configs(self):
-        """ Get the configs of the forwarding rule
+        """ Get the configs of a global forwarding rule
 
         Returns: configs
 
@@ -128,9 +128,9 @@ class ForwardingRuleHelper:
             forwardingRule=self.forwarding_rule_name).execute()
 
     def get_load_balancing_schema(self) -> str:
-        """ Decide the load balancing schema is External/Internal
+        """ Get the load balancing schema
 
-        Returns: 'External' or 'Internal'
+        Returns: 'EXTERNAL' or 'INTERNAL' or 'INTERNAL_SELF_MANAGED' or 'INTERNAL_MANAGED'
 
         """
         if self.region == None:

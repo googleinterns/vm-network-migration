@@ -55,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument('--project_id',
                         help='The project ID of the original VM.')
     parser.add_argument('--zone', help='The zone name of the original VM.')
-    parser.add_argument('--instance_name',
+    parser.add_argument('--target_resource_name',
                         help='The name of the original VM')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     instance_migration = InstanceNetworkMigration(compute, args.project_id,
                                                   args.zone,
-                                                  args.instance_name,
+                                                  args.target_resource_name,
                                                   args.network,
                                                   args.subnetwork,
                                                   args.preserve_instance_external_ip)

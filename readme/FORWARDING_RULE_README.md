@@ -1,32 +1,40 @@
 # Forwarding Rule Network Migration
+## Characteristics:
+*  The forwarding rule itself and the backend services, target pools, or target instances in use by this forwarding rule will be migrated to the target subnet.
+### EXTERNAL forwarding rule:
+* The external IP of the forwarding rule will not change.
+* The forwarding rule itself will not be modified, because it doesn't live in a network. The GCE resources which are in use by it will be migrated.
+* The downtime can be minimized or eliminated. For further explanation: see **Characteristic** in [Target pool migration](./TARGET_POOL_README.md) and [Backend service migration](./BACKEND_SERVICE_README.md)
+### INTERNAL or INTERNAL_SELF_MANAGED forwarding rule:
+* The forwarding rule will be deleted and recreated using the new network configuration 
 ## Limitations:
-1. Supported type: ‘EXTERNAL’, ‘INTERNAL’ and ‘INTERAL_SELF_MANAGED’. The ‘INTERNAL_MANAGED’ is not supported, because it can not use a legacy network.
-2. All the backend service, target pools, or target instances serving the forwarding rule will be migrated to the VPC subnet.
-3. If any of its backends is serving multiple resources, the migration will fail and rollback to the original network.
-4. For an INTERNAL or INTERNAL_SELF_MANAGED forwarding rule, it will be deleted and recreated using the new network configuration. For an external forwarding rule, it will not be deleted.
+* If the forwarding rule is using a backend service, see **Limitations** in [Backend service migration](./BACKEND_SERVICE_README.md)
+* If the forwarding rule is using a target pool, see **Limitations** in [Target pool migration](./TARGET_POOL_README.md)
+* If the forwarding rule is using a target instance, see **Limitations** in [VM instance migration](./VM_INSTANCE_README.md)
 ## Examples:
-### 1. A regional forwarding rule (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
+### 1. A regional forwarding rule (it can be EXTERNAL or INTERNAL):
      python3 forwarding_rule_migration.py  --project_id=my-project \
-        --region=us-central1-a  --forwarding_rule_name=my-forwarding-rule  \
-        --network=my-network  --subnetwork=my-network-subnet1 
+        --forwarding_rule_name=my-forwarding-rule \
+        --region=us-central1-a \
+        --network=my-network \
+        [--subnetwork=my-network-subnet1 --preserve_instance_external_ip=False]
+     
+### 2. A global forwarding rule (it can be EXTERNAL or INTERNAL_SELF_MANAGED):
+     python3 forwarding_rule_migration.py  --project_id=my-project \
+        --forwarding_rule_name=my-forwarding-rule \
+        --network=my-network \
+        [--subnetwork=my-network-subnet1 --preserve_instance_external_ip=False]
         
-     (Note: you can add --preserve-instance-external-ip=True 
-     if you want to preserve the single instances' IP) 
-### 2. A global forwarding rule (supported loadBalancingScheme: EXTERNAL, INTERNAL, INTERNAL_SELF_MANAGED):
-     python3 forwarding_rule_migration.py  --project_id=my-project \
-        --forwarding_rule_name=my-forwarding-rule  \
-        --network=my-network  --subnetwork=my-network-subnet1 
-    
-    (Note: you can add --preserve-instance-external-ip=True 
-    if you want to preserve the single instances' IP) 
 ## Special cases:
-### 1. An INTERNAL forwarding rule is sharing the same backend service with another forwarding rule:
-    Not supported.
-    The tool will rollback. 
-### 2. An EXTERNAL or INTERNAL-SELF-MANAGED forwarding rule A is sharing the same backend service with another forwarding rule B:
-    Supported, but it is not recommended. 
-    The tool will still migrate A and all its backend services. After the migration, B will also be served by the migrated backend services. 
-### 3. Any kind of forwarding rule is sharing the same target pool or target instance with another forwarding rule:
-    Supported, but it is not recommended. 
-    Reason: see case2.
+### 1. An INTERNAL forwarding rule shares a backend service with another forwarding rule:
+Not supported. \
+The migration of the INTERNAL forwarding rule will fail. The tool will rollback. 
+*Recommendation*: Remove this backend service from another forwarding rule and try again.
+### 2. An EXTERNAL or INTERNAL-SELF-MANAGED forwarding rule A shares a backend service with another forwarding rule B:
+Supported. \
+The tool will still migrate A and all its backend services. 
+After the migration, B will also be served by the migrated backend services. 
+### 3. Any kind of forwarding rule shares the same target pool or target instance with another forwarding rule:
+Supported. \
+Further explanation: see case 2.
  

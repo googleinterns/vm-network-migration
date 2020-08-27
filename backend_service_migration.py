@@ -55,7 +55,7 @@ if __name__ == '__main__':
                         help='The project ID of the backend service.')
     parser.add_argument('--region', default=None,
                         help='The region of the the backend service.')
-    parser.add_argument('--backend_service_name',
+    parser.add_argument('--target_resource_name',
                         help='The name of the the backend service')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
@@ -90,7 +90,7 @@ if __name__ == '__main__':
             args.preserve_external_ip = False
 
     backend_service_migration = BackendServiceMigration(compute, args.project_id,
-                                                        args.backend_service_name,
+                                                        args.target_resource_name,
                                                         args.network,
                                                         args.subnetwork,
                                                         args.preserve_instance_external_ip,

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" ForwardingRuleMigration class: It is the handler to migrate
-a forwarding rule based on the type of it.
+""" Migration handler to migrate a forwarding rule based on its type.
 
 """
 import warnings
@@ -43,8 +42,8 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether preserve the external IP
-            of the instances which serves this load balancer
-            region: region of the internal load balancer
+            of the instances serving the forwarding rule
+            region: region of the forwarding rule
         """
         super(ForwardingRuleMigration, self).__init__()
         self.forwarding_rule = self.build_forwarding_rule()
@@ -112,7 +111,13 @@ class ForwardingRuleMigration(ComputeEngineResourceMigration):
             self.forwarding_rule_migration_handler.network_migration()
         except Exception as e:
             warnings.warn(str(e), Warning)
-            self.rollback()
+            try:
+                self.rollback()
+            except Exception as e:
+                warnings.warn(str(e), Warning)
+                raise RollbackError(
+                    'Rollback failed. You may lose your original resource. Please refer \'backup.log\' file.')
+
             raise MigrationFailed('Rollback finished.')
 
     def rollback(self):

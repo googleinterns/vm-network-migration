@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" BackendServiceHelper: helps to create a subclass instance of the BackendService.
+""" Helper class for creating a BackendService object.
 """
 from googleapiclient.http import HttpError
 from vm_network_migration.errors import *
@@ -34,8 +34,8 @@ class BackendServiceHelper:
             network: target network
             subnetwork: target subnet
             preserve_instance_external_ip: whether preserve the external IP
-            of the instances which serves this load balancer
-            region: region of the internal load balancer
+            of the instances which serves this backend service
+            region: region of the backend service
         """
         self.backend_config = None
 
@@ -45,6 +45,7 @@ class BackendServiceHelper:
         Returns:
 
         """
+        # Try to create a global backend service
         if self.region == None:
             try:
                 self.backend_config = self.get_global_backend_service_config()
@@ -69,7 +70,7 @@ class BackendServiceHelper:
                     raise UnsupportedBackendService(
                         'The typeof the backend service is not supported. Migration is terminating.')
 
-
+        # try to create a regional backend service (INTERNAL backend service)
         else:
             try:
                 self.backend_config = self.get_regional_backend_service_config()

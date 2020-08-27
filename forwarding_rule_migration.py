@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--region', default=None,
                         help='The region of the forwarding rule.')
-    parser.add_argument('--forwarding_rule_name',
+    parser.add_argument('--target_resource_name',
                         help='The name of the forwarding rule.')
     parser.add_argument('--network', help='The name of the target network.')
     parser.add_argument(
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     forwarding_rule_migration = ForwardingRuleMigration(compute,
                                                         args.project_id,
-                                                        args.forwarding_rule_name,
+                                                        args.target_resource_name,
                                                         args.network,
                                                         args.subnetwork,
                                                         args.preserve_instance_external_ip,

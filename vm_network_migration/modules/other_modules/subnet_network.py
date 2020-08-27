@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" SubnetNetwork class: describes an instance's subnetwork.
-    SubnetNetworkHelper class: helps to create a SubnetNetwork object
+""" SubnetNetwork class: describes a subnetwork and its relate API calls.
+
 """
 from vm_network_migration.errors import *
 from vm_network_migration.utils import initializer
@@ -32,7 +32,9 @@ class SubnetNetwork(object):
             region: region name
             network: network name
             subnetwork: subnetwork name
+            only_check_network_info: True means ignoring the subnetwork info
         """
+
         self.network_link = None
         self.subnetwork_link = None
 
@@ -57,7 +59,7 @@ class SubnetNetwork(object):
                 self.subnetwork = self.network
 
     def get_network(self) -> dict:
-        """ Get the network information.
+        """ Get the network config.
 
             Returns:
                 a deserialized object of the network information
@@ -70,6 +72,11 @@ class SubnetNetwork(object):
             network=self.network).execute()
 
     def generate_new_network_info(self):
+        """ Generate self.network_link and self.subnetwork_link
+
+        Returns:
+
+        """
         network_parameters = self.get_network()
         self.network_link = network_parameters['selfLink']
         if self.only_check_network_info:
@@ -77,7 +84,8 @@ class SubnetNetwork(object):
         subnetwork_link = 'regions/' + self.region + '/subnetworks/' + self.subnetwork
         if 'subnetworks' not in network_parameters:
             self.subnetwork_link = None
-            raise SubnetworkNotExists('No subnetwork was found in the target network.')
+            raise SubnetworkNotExists(
+                'No subnetwork was found in the target network.')
         for subnetwork in network_parameters['subnetworks']:
             if subnetwork_link in subnetwork:
                 self.subnetwork_link = subnetwork_link
@@ -89,7 +97,7 @@ class SubnetNetwork(object):
         """ Check if the network is in auto mode
 
         Returns:
-            true or false
+            True for automode network
 
         Raises:
             InvalidTargetNetworkError: if the network is not a subnetwork mode network

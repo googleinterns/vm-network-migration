@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" This script is used to migrate a GCP instance from its legacy network to a
-subnetwork mode network.
+""" This script is used to migrate a VM instance from its legacy network to a
+target subnet.
 
 """
 import warnings
@@ -34,34 +34,24 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
     def __init__(self, compute, project, zone, original_instance_name,
                  network_name,
                  subnetwork_name, preserve_external_ip):
-        """ Initialize a InstanceNetworkMigration object
+        """ Initialization
 
         Args:
-            project: project ID
-            zone: zone of the instance
+          compute: google compute engine API
+          project: project id
+          zone: zone of a instance
+          original_instance_name: name of the instance
+          network_name: target network
+          subnetwork_name: target subnetwork
+          preserve_external_ip: whether to preserve instances' external IPs
         """
         super(InstanceNetworkMigration, self).__init__()
-        self.region = self.get_region()
         self.instance = Instance(self.compute, self.project,
                                  self.original_instance_name,
-                                 self.region,
                                  self.zone, self.network_name,
                                  self.subnetwork_name,
                                  preserve_instance_ip=self.preserve_external_ip)
         self.migration_status = MigrationStatus(0)
-
-    def get_region(self) -> dict:
-        """ Get region information
-
-            Returns:
-                region name of the self.zone
-
-            Raises:
-                googleapiclient.errors.HttpError: invalid request
-        """
-        return self.compute.zones().get(
-            project=self.project,
-            zone=self.zone).execute()['region'].split('regions/')[1]
 
     def get_instance_selfLink(self):
         """  Get the selfLink of the instance
@@ -73,16 +63,7 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
             return self.instance.selfLink
 
     def network_migration(self, force=False):
-        """ The main method of the instance network migration process
-
-        Args:
-            original_instance_name: original instance's name
-            network_name: target network name
-            subnetwork_name: target subnetwork name
-            preserve_external_ip: True/False
-
-        Returns: None
-
+        """ Migrate the instance
         """
         self.migration_status = MigrationStatus(0)
         print('Migrating the VM: %s.' % (self.original_instance_name))
@@ -125,7 +106,13 @@ class InstanceNetworkMigration(ComputeEngineResourceMigration):
 
         except Exception as e:
             warnings.warn(str(e), Warning)
-            self.rollback()
+            print('Rolling back to the original resource.')
+            try:
+                self.rollback()
+            except Exception as e:
+                warnings.warn(str(e), Warning)
+                raise RollbackError(
+                    'Rollback failed. You may lose your original resource. Please refer \'backup.log\' file.')
             raise MigrationFailed('Rollback to the original instance %s.' % (
                 self.original_instance_name))
 

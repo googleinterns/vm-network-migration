@@ -44,13 +44,12 @@ class BackendService(object):
         logging.info('--------------------------')
 
     def get_backend_service_configs(self):
+        """ Get the config of the backend service
+        """
         pass
 
     def get_connecting_forwarding_rule_list(self):
-        """ Get the configs of the forwarding rule which serves this backend service
-
-        Returns: a deserialized python object of the response
-
+        """ Get a list of the forwarding rule which serves this backend service
         """
         pass
 
@@ -58,12 +57,16 @@ class BackendService(object):
         """ Count the number of forwarding rules connecting this backend service
         to check whether it is only serving a single forwarding rule
 
-        Returns: True or False
+        Returns: the number of forwarding rules
 
         """
         return len(self.get_connecting_forwarding_rule_list())
 
-    def compare_original_network_and_target_network(self):
+    def compare_original_network_and_target_network(self) -> bool:
+        """ Compare whether the original network and the target network is the same
+
+        Returns: True for same
+        """
         return False
 
     def check_backend_health(self, backend_selfLink):
@@ -72,17 +75,17 @@ class BackendService(object):
         Args:
             backends_selfLink: url selfLink of the backends (just an instance group)
 
-        Returns:
+        Returns: True for healthy
 
         """
-        pass
+        return True
 
-    def wait_for_backend_become_healthy(self, backend_selfLink, TIME_OUT = 600):
+    def wait_for_backend_become_healthy(self, backend_selfLink, TIME_OUT = 300):
         """ Wait for backend being healthy
 
         Args:
             backend_selfLink: url selfLink of the backends (just an instance group)
-
+            TIME_OUT: maximum waiting time
         Returns:
 
         """

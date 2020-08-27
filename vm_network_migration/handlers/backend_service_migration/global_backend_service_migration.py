@@ -13,8 +13,8 @@
 # limitations under the License.
 
 """ This script is used to migrate a global backend service
-(external/internal-self-managed) from its legacy network to
-a subnetwork mode network.
+(EXTERNAL/INTERNAL-SELF-MANAGED) from its legacy network to
+the target subnet.
 
 """
 
@@ -29,7 +29,7 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
     @initializer
     def __init__(self, compute, project, backend_service_name, network,
                  subnetwork,
-                 preserve_instance_external_ip, region, backend_service):
+                 preserve_instance_external_ip, backend_service):
         """ Initialization
 
         Args:
@@ -37,10 +37,8 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
             backend_service_name: name of the backend service
             network: target network
             subnetwork: target subnet
-            preserve_instance_external_ip: whether preserve the external IP
-            of the instances which serves this load balancer
-            region: region of the internal load balancer
-            backend_service: an InternalBackEndService object
+            preserve_instance_external_ip: whether preserve the instance's external IP
+            backend_service: a GlobalBackendService object
         """
         super(GlobalBackendServiceNetworkMigration, self).__init__()
         self.backend_migration_handlers = []
@@ -88,7 +86,7 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
                 self.backend_service.wait_for_backend_become_healthy(backend['group'])
 
     def network_migration(self):
-        """ Migrate the network of an external backend service.
+        """ Migrate the backend service
         """
         print('Migrating an global backend service: %s' % (
             self.backend_service.backend_service_name))
@@ -103,7 +101,7 @@ class GlobalBackendServiceNetworkMigration(ComputeEngineResourceMigration):
         if self.backend_service == None:
             print('Unable to fetch the backend service.')
             return
-        # Rollback the instance group backends one by one
+        # Rollback the instance groups one by one
         for backend_migration_handler in self.backend_migration_handlers:
             if backend_migration_handler != None and backend_migration_handler.instance_group != None:
                 print('Detaching: %s' % (

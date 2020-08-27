@@ -14,26 +14,28 @@
 
 import unittest
 import warnings
+
 import google.auth
+from googleapiclient import discovery
+from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 from vm_network_migration_end_to_end_tests.build_test_resource import TestResourceCreator
 from vm_network_migration_end_to_end_tests.check_result import *
 from vm_network_migration_end_to_end_tests.google_api_interface import GoogleApiInterface
-from googleapiclient import discovery
 from vm_network_migration_end_to_end_tests.utils import *
-from vm_network_migration.handler_helper.selfLink_executor import SelfLinkExecutor
 
 
 class TestExternalForwardingRuleMigration(unittest.TestCase):
-    project = os.environ["PROJECT_ID"]
-    credentials, default_project = google.auth.default()
-    compute = discovery.build('compute', 'v1', credentials=credentials)
-    google_api_interface = GoogleApiInterface(compute,
-                                              project,
-                                              'us-central1',
-                                              'us-central1-a')
-    test_resource_creator = TestResourceCreator(
-        google_api_interface)
-
+    def setUp(self):
+        print('Initialize test environment.')
+        project = os.environ["PROJECT_ID"]
+        credentials, default_project = google.auth.default()
+        self.compute = discovery.build('compute', 'v1', credentials=credentials)
+        self.google_api_interface = GoogleApiInterface(self.compute,
+                                                       project,
+                                                       'us-central1',
+                                                       'us-central1-a')
+        self.test_resource_creator = TestResourceCreator(
+            self.google_api_interface)
 
     def testWithTargetHttpProxy(self):
         ### create test resources
@@ -69,7 +71,8 @@ class TestExternalForwardingRuleMigration(unittest.TestCase):
                 'sample_global_forwarding_rule.json',
                 forwarding_rule_name,
                 proxy_selfLink)['targetLink']
-        original_forwarding_rule_config = self.google_api_interface.get_global_forwarding_rule_config(forwarding_rule_name)
+        original_forwarding_rule_config = self.google_api_interface.get_global_forwarding_rule_config(
+            forwarding_rule_name)
         ### start migration
         selfLink_executor = SelfLinkExecutor(self.compute,
                                              forwarding_rule_selfLink,
@@ -80,7 +83,8 @@ class TestExternalForwardingRuleMigration(unittest.TestCase):
         migration_handler.network_migration()
         ### check migration result
         # check forwarding rule config
-        new_forwarding_rule_config = self.google_api_interface.get_global_forwarding_rule_config(forwarding_rule_name)
+        new_forwarding_rule_config = self.google_api_interface.get_global_forwarding_rule_config(
+            forwarding_rule_name)
         self.assertTrue(resource_config_is_unchanged_except_for_network(
             original_forwarding_rule_config,
             new_forwarding_rule_config))
@@ -109,9 +113,6 @@ class TestExternalForwardingRuleMigration(unittest.TestCase):
     def testWithTargetHttpProxyRelatedToMultipleBackendServices(self):
         """ The urlMapping is related to two backend service.
         All the backend services will be migrated.
-
-        Returns:
-
         """
         ### create test resrouces
         forwarding_rule_name = 'end-to-end-test-forwarding-rule'
@@ -174,7 +175,6 @@ class TestExternalForwardingRuleMigration(unittest.TestCase):
 
         original_backend_service_configs_2 = self.google_api_interface.get_global_backend_service_configs(
             backend_service_name_2)
-
 
         ### start migration
         selfLink_executor = SelfLinkExecutor(self.compute,
@@ -305,7 +305,7 @@ class TestExternalForwardingRuleMigration(unittest.TestCase):
         backend_service_selfLink = \
             self.test_resource_creator.create_global_backend_service(
                 'sample_tcp_backend_service.json',
-                backend_service_name,  [instance_group_1_selfLink])['targetLink']
+                backend_service_name, [instance_group_1_selfLink])['targetLink']
         original_backend_service_configs = self.google_api_interface.get_global_backend_service_configs(
             backend_service_name)
         ssl_certificate_name = forwarding_rule_name

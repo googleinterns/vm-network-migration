@@ -20,6 +20,7 @@ from vm_network_migration.modules.other_modules.operations import Operations
 from vm_network_migration.utils import *
 from vm_network_migration.module_helpers.subnet_network_helper import SubnetNetworkHelper
 from vm_network_migration.errors import *
+from vm_network_migration.modules.other_modules.subnet_network import SubnetNetwork
 
 class InstanceTemplate:
     @initializer
@@ -31,7 +32,11 @@ class InstanceTemplate:
             compute: google compute engine
             project: project ID
             instance_template_name: name of the instance template
-            instance_template_body: a dictionary of the instance template's configs
+            zone: zone of the instance template
+            region: region of the instance template
+            instance_template_body: instance template's config
+            network: target network
+            subnetwork: target subnet
         """
 
         self.operation = Operations(self.compute, self.project, None, None)
@@ -51,10 +56,10 @@ class InstanceTemplate:
         return self.compute.instanceTemplates().get(project=self.project,
                                                     instanceTemplate=self.instance_template_name).execute()
 
-    def get_network(self):
+    def get_network(self) -> SubnetNetwork:
         """ Generate the network object
 
-        Returns: Network object
+        Returns: a SubnetNetwork object
 
         """
         subnetwork_factory = SubnetNetworkHelper(self.compute, self.project,
@@ -89,8 +94,7 @@ class InstanceTemplate:
         self.operation.wait_for_global_operation(delete_operation['name'])
         return delete_operation
 
-    def modify_instance_template_with_new_network(self, instance_template_body,
-                                                  add_network_metadata=True):
+    def modify_instance_template_with_new_network(self, instance_template_body):
         """ Modify the instance template with the new network links
 
             Args:
@@ -158,9 +162,11 @@ class InstanceTemplate:
                                                      new_instance_template_body)
             return new_instance_template
 
-    def compare_original_network_and_target_network(self):
+    def compare_original_network_and_target_network(self) -> bool:
         """ Check if the original network is the
         same as the target subnet
+
+        Returns: True for the same
         """
         if self.network_object == None or self.network_object.subnetwork_link == None:
             raise InvalidTargetNetworkError

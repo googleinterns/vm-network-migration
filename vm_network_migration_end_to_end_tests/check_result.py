@@ -72,6 +72,11 @@ def instance_template_config_is_unchanged(original_config, new_config):
         new_config,
         ['id', 'creationTimestamp', 'fingerprint', 'selfLink'])
 
+def managed_instance_group_config_is_unchanged_except_for_instance_template(original_config, new_config):
+    return resource_config_is_unchanged_except_for_tags(
+        original_config,
+        new_config,
+        ['id', 'creationTimestamp', 'fingerprint', 'selfLink', 'instanceTemplate'])
 
 def resource_config_is_unchanged_except_for_tags(original_config, new_config,
                                                  except_tags=[]):
