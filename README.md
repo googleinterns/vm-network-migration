@@ -2,7 +2,7 @@
 **This is not an officially supported Google product.**
 ## Description
 This tool is used to migrate Google Compute Engine (GCE) resources from a legacy network to a
-VPC subnet with downtime. The project uses Google APIs Python client library to manage the 
+VPC subnet with downtime. It uses Google APIs Python client library to manage the 
 GCE resources. 
 ## Use cases
 ### Supported GCE resources:
@@ -28,10 +28,10 @@ GCE resources.
 * NEG
 ### How to migrate a load balancer?
 A load balancer is not a GCE resource, but a combination of different GCE resources.
-You can try to migrate a load balancer's forwarding rule so that the tool will migrate all the resources in this load balancer.        
+You can try to migrate a load balancer's forwarding rule so that the tool will migrate all the resources in use by this load balancer.        
 ## Characteristics:
 * The tool has simple validation checks before the migration starts. If the resource can not be migrated, the migration process will not start and won't affect the original resource.
-* In some cases, the validation checks are ok, but the resource is still not able to be safely migrated, the migration will fail and rollback the resource to its original network. A 'MigrationFailed' error will raise after the rollback finishes. 
+* In some cases, the validation checks are passed, but the resource is still not able to be safely migrated, the migration will fail and rollback the resource to its original network. A 'MigrationFailed' error will raise after the rollback finishes. With the rollback mechanism, the tool can preserve the target resource's original configuration if the migration fails. 
 ## Limitations
 ### General limitations:
 * You should not manually change any GCE resources during the migration. Otherwise, some errors might happen. E.g., resources that can not be found or out of quota issues. 
@@ -70,8 +70,8 @@ You can try to migrate a load balancer's forwarding rule so that the tool will m
 | ------------- | ------------- | ---|
 | selfLink | The URL selfLink of the target resource. A legal format be `https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance` or `projects/project/zones/zone/instances/instance` | string |
 | network | The name of the target VPC network  | string |
-| subnetwork | Default: None.  The name of the target VPC subnetwork. This flag is optional for an auto-mode VPC network. For other subnet creation modes, if there are multiple subnets within the zone, this flag should be specified; otherwise,  an error will be thrown.  | string |
-| preserve_instance_external_ip | Default: False. Preserve the external IPs of the VM instances serving the target resource. Be cautious: If the VM instance instance is in a managed instance group, its external IP cannot be preserved. | boolean |
+| subnetwork | Default: None.  The name of the target VPC subnetwork. This flag is optional for an auto-mode VPC network. For other subnet creation modes, this flag should be specified; otherwise, an error will be thrown.  | string |
+| preserve_instance_external_ip | Default: False. Preserve the external IPs of the VM instances serving the target resource. Be cautious: If the VM instance is in a managed instance group, its external IP cannot be preserved. | boolean |
 
      python3 migrate_by_selfLink.py --selfLink=selfLink-of-target-resource  \
      --network=my-network  --subnetwork=my-network-subnet \
@@ -83,9 +83,9 @@ You can try to migrate a load balancer's forwarding rule so that the tool will m
 | project_id | The project ID of the target resource.  | string |
 | target_resource_name | The name of the target resource.  | string |
 | region | Default: None. If it is a regional resource, this flag must be specified. If it is a zonal/global resource, this field should be blank.| string |
-| zone | Default: None. If it is a zonal resource (E.g. a VM instance is a zonal resource), this flag must be specified. If it is a regional/global resource, this field should be blank.| string |
+| zone | Default: None. If it is a zonal resource (E.g., a VM instance is a zonal resource), this flag must be specified. If it is a regional/global resource, this field should be blank.| string |
 | network | The name of the target VPC network  | string |
-| subnetwork | Default: None.  The name of the target VPC subnetwork. This flag is optional for an auto-mode VPC network. For other subnet creation modes, if there are multiple subnets within the zone, this flag should be specified; otherwise,  an error will be thrown.  | string |
+| subnetwork | Default: None.  The name of the target VPC subnetwork. This flag is optional for an auto-mode VPC network. This flag should be specified for other subnet creation modes; otherwise,  an error will be thrown.    | string |
 | preserve_instance_external_ip | Default: False. Preserve the external IPs of the VM instances serving the target resource. Be cautious: If the VM instance is in a managed instance group, its external IP cannot be preserved. | boolean |
 
 #### VM instance network migration. [See more examples.](readme/VM_INSTANCE_README.md)
@@ -120,18 +120,20 @@ Note: --region is only needed for a regional backend service.
 Note: --region is only needed for a regional forwarding rule.
 
 ## Troubleshooting: 
-1. The tool has import issue. You should check the Python version and ensure pip3 matches Python3.
-2. After the migration, all the resources have been migrated, but the resource's external IP is not accessible. 
-    * You should check out the target network's firewall. You need to set up all the firewalls in the target network manually. . The easiest way is to copy all the original network's firewall settings to the target VPC network.
-3. The rollback is failed and throws an 'RollbackFailed' error:
+1. The tool cannot run and has an import issue. 
+    * You should check the Python version and ensure pip3 matches Python3.
+    * Follow the 'Before running' section and install it again.
+2. After the migration, all the resources migrated, but the resource's external IP is not accessible. 
+    * You should check out the target network's firewall. You need to set up all the firewalls in the target network manually. The easiest way is to follow all the original network's firewall settings and create the target VPC network's firewalls.
+3. The rollback is failed and throws a 'RollbackFailed' error:
     * The rollback can fail due to network issues or quota limitation issues. 
     * In this scenario, you can refer to the ‘backup.log’ file, which is located in the root folder. 
-    you can recreate the lost resources by themselves. The name and the configuration of all the legacy resources that the tool might have possibly
+    You can recreate the lost resources by yourself. The configuration of all the legacy resources that the tool might have possibly
      touched are saved in the 'backup.log' file. 
 4. The tool throws a 'MigrationFailed' error:
-    * The migration has failed. The tool rollbacks the resource to the legacy network. You should be cautious that the internal IPs may have changed due to the rollback.
+    * The migration has failed. The tool rollbacks the target resource to the legacy network. You should be cautious that the internal IPs may have already changed after the rollback.
 5. The tool terminates with some other errors, such as 'InvalidNetworkError' or 'HttpError':
-    * The migration didn't start due to that error. The tool didn't modify the original resource.   
+    * The migration didn't start due to that error. The tool didn't modify the target resource.   
  
 ## Run end-to-end tests:
 #### Before running:
