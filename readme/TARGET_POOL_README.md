@@ -22,7 +22,7 @@ Reason: see **Limitations** above.
   
 ### 2. The target pool shares an instance group backend with another target pool or backend service:
 Not supported. \
-The tool will rollback. \
+The tool will roll back. \
 *Recommendation*: [remove this instance group from the target pool](https://cloud.google.com/compute/docs/reference/rest/v1/instanceGroupManagers/setTargetPools) and try the target pool migration again. 
 ### 3. The target pool shares a VM instance (which is not a member of any instance group) backend with another target pool:
 Supported, but not recommended. \

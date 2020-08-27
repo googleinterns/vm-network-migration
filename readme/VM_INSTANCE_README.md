@@ -4,7 +4,7 @@
 2. The original VM will be deleted and recreated using the modified network configuration (modified fields: network, subnetwork, natIP, networkIP). If you choose to preserve the external IP, the ‘natIP’ field won’t change. ![See more details.](vm_config.png) 
 
 ## Limitations:
-1. The IP preservation action is not reversible, even though rollback happens.
+1. The IP preservation action is not reversible, even though roll back happens.
 ## Special cases:
 ### 1. Migrate a VM instance which is a member of an instance group:
 Not supported. \

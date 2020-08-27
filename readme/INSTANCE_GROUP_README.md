@@ -40,7 +40,7 @@ after the migration. Therefore, it is not a recommended use case. \
 Recommended action: [remove the instances of this instance group from the target pool.](https://cloud.google.com/compute/docs/reference/rest/v1/targetPools/removeInstance)
 #### 2. The instance group is serving one or more backend service
 Not supported. \
-The migration will fail and rollback to the legacy network. \
+The migration will fail and roll back to the legacy network. \
 *Recommendation*: [migrate the backend service directly](./BACKEND_SERVICE_README.md), 
 or [remove the instance group from the backend service](https://cloud.google.com/compute/docs/reference/rest/v1/backendServices/update).
 ### Managed instance group
@@ -50,6 +50,6 @@ Not supported. The migration will not start. \
 group from the target pool](https://cloud.google.com/compute/docs/reference/rest/v1/instanceGroupManagers/setTargetPools).
 #### 2. The instance group is serving one or more backend service
 Not supported. \
-The migration will fail and rollback to the legacy network. \
+The migration will fail and roll back to the legacy network. \
 *Recommendation*: [migrate the backend service directly](./BACKEND_SERVICE_README.md), 
 or [remove the instance group from the backend service](https://cloud.google.com/compute/docs/reference/rest/v1/backendServices/update).

@@ -29,7 +29,7 @@
 ## Special cases:
 ### 1. An INTERNAL forwarding rule shares a backend service with another forwarding rule:
 Not supported. \
-The migration of the INTERNAL forwarding rule will fail. The tool will rollback. \
+The migration of the INTERNAL forwarding rule will fail. The tool will roll back. \
 *Recommendation*: Remove this backend service from another forwarding rule and try again.
 ### 2. An EXTERNAL or INTERNAL-SELF-MANAGED forwarding rule A shares a backend service with another forwarding rule B:
 Supported. \
