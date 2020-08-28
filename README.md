@@ -7,6 +7,7 @@ GCE resources.
 ## Use cases
 ### Supported GCE resources:
 * VM instance (with IP preservation)
+* Target instance (with IP preservation)
 * Instance group
     * Unmanaged
     * Managed 
@@ -29,8 +30,6 @@ GCE resources.
 ### How to migrate a load balancer?
 A load balancer is not a GCE resource, but a combination of different GCE resources.
 You can try to migrate a load balancer's forwarding rule so that the tool will migrate all the resources in use by this load balancer.        
-### How to migrate a target instance?
-You can directly [migrate the VM instance](readme/VM_INSTANCE_README.md) that serves the target instance.
 ## Characteristics:
 * The tool has simple validation checks before the migration starts. If the resource can not be migrated, the migration process will not start and won't affect the original resource.
 * In some cases, the validation checks are passed, but the resource is still not able to be safely migrated, the migration will fail and roll back the resource to its original network. A 'MigrationFailed' error will raise after the rollback finishes. With the rollback mechanism, the tool can preserve the target resource's original configuration if the migration fails. 
@@ -95,7 +94,11 @@ You can directly [migrate the VM instance](readme/VM_INSTANCE_README.md) that se
      --target_resource_name=my-original-instance --zone=us-central1-a  \
      --network=my-network \ 
      [--subnetwork=my-network-subnet1 --preserve_instance_external_ip=False] 
-     
+#### Target instance network migration. [See more examples.](readme/TARGET_INSTANCE_README.md)
+     python3 instance_migration.py  --project_id=my-project \
+     --target_resource_name=my-target-instance --zone=us-central1-a  \
+     --network=my-network \ 
+     [--subnetwork=my-network-subnet1 --preserve_instance_external_ip=False]      
 #### Instance group network migration. [See more examples.](readme/INSTANCE_GROUP_README.md)
      python3  instance_group_migration.py  --project_id=my-project \
      --target_resource_name=my-original-instance-group  --region=us-central1 \
