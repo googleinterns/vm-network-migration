@@ -17,5 +17,6 @@ the VM instance may have been removed from the target pool.
 In general, the target pool may be affected. \
 *Recommendation*: [remove the VM instance from the target pool](https://cloud.google.com/compute/docs/reference/rest/v1/instanceGroupManagers/setTargetPools) and then migrate it.
 ### 3. Migrate a VM instance which serves a target instance:
-Supported. 
+Supported. \
+You can migrate the VM instance without affecting the target instance. 
     

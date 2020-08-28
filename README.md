@@ -29,9 +29,11 @@ GCE resources.
 ### How to migrate a load balancer?
 A load balancer is not a GCE resource, but a combination of different GCE resources.
 You can try to migrate a load balancer's forwarding rule so that the tool will migrate all the resources in use by this load balancer.        
+### How to migrate a target instance?
+You can directly [migrate the VM instance](readme/VM_INSTANCE_README.md) that serves the target instance.
 ## Characteristics:
 * The tool has simple validation checks before the migration starts. If the resource can not be migrated, the migration process will not start and won't affect the original resource.
-* In some cases, the validation checks are passed, but the resource is still not able to be safely migrated, the migration will fail and rollback the resource to its original network. A 'MigrationFailed' error will raise after the rollback finishes. With the rollback mechanism, the tool can preserve the target resource's original configuration if the migration fails. 
+* In some cases, the validation checks are passed, but the resource is still not able to be safely migrated, the migration will fail and roll back the resource to its original network. A 'MigrationFailed' error will raise after the rollback finishes. With the rollback mechanism, the tool can preserve the target resource's original configuration if the migration fails. 
 ## Limitations
 ### General limitations:
 * You should not manually change any GCE resources during the migration. Otherwise, some errors might happen. E.g., resources that can not be found or out of quota issues. 
@@ -68,8 +70,8 @@ You can try to migrate a load balancer's forwarding rule so that the tool will m
 #### Migrate by selfLink (It is the easiest way to use the tool. [Read more about how to find a resource's selfLink](readme/FIND_SELFLINK_README.md))
 | Flag  | Description | Flag Type| 
 | ------------- | ------------- | ---|
-| selfLink | The URL selfLink of the target resource. A legal format be `https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance` or `projects/project/zones/zone/instances/instance` | string |
-| network | The name of the target VPC network  | string |
+| selfLink | The URL selfLink of the target resource. [Details about the selfLink.](readme/FIND_SELFLINK_README.md)| string |
+| network | The name of the target VPC network. | string |
 | subnetwork | Default: None.  The name of the target VPC subnetwork. This flag is optional for an auto-mode VPC network. For other subnet creation modes, this flag should be specified; otherwise, an error will be thrown.  | string |
 | preserve_instance_external_ip | Default: False. Preserve the external IPs of the VM instances serving the target resource. Be cautious: If the VM instance is in a managed instance group, its external IP cannot be preserved. | boolean |
 
@@ -131,8 +133,8 @@ Note: --region is only needed for a regional forwarding rule.
     You can recreate the lost resources by yourself. The configuration of all the legacy resources that the tool might have possibly
      touched are saved in the 'backup.log' file. 
 4. The tool throws a 'MigrationFailed' error:
-    * The migration has failed. The tool rollbacks the target resource to the legacy network. You should be cautious that the internal IPs may have already changed after the rollback.
-5. The tool terminates with some other errors, such as 'InvalidNetworkError' or 'HttpError':
+    * The migration has failed. The tool rolls back the target resource to the legacy network. You should be cautious that the internal IPs may have already changed after the rollback.
+5. The tool terminates with some other errors, such as 'InvalidTargetNetworkError' or 'HttpError':
     * The migration didn't start due to that error. The tool didn't modify the target resource.   
  
 ## Run end-to-end tests:

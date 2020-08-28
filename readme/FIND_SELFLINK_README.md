@@ -1,3 +1,6 @@
+## What is a selfLink?
+A selfLink is a server-defined URL of the resource.
+A legal format be `https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance` or `projects/project/zones/zone/instances/instance`
 ## Example 1: Find the selfLink of a VM instance
 ### Use gcloud command:
     gcloud compute instances describe some-instance-name
