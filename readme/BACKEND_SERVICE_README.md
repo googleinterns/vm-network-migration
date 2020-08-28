@@ -23,7 +23,7 @@ With this feature, the tool minimizes or eliminates the downtime for the backend
        [--subnetwork=my-network-subnet1 --preserve-instance-external-ip=True]
       
 ### 2. A global backend service (EXTERNAL or INTERNAL_SELF_MANAGED):
-   python3 backend_service_migration.py  --project_id=my-project \
+    python3 backend_service_migration.py  --project_id=my-project \
        --target_resource_name=my-backend-service  \
        --network=my-network  \
        [--subnetwork=my-network-subnet1 --preserve-instance-external-ip=True]

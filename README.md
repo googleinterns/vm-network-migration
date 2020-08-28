@@ -33,7 +33,7 @@ You can try to migrate a load balancer's forwarding rule so that the tool will m
 ## Characteristics:
 * The tool has simple validation checks before the migration starts. If the resource can not be migrated, the migration process will not start and won't affect the original resource.
 * In some cases, the validation checks are passed, but the resource is still not able to be safely migrated, the migration will fail and roll back the resource to its original network. A 'MigrationFailed' error will raise after the rollback finishes. With the rollback mechanism, the tool can preserve the target resource's original configuration if the migration fails. 
-## Limitations
+* Explanation about how the tool handles the external IP preservation: the tool will reserve the IP as a static IP though addresses.insert API. If the original external IP is ephemeral, it will become a static IP after calling the IP_preservation_handler. This action is not invertible, even though the original VM rollbacks due to pitfalls.  ## Limitations
 ### General limitations:
 * You should not manually change any GCE resources during the migration. Otherwise, some errors might happen. E.g., resources that can not be found or out of quota issues. 
 * Downtime is required in general. (*Downtime:* during the migration, the resource will be out of service. The downtime varies from several minutes to several ten minutes.)
@@ -41,6 +41,7 @@ You can try to migrate a load balancer's forwarding rule so that the tool will m
 * The resource will remain in the same project after the migration.
 * Only handle the external IP preservation, but not internal IP. The internal IP will change no matter whether the migration is successful or not.
 * IP preservation action is not reversible even though the migration fails. You need to release the external IP manually after the migration.
+* If the resource has an Ephemeral external IP and the rollback happens during the migration, its external IP may change after the rollback.
 ### Specific limitations:
 #### [VM migration.](readme/VM_INSTANCE_README.md)
 #### [Instance group migration.](readme/INSTANCE_GROUP_README.md)

@@ -1,6 +1,7 @@
 # Forwarding Rule Network Migration
 ## Characteristics:
-*  The forwarding rule itself and the backend services, target pools, or target instances used by this forwarding rule will be migrated to the target subnet.
+* The forwarding rule itself and the backend services, target pools, or target instances used by this forwarding rule will be migrated to the target subnet.
+* If the forwarding rule uses a static internal IP, after the migration, the internal IP of the forwarding rule will remain the same.
 ### EXTERNAL forwarding rule:
 * The external IP of the forwarding rule will not change.
 * The forwarding rule itself will not be modified, because it doesn't live in a network. 
@@ -15,14 +16,14 @@
 ## Examples:
 ### 1. A regional forwarding rule (it can be EXTERNAL or INTERNAL):
      python3 forwarding_rule_migration.py  --project_id=my-project \
-        --forwarding_rule_name=my-forwarding-rule \
+        --target_resource_name=my-forwarding-rule \
         --region=us-central1-a \
         --network=my-network \
         [--subnetwork=my-network-subnet1 --preserve_instance_external_ip=False]
      
 ### 2. A global forwarding rule (it can be EXTERNAL or INTERNAL_SELF_MANAGED):
      python3 forwarding_rule_migration.py  --project_id=my-project \
-        --forwarding_rule_name=my-forwarding-rule \
+        --target_resource_name=my-forwarding-rule \
         --network=my-network \
         [--subnetwork=my-network-subnet1 --preserve_instance_external_ip=False]
         
