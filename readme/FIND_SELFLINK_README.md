@@ -10,3 +10,5 @@ After executing this command line, you can find a 'selfLink' field, which is the
 2. Scroll down and find a line showing: *Equivalent REST*
 3. Click the blue *REST* link
 4. A configuration file will pop up, and you can search for selfLink field through Ctrl + F
+
+*For other types of GCE resources, you can use the similar method to find its selfLink.*
