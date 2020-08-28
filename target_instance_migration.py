@@ -53,10 +53,10 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--project_id',
-                        help='The project ID of the original VM.')
+                        help='The project ID of the original target instance.')
     parser.add_argument('--zone', help='The zone name of the original VM.')
     parser.add_argument('--target_resource_name',
-                        help='The name of the original VM')
+                        help='The name of the original target instance')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
         '--subnetwork',
