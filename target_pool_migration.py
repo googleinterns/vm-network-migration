@@ -29,7 +29,7 @@ Before running:
 
 Run the script by terminal, for example:
      python3 target_pool_migration.py --project_id=test-project
-     --target_pool_name=test-target-pool --network=test-network
+     --target_resource_name=test-target-pool --network=test-network
      --subnetwork=test-network --preserve_instance_external_ip=False
      --region=us-central1
 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--region', default=None,
                         help='The region of the target pool.')
-    parser.add_argument('--target_pool_name',
+    parser.add_argument('--target_resource_name',
                         help='The name of the target pool')
     parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
@@ -90,6 +90,10 @@ if __name__ == '__main__':
         if continue_execution == 'n':
             args.preserve_instance_external_ip = False
 
-    target_pool_migration = TargetPoolMigration(compute, args.project_id, args.target_pool_name, args.network, args.subnetwork,
-                 args.preserve_instance_external_ip, args.region)
+    target_pool_migration = TargetPoolMigration(compute, args.project_id,
+                                                args.target_resource_name,
+                                                args.network,
+                                                args.subnetwork,
+                                                args.preserve_instance_external_ip,
+                                                args.region)
     target_pool_migration.network_migration()
