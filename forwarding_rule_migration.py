@@ -29,7 +29,7 @@ Before running:
 
 Run the script by terminal, for example:
      python3 forwarding_rule_migration.py --project_id=test-project
-     --forwarding_rule_name=forwarding-rule-legacy --network=test-network
+     --target_resource_name=forwarding-rule-legacy --network=test-network
      --subnetwork=test-network --preserve_instance_external_ip=False
      --region=us-central1
 
