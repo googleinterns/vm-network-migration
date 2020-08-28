@@ -29,7 +29,7 @@ Before running:
 
 Run the script by terminal, for example:
      python3 instance_migration.py --project_id=test-project
-     --zone=us-central1-a --original_instance_name=instance-legacy
+     --zone=us-central1-a --target_resource_name=instance-legacy
      --network=tests-network
      --subnetwork=tests-network
      --preserve_external_ip = False

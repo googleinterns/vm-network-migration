@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The script takes the arguments and run the forwarding rule migration handler.
+""" The script takes the arguments and call the vm_network_migration module.
 
 Before running:
     1. If not already done, enable the Compute Engine API
@@ -28,10 +28,11 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 forwarding_rule_migration.py --project_id=test-project
-     --target_resource_name=forwarding-rule-legacy --network=test-network
-     --subnetwork=test-network --preserve_instance_external_ip=False
-     --region=us-central1
+     python3 target_instance_migration.py --project_id=test-project
+     --zone=us-central1-a --target_resource_name=instance-legacy
+     --network=tests-network
+     --subnetwork=tests-network
+     --preserve_instance_external_ip = False
 
 """
 import warnings
@@ -39,7 +40,7 @@ import os
 import argparse
 import google.auth
 from googleapiclient import discovery
-from vm_network_migration.handlers.forwarding_rule_migration.forwarding_rule_migration import ForwardingRuleMigration
+from vm_network_migration.handlers.instance_migration.target_instance_migration import TargetInstanceMigration
 
 if __name__ == '__main__':
     if os.path.exists('./backup.log'):
@@ -52,22 +53,20 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--project_id',
-                        help='The project ID of the forwarding rule.')
-
-    parser.add_argument('--region', default=None,
-                        help='The region of the forwarding rule.')
+                        help='The project ID of the original target instance.')
+    parser.add_argument('--zone', help='The zone name of the original VM.')
     parser.add_argument('--target_resource_name',
-                        help='The name of the forwarding rule.')
-    parser.add_argument('--network', help='The name of the target network.')
+                        help='The name of the original target instance')
+    parser.add_argument('--network', help='The name of the new network')
     parser.add_argument(
         '--subnetwork',
         default=None,
-        help='The name of target subnetwork. For auto mode networks,'
+        help='The name of the subnetwork. For auto mode networks,'
              ' this field is optional')
     parser.add_argument(
         '--preserve_instance_external_ip',
         default=False,
-        help='Preserve the external IP addresses of the instances serving this forwarding rule')
+        help='Preserve the external IP address')
 
     args = parser.parse_args()
 
@@ -77,24 +76,21 @@ if __name__ == '__main__':
         args.preserve_instance_external_ip = False
 
     if args.preserve_instance_external_ip:
-
         warnings.warn(
-            'You choose to preserve the external IPs of the instances serving '
-            'the target pool. If the instance is within an managed instance '
-            'group, its external IP can not be preserved. For other instances with '
-            'an ephemeral IP, its external IP will be reserved as a static '
-            'external IP after the execution.',
+            'You choose to preserve the external IP. If the original instance '
+            'has an ephemeral IP, it will be reserved as a static external IP after the '
+            'execution.',
             Warning)
         continue_execution = input(
             'Do you still want to preserve the external IP? y/n: ')
         if continue_execution == 'n':
-            args.preserve_instance_external_ip = False
+            args.preserve_external_ip = False
 
-    forwarding_rule_migration = ForwardingRuleMigration(compute,
-                                                        args.project_id,
-                                                        args.target_resource_name,
-                                                        args.network,
-                                                        args.subnetwork,
-                                                        args.preserve_instance_external_ip,
-                                                        args.region)
-    forwarding_rule_migration.network_migration()
+    target_instance_migration = TargetInstanceMigration(compute, args.project_id,
+                                                 args.target_resource_name,
+                                                 args.network,
+                                                 args.subnetwork,
+                                                 args.preserve_instance_external_ip,
+                                                 args.zone)
+
+    target_instance_migration.network_migration()

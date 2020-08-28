@@ -30,7 +30,8 @@ Before running:
        `pip install --upgrade google-api-python-client`
 
 Run the script by terminal, for example:
-     python3 migrate_by_selfLink.py --selfLink=projects/sample-project/global/forwardingRules/sample-rule
+     python3 migrate_by_selfLink.py
+     --selfLink=projects/sample-project/global/forwardingRules/sample-rule
      --network=test-network
      --subnetwork=test-network --preserve_external_ip=False
      --region=us-central1
